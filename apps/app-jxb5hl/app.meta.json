@@ -3,10 +3,10 @@
   "name": "快速登打表格工具",
   "description": "複雜型登打與合拼表格工具",
   "category": "Office",
-  "entry": "快速登打表格工具.html",
+  "entry": "快速登打表格工具(4_手打自動序號).html",
   "icon": "icon.png",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "featured": false,
   "publishedAt": "2026-09-02T08:08:23.299Z",
-  "updatedAt": "2026-09-02T08:08:23.299Z"
+  "updatedAt": "2026-09-02T09:31:49.515Z"
 }

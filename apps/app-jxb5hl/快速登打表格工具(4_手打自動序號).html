@@ -203,7 +203,7 @@
 (function(){
   'use strict';
   const STORAGE_KEY='evolving_universal_entry_v2';
-  const APP_VERSION=3;
+  const APP_VERSION=4;
   const qs=s=>document.querySelector(s);
   const qsa=s=>Array.from(document.querySelectorAll(s));
   const nowIso=()=>new Date().toISOString();
@@ -217,7 +217,7 @@
 
   function activeProject(){return state.projects.find(p=>p.id===state.activeProjectId)||null;}
   function defaultProject(name,headers=[],rows=[]){
-    const p={id:uid(),name:name||'未命名專案',headers:[...headers],rows:rows.map(r=>({...r})),fieldConfig:{},keyField:'',dateMode:'ROC',smartPrefill:true,previewLimit:100,usage:{},lastValues:{},pinned:{},sortConfig:{field:'',order:[]},outputHeaders:[...headers],sourceName:'',sourceNames:[],createdAt:nowIso(),updatedAt:nowIso()};
+    const p={id:uid(),name:name||'未命名專案',headers:[...headers],rows:rows.map(r=>({...r})),fieldConfig:{},keyField:'',autoSerialField:'',dateMode:'ROC',smartPrefill:true,previewLimit:100,usage:{},lastValues:{},pinned:{},sortConfig:{field:'',order:[]},outputHeaders:[...headers],sourceName:'',sourceNames:[],createdAt:nowIso(),updatedAt:nowIso()};
     p.headers.forEach(h=>p.fieldConfig[h]={type:detectFieldType(h,p.rows.map(r=>r[h]).slice(0,80)),required:false,quick:true});
     p.keyField=guessKeyField(p.headers,p.rows);
     if(p.keyField&&p.fieldConfig[p.keyField]) p.fieldConfig[p.keyField].required=true;
@@ -229,7 +229,7 @@
     p.fieldConfig=p.fieldConfig||{};p.usage=p.usage||{};p.lastValues=p.lastValues||{};p.pinned=p.pinned||{};
     p.sortConfig=p.sortConfig&&typeof p.sortConfig==='object'?p.sortConfig:{field:'',order:[]};p.sortConfig.field=p.headers.includes(p.sortConfig.field)?p.sortConfig.field:'';p.sortConfig.order=Array.isArray(p.sortConfig.order)?p.sortConfig.order.map(v=>String(v)):[];
     p.outputHeaders=Array.isArray(p.outputHeaders)?p.outputHeaders.filter(h=>p.headers.includes(h)):p.headers.slice();
-    p.dateMode=p.dateMode==='AD'?'AD':'ROC';p.smartPrefill=p.smartPrefill!==false;p.previewLimit=Number(p.previewLimit)||100;
+    p.dateMode=p.dateMode==='AD'?'AD':'ROC';p.smartPrefill=p.smartPrefill!==false;p.previewLimit=Number(p.previewLimit)||100;p.autoSerialField=p.headers.includes(p.autoSerialField)?p.autoSerialField:'';
     p.createdAt=p.createdAt||nowIso();p.updatedAt=p.updatedAt||nowIso();p.sourceName=p.sourceName||'';p.sourceNames=Array.isArray(p.sourceNames)?p.sourceNames:(p.sourceName?[p.sourceName]:[]);
     p.headers.forEach(h=>{if(!p.fieldConfig[h])p.fieldConfig[h]={type:detectFieldType(h,p.rows.map(r=>r[h]).slice(0,80)),required:false,quick:true};});
     if(!p.keyField||!p.headers.includes(p.keyField))p.keyField=guessKeyField(p.headers,p.rows);
@@ -387,6 +387,16 @@
     if(!p.smartPrefill||h===p.keyField)return'';if(p.pinned[h]&&hasVal(p.lastValues[h]))return p.lastValues[h];const list=suggestions(p,h);if(!list.length)return'';
     const total=Object.values(p.usage[h]||{}).reduce((s,x)=>s+(Number(x.count)||0),0);return list[0].count>=3&&list[0].count/Math.max(1,total)>=.58?list[0].v:'';
   }
+  function nextAutoSerial(p){
+    const field=p?.autoSerialField;if(!field||!p.headers.includes(field))return'';let max=0;
+    p.rows.forEach(r=>{const s=toHalfWidthDigits(r[field]).trim();if(/^\d+$/.test(s))max=Math.max(max,Number(s));});
+    return String(max+1);
+  }
+  function entryDefault(p,h){return h===p.autoSerialField?nextAutoSerial(p):smartDefault(p,h);}
+  function fillAutoSerialValue(p,vals){
+    const field=p?.autoSerialField;if(!field||!p.headers.includes(field)||hasVal(vals[field]))return vals;vals[field]=nextAutoSerial(p);
+    const inp=qsa('[data-field]').find(x=>x.dataset.field===field);if(inp)inp.value=vals[field];return vals;
+  }
 
   function renderProjects(){
     const list=qs('#projectList');if(!state.projects.length){list.innerHTML='<span class="muted smallText">尚無專案</span>';return;}
@@ -400,14 +410,14 @@
     const p=activeProject();const key=qs('#keyFieldSelect');if(!p){key.innerHTML='';return;}key.innerHTML=p.headers.map(h=>'<option value="'+esc(h)+'" '+(h===p.keyField?'selected':'')+'>'+esc(h)+'</option>').join('');qs('#dateMode').value=p.dateMode;qs('#smartPrefill').value=p.smartPrefill?'on':'off';qs('#previewLimit').value=String(p.previewLimit||100);
   }
   function fieldInputHtml(p,h,val){
-    const cfg=p.fieldConfig[h]||{type:'text'};const type=cfg.type||'text';const isKey=h===p.keyField;const date=type==='date';const cls='fieldBox'+(isKey?' keyField':'')+(date?' dateField':'');const req=cfg.required?' <span class="pill bad">必填</span>':'';const badges=(isKey?' <span class="pill good">主鍵</span>':'')+(date?' <span class="pill purple">日期</span>':'');
+    const cfg=p.fieldConfig[h]||{type:'text'};const type=cfg.type||'text';const isKey=h===p.keyField;const autoSerial=h===p.autoSerialField;const date=type==='date';const cls='fieldBox'+(isKey?' keyField':'')+(date?' dateField':'');const req=cfg.required?' <span class="pill bad">必填</span>':'';const badges=(isKey?' <span class="pill good">主鍵</span>':'')+(autoSerial?' <span class="pill blue">自動序號</span>':'')+(date?' <span class="pill purple">日期</span>':'');
     const action='<div class="fieldActions"><button type="button" class="miniIcon '+(p.pinned[h]?'active':'')+'" data-pin="'+esc(h)+'" title="固定沿用上一筆">📌</button></div>';
-    let input='';if(type==='textarea')input='<textarea data-field="'+esc(h)+'" placeholder="'+esc(h)+'">'+esc(val)+'</textarea>';else input='<input data-field="'+esc(h)+'" type="'+(type==='number'?'text':'text')+'" '+(date?'inputmode="numeric"':'')+' value="'+esc(val)+'" placeholder="'+(date?'例如 0317、1150317、20260317':esc(h))+'" autocomplete="off" />';
+    let input='';if(type==='textarea')input='<textarea data-field="'+esc(h)+'" placeholder="'+esc(h)+'">'+esc(val)+'</textarea>';else input='<input data-field="'+esc(h)+'" type="'+(type==='number'?'text':'text')+'" '+(date||autoSerial?'inputmode="numeric"':'')+(autoSerial?' readonly aria-readonly="true"':'')+' value="'+esc(val)+'" placeholder="'+(date?'例如 0317、1150317、20260317':esc(h))+'" autocomplete="off" />';
     return '<div class="'+cls+'"><div class="fieldLabel"><label>'+esc(h)+badges+req+'</label>'+action+'</div>'+input+'<div class="quickValues" data-quick-for="'+esc(h)+'"></div><div class="learnNote" data-learn-for="'+esc(h)+'"></div></div>';
   }
   function renderForm(){
     const p=activeProject(),area=qs('#formArea'),empty=qs('#noProject');if(!p||!p.headers.length){area.innerHTML='';empty.classList.remove('hidden');qs('#entryTop').classList.toggle('hidden',!p);return;}empty.classList.add('hidden');qs('#entryTop').classList.remove('hidden');
-    area.innerHTML=p.headers.map(h=>fieldInputHtml(p,h,smartDefault(p,h))).join('');bindForm();renderDraftNotice();
+    area.innerHTML=p.headers.map(h=>fieldInputHtml(p,h,entryDefault(p,h))).join('');bindForm();renderDraftNotice();
   }
   function bindForm(){
     const p=activeProject();if(!p)return;qsa('[data-field]').forEach(inp=>{
@@ -425,8 +435,8 @@
   }
   function getFormValues(){const p=activeProject(),obj={};if(!p)return obj;qsa('[data-field]').forEach(inp=>{const h=inp.dataset.field;let v=inp.value.trim();if(p.fieldConfig[h]?.type==='date'){v=normalizeDateInput(v,p.dateMode);inp.value=v;}obj[h]=v;});return obj;}
   function setFormValues(row){const p=activeProject();if(!p)return;p.headers.forEach(h=>{const inp=qsa('[data-field]').find(x=>x.dataset.field===h);if(inp)inp.value=row?.[h]??'';renderQuickFor(h,row?.[h]??'');});renderDraftNotice();}
-  function resetForm(prefill=true){const p=activeProject();if(!p)return;qs('#recordSearch').value='';qs('#recordResults').innerHTML='';if(!qsa('[data-field]').length){renderForm();return;}p.headers.forEach(h=>{const inp=qsa('[data-field]').find(x=>x.dataset.field===h);if(inp)inp.value=prefill?smartDefault(p,h):'';renderQuickFor(h,'');});renderDraftNotice();qsa('[data-field]')[0]?.focus();}
-  function renderDraftNotice(){const p=activeProject(),el=qs('#draftNotice');if(!p){el.classList.add('hidden');return;}const vals=getFormValuesSilent(),filled=Object.values(vals).filter(hasVal).length;if(!filled){el.classList.add('hidden');return;}const key=String(vals[p.keyField]??'').trim();const idx=key?p.rows.findIndex(r=>norm(r[p.keyField])===norm(key)):-1;el.classList.remove('hidden');el.className='notice '+(idx>=0?'warn':'good')+' draftLine';el.innerHTML=idx>=0?'目前主鍵 <b>'+esc(key)+'</b> 已存在，儲存時會更新第 '+(idx+1)+' 列。':'目前是新資料草稿'+(key?'，主鍵：<b>'+esc(key)+'</b>':'')+'。';}
+  function resetForm(prefill=true){const p=activeProject();if(!p)return;qs('#recordSearch').value='';qs('#recordResults').innerHTML='';if(!qsa('[data-field]').length){renderForm();return;}p.headers.forEach(h=>{const inp=qsa('[data-field]').find(x=>x.dataset.field===h);if(inp)inp.value=prefill?entryDefault(p,h):'';renderQuickFor(h,'');});renderDraftNotice();qsa('[data-field]')[0]?.focus();}
+  function renderDraftNotice(){const p=activeProject(),el=qs('#draftNotice');if(!p){el.classList.add('hidden');return;}const vals=getFormValuesSilent(),filled=Object.entries(vals).filter(([h,v])=>h!==p.autoSerialField&&hasVal(v)).length;if(!filled){el.classList.add('hidden');return;}const key=String(vals[p.keyField]??'').trim();const idx=key?p.rows.findIndex(r=>norm(r[p.keyField])===norm(key)):-1;el.classList.remove('hidden');el.className='notice '+(idx>=0?'warn':'good')+' draftLine';el.innerHTML=idx>=0?'目前主鍵 <b>'+esc(key)+'</b> 已存在，儲存時會更新第 '+(idx+1)+' 列。':'目前是新資料草稿'+(key?'，主鍵：<b>'+esc(key)+'</b>':'')+'。';}
   function getFormValuesSilent(){const obj={};qsa('[data-field]').forEach(inp=>obj[inp.dataset.field]=inp.value.trim());return obj;}
 
   function renderRecordResults(){
@@ -435,13 +445,13 @@
     qsa('[data-load-row]').forEach(b=>b.addEventListener('click',()=>{setFormValues(p.rows[Number(b.dataset.loadRow)]);toast('已載入既有資料，可直接修改');}));
   }
   function saveRecord(){
-    const p=activeProject();if(!p||!p.headers.length){toast('請先建立或載入專案','bad');return;}const vals=getFormValues();const missing=p.headers.filter(h=>p.fieldConfig[h]?.required&&!hasVal(vals[h]));if(missing.length){toast('必填欄位未填：'+missing.join('、'),'bad');return;}const key=p.keyField;const keyVal=String(vals[key]??'').trim();if(!keyVal){toast('請填寫主鍵欄位「'+key+'」','bad');return;}
+    const p=activeProject();if(!p||!p.headers.length){toast('請先建立或載入專案','bad');return;}const vals=fillAutoSerialValue(p,getFormValues());const missing=p.headers.filter(h=>p.fieldConfig[h]?.required&&!hasVal(vals[h]));if(missing.length){toast('必填欄位未填：'+missing.join('、'),'bad');return;}const key=p.keyField;const keyVal=String(vals[key]??'').trim();if(!keyVal){toast('請填寫主鍵欄位「'+key+'」','bad');return;}
     const idx=p.rows.findIndex(r=>norm(r[key])===norm(keyVal));state.lastUndo={projectId:p.id,rows:clone(p.rows),lastValues:clone(p.lastValues),usage:clone(p.usage)};
     if(idx>=0){p.rows[idx]={...p.rows[idx],...vals};log('已更新「'+keyVal+'」所在資料列。');toast('已更新既有資料');}else{p.rows.push(vals);log('已新增「'+keyVal+'」。');toast('已新增一筆資料');}
     p.headers.forEach(h=>{if(hasVal(vals[h]))touchUsage(p,h,vals[h]);});p.updatedAt=nowIso();saveLocal();renderAll(false);resetForm(true);
   }
   function undoSave(){const u=state.lastUndo,p=activeProject();if(!u||!p||u.projectId!==p.id){toast('目前沒有可復原的儲存','bad');return;}p.rows=u.rows;p.lastValues=u.lastValues;p.usage=u.usage;state.lastUndo=null;p.updatedAt=nowIso();saveLocal();renderAll();toast('已復原上次儲存');log('已復原上次儲存。');}
-  function useLastRecord(){const p=activeProject();if(!p)return;const vals={};p.headers.forEach(h=>vals[h]=h===p.keyField?'':(p.lastValues[h]??''));setFormValues(vals);qsa('[data-field]').find(x=>x.dataset.field===p.keyField)?.focus();toast('已沿用上一筆，主鍵已清空');}
+  function useLastRecord(){const p=activeProject();if(!p)return;const vals={};p.headers.forEach(h=>vals[h]=h===p.autoSerialField?nextAutoSerial(p):(h===p.keyField?'':(p.lastValues[h]??'')));setFormValues(vals);qsa('[data-field]').find(x=>x.dataset.field===p.keyField)?.focus();toast(p.autoSerialField?'已沿用上一筆，序號已自動換新':'已沿用上一筆，主鍵已清空');}
 
   function renderFieldSettings(){
     const p=activeProject(),el=qs('#fieldSettings');if(!p){el.innerHTML='<div class="muted">尚無專案。</div>';return;}el.innerHTML=p.headers.map(h=>{const c=p.fieldConfig[h]||{};return '<div class="settingRow"><div class="settingName">'+esc(h)+'</div><select data-type="'+esc(h)+'"><option value="text" '+(c.type==='text'?'selected':'')+'>文字</option><option value="number" '+(c.type==='number'?'selected':'')+'>數字</option><option value="date" '+(c.type==='date'?'selected':'')+'>日期</option><option value="textarea" '+(c.type==='textarea'?'selected':'')+'>多行文字</option></select><label style="font-weight:700;margin:0"><input class="check" type="checkbox" data-required="'+esc(h)+'" '+(c.required?'checked':'')+'>必填</label><label style="font-weight:700;margin:0"><input class="check" type="checkbox" data-quick="'+esc(h)+'" '+(c.quick!==false?'checked':'')+'>快捷</label></div>';}).join('');
@@ -514,7 +524,7 @@
   }
 
   function openBlankModal(){qs('#blankProjectName').value='';qs('#blankProjectFields').value='';qs('#modalBackdrop').classList.remove('hidden');setTimeout(()=>qs('#blankProjectName').focus(),0);}
-  function createBlankProject(){const name=qs('#blankProjectName').value.trim()||'空白專案';const raw=qs('#blankProjectFields').value.trim();const fields=raw?raw.split(/[\n,，、\t]+/).map(s=>s.trim()).filter(Boolean):[];const headers=[...new Set(fields)];const p=defaultProject(name,headers,[]);state.projects.push(p);state.activeProjectId=p.id;saveLocal();qs('#modalBackdrop').classList.add('hidden');renderAll();toast(headers.length?'已建立空白專案，共 '+headers.length+' 個欄位':'已建立純空白專案');log('已建立空白專案：'+name+(headers.length?'（'+headers.length+' 欄）':'（0 欄）')+'。');}
+  function createBlankProject(){const name=qs('#blankProjectName').value.trim()||'空白專案';const raw=qs('#blankProjectFields').value.trim();const fields=raw?raw.split(/[\n,，、\t]+/).map(s=>s.trim()).filter(Boolean):[];const userHeaders=[...new Set(fields)],manualMode=userHeaders.length>0;const headers=manualMode&&!userHeaders.includes('序號')?['序號',...userHeaders]:userHeaders;const p=defaultProject(name,headers,[]);if(manualMode){p.autoSerialField='序號';p.keyField='序號';ensureFieldConfig(p,'序號');p.fieldConfig['序號'].required=true;p.fieldConfig['序號'].quick=false;}state.projects.push(p);state.activeProjectId=p.id;saveLocal();qs('#modalBackdrop').classList.add('hidden');renderAll();toast(manualMode?'已建立手打專案，序號會自動產生':'已建立純空白專案');log('已建立空白專案：'+name+(manualMode?'（手打模式，自動序號，共 '+headers.length+' 欄）':'（0 欄）')+'。');}
 
   function renderAll(rebuildForm=true){renderProjects();renderMeta();renderSideStatus();renderProjectLead();renderSmartControls();if(rebuildForm)renderForm();renderFieldSettings();renderTableCustomize();renderTable();}
 
