@@ -1,0 +1,38 @@
+name: Rebuild app catalog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'scripts/build_catalog.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: office-deck-catalog
+  cancel-in-progress: true
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rebuild catalog
+        run: python3 scripts/build_catalog.py
+      - name: Commit catalog if changed
+        run: |
+          if git diff --quiet -- data/catalog.json; then
+            echo "Catalog is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalog.json
+          git commit -m "chore: rebuild office deck catalog"
+          git push

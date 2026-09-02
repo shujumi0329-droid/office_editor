@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e8">
+  <meta name="description" content="Torsio Toletana Office Deck — 團隊辦公工具入口。">
+  <title>Office Deck · Torsio Toletana</title>
+  <link rel="stylesheet" href="./assets/portal.css">
+</head>
+<body class="portal-page">
+  <div class="page-noise" aria-hidden="true"></div>
+  <header class="site-header shell">
+    <a class="brand-lockup" href="./" aria-label="Torsio Toletana Office Deck 首頁">
+      <img class="brand-logo" data-brand-logo alt="Torsio Toletana">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="brand-product">OFFICE DECK</span>
+    </a>
+    <div class="header-actions">
+      <span class="system-status"><span class="status-dot"></span>STATIC · GITHUB PAGES</span>
+      <a class="text-link" href="./admin/">Publisher</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero shell">
+      <div class="hero-copy">
+        <p class="eyebrow">TORSIO TOLETANA / OFFICE SYSTEMS</p>
+        <h1>把常用工具，<br><span>排成一副甲板。</span></h1>
+        <p class="hero-lede">所有已發布的 HTML 工具集中在一個入口。搜尋、開啟、直接工作。</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="shape shape-yellow"></div>
+        <div class="shape shape-red"></div>
+        <div class="shape shape-blue"></div>
+        <div class="shape shape-black"></div>
+        <div class="shape-line shape-line-a"></div>
+        <div class="shape-line shape-line-b"></div>
+      </div>
+    </section>
+
+    <section class="workspace shell" aria-labelledby="tools-title">
+      <div class="workspace-head">
+        <div>
+          <p class="section-kicker">TOOL LIBRARY</p>
+          <h2 id="tools-title">辦公工具</h2>
+        </div>
+        <div class="tool-count" id="tool-count" aria-live="polite">0 TOOLS</div>
+      </div>
+
+      <div class="control-bar">
+        <label class="search-field" for="app-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/></svg>
+          <input id="app-search" type="search" autocomplete="off" placeholder="搜尋工具、用途或分類…">
+          <kbd>⌘ K</kbd>
+        </label>
+      </div>
+
+      <nav class="category-chips" id="category-chips" aria-label="工具分類"></nav>
+
+      <div class="loading-state" id="loading-state" aria-live="polite">
+        <span class="loader"></span>正在讀取工具甲板…
+      </div>
+      <div class="app-grid" id="app-grid"></div>
+      <div class="empty-state" id="empty-state" hidden>
+        <div class="empty-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <h3>甲板目前是空的</h3>
+        <p>工具發布後會自動出現在這裡。若搜尋沒有結果，清除關鍵字即可看見全部工具。</p>
+      </div>
+      <div class="error-state" id="error-state" hidden>
+        <strong>Catalog 無法載入</strong>
+        <span id="error-message">請稍後重新整理頁面。</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer shell">
+    <div class="footer-rule"></div>
+    <div class="footer-content">
+      <div><strong>Torsio Toletana</strong><span>DESIGN · ENGINEER · TRANSFORM</span></div>
+      <span>Office Deck / <span id="footer-year"></span></span>
+    </div>
+  </footer>
+
+  <script type="module" src="./assets/portal.mjs"></script>
+</body>
+</html>

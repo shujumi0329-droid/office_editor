@@ -1,0 +1,32 @@
+name: Validate Office Deck
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: JavaScript tests
+        run: node --test tests/package-utils.test.mjs tests/catalog-utils.test.mjs tests/github-client.test.mjs tests/static-site.test.mjs
+      - name: Python tests
+        run: python3 -m unittest tests/test_build_catalog.py
+      - name: Syntax checks
+        run: |
+          node --check assets/portal.mjs
+          node --check assets/admin.mjs
+          node --check assets/package-utils.mjs
+          node --check assets/catalog-utils.mjs
+          node --check assets/github-client.mjs

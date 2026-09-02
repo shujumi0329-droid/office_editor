@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Publisher · Torsio Toletana Office Deck</title>
+  <link rel="stylesheet" href="../assets/portal.css">
+</head>
+<body class="admin-page">
+  <div class="page-noise" aria-hidden="true"></div>
+  <header class="site-header shell">
+    <a class="brand-lockup" href="../" aria-label="回到 Office Deck">
+      <img class="brand-logo" data-brand-logo alt="Torsio Toletana">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="brand-product">PUBLISHER</span>
+    </a>
+    <div class="header-actions">
+      <span class="system-status" id="auth-status"><span class="status-dot status-dot-warn"></span>LOCKED</span>
+      <a class="text-link" href="../">← Office Deck</a>
+    </div>
+  </header>
+
+  <main class="admin-shell shell">
+    <section class="admin-intro">
+      <p class="eyebrow">TORSIO TOLETANA / PUBLISH CONTROL</p>
+      <h1>Office Deck Publisher</h1>
+      <p>把 HTML、ZIP 或完整資料夾拖進來，設定圖示與名稱，一次 commit 發布到 GitHub Pages。</p>
+    </section>
+
+    <section class="auth-panel panel" id="auth-panel">
+      <div class="panel-index">01</div>
+      <div class="auth-copy">
+        <p class="section-kicker">REPOSITORY ACCESS</p>
+        <h2>解鎖發布器</h2>
+        <p>使用 Fine-grained GitHub Token。Repository access 只選 <code>office_editor</code>，Repository permissions 將 <code>Contents</code> 設為 <strong>Read and write</strong>。</p>
+        <div class="security-note"><span>●</span> Token 僅保留在這個頁面的記憶體；重新整理或按「鎖定」後即清除。</div>
+      </div>
+      <div class="auth-form">
+        <label for="token-input">Fine-grained token</label>
+        <div class="token-row">
+          <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+          <button class="button button-dark" id="unlock-button" type="button">解鎖</button>
+        </div>
+        <p class="field-help" id="auth-message" aria-live="polite">目標：shujumi0329-droid/office_editor · main</p>
+      </div>
+    </section>
+
+    <div class="publisher-workspace" id="publisher-workspace" hidden>
+      <div class="publisher-topline">
+        <div><span class="live-dot"></span><strong>Repository connected</strong><span>shujumi0329-droid/office_editor</span></div>
+        <button class="button button-ghost" id="lock-button" type="button">鎖定</button>
+      </div>
+
+      <div class="publisher-grid">
+        <section class="panel package-panel">
+          <div class="panel-index">02</div>
+          <div class="panel-title-row">
+            <div><p class="section-kicker">PACKAGE</p><h2>放入工具</h2></div>
+            <button class="mini-button" id="clear-package" type="button">清除</button>
+          </div>
+
+          <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="拖曳 HTML、ZIP 或資料夾到這裡">
+            <div class="drop-icon" aria-hidden="true"><span></span><span></span></div>
+            <h3>拖進來就好</h3>
+            <p>單一 HTML、ZIP、或包含 CSS / JS / 圖片的完整資料夾</p>
+            <div class="drop-actions">
+              <label class="button button-light">選擇檔案<input id="file-input" type="file" accept=".html,.htm,.zip" multiple hidden></label>
+              <label class="button button-light">選擇資料夾<input id="folder-input" type="file" webkitdirectory multiple hidden></label>
+            </div>
+            <span class="limit-copy">最多 300 個檔案 · 總計 20 MiB</span>
+          </div>
+
+          <div class="package-inspector" id="package-inspector" hidden>
+            <div class="inspector-stats">
+              <div><span>FILES</span><strong id="file-count">0</strong></div>
+              <div><span>SIZE</span><strong id="package-size">0 KB</strong></div>
+              <div><span>ENTRY</span><strong id="entry-label">—</strong></div>
+            </div>
+            <label class="field-group entry-field" id="entry-field" hidden>
+              <span>入口 HTML</span>
+              <select id="entry-select"></select>
+            </label>
+            <div class="file-preview" id="file-preview"></div>
+          </div>
+        </section>
+
+        <section class="panel metadata-panel">
+          <div class="panel-index">03</div>
+          <div class="panel-title-row">
+            <div><p class="section-kicker">APP PROFILE</p><h2>工具資料</h2></div>
+            <span class="edit-badge" id="edit-badge" hidden>EDITING</span>
+          </div>
+
+          <div class="profile-layout">
+            <div class="icon-editor">
+              <div class="icon-preview"><img id="icon-preview" alt="工具圖示預覽"></div>
+              <label class="mini-button icon-button">自訂圖示<input id="icon-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" hidden></label>
+              <button class="mini-button" id="clear-icon" type="button">使用預設</button>
+            </div>
+            <div class="form-stack">
+              <label class="field-group"><span>名稱</span><input id="app-name" type="text" maxlength="80" placeholder="例如：Excel 清理器"></label>
+              <label class="field-group"><span>Slug</span><div class="slug-row"><span>apps/</span><input id="app-slug" type="text" maxlength="80" placeholder="excel-cleaner"></div></label>
+            </div>
+          </div>
+
+          <label class="field-group"><span>說明</span><textarea id="app-description" rows="3" maxlength="180" placeholder="一句話說明這個工具能做什麼"></textarea></label>
+          <div class="two-fields">
+            <label class="field-group"><span>分類</span><input id="app-category" type="text" maxlength="40" value="Office" placeholder="Office"></label>
+            <label class="field-group"><span>版本</span><input id="app-version" type="text" maxlength="24" value="1.0.0" placeholder="1.0.0"></label>
+          </div>
+          <label class="toggle-row"><input id="app-featured" type="checkbox"><span class="toggle-ui"></span><span><strong>置頂顯示</strong><small>Featured 工具會排在甲板最前面</small></span></label>
+
+          <div class="public-warning"><strong>PUBLIC</strong><p>這個 repository 與 GitHub Pages 是公開的。上傳的 HTML、JavaScript、資料與素材都會成為公開內容，請勿放入密碼、API Secret 或私密資料。</p></div>
+
+          <button class="button button-publish" id="publish-button" type="button" disabled><span>發布到 Office Deck</span><span class="button-arrow">↗</span></button>
+          <div class="publish-progress" id="publish-progress" hidden><div id="progress-bar"></div><span id="progress-label">準備中…</span></div>
+        </section>
+      </div>
+
+      <section class="panel library-panel">
+        <div class="panel-index">04</div>
+        <div class="panel-title-row">
+          <div><p class="section-kicker">LIVE CATALOG</p><h2>已發布工具</h2></div>
+          <div class="existing-actions"><button class="mini-button" id="new-app" type="button">＋ 新工具</button><button class="mini-button" id="refresh-apps" type="button">重新整理</button></div>
+        </div>
+        <div class="existing-apps" id="existing-apps"><p class="muted">讀取中…</p></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script type="module" src="../assets/admin.mjs"></script>
+</body>
+</html>

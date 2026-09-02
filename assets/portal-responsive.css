@@ -1,0 +1,47 @@
+:focus-visible { outline: 3px solid rgba(20,84,127,.28); outline-offset: 3px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 58px; }
+  .hero-art { height: 265px; margin-top: 20px; transform: scale(.82); transform-origin: right center; }
+  .app-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .auth-panel, .publisher-grid { grid-template-columns: 1fr; }
+  .package-panel, .metadata-panel { min-height: auto; }
+}
+@media (max-width: 640px) {
+  .shell { width: min(100% - 28px, 1180px); }
+  .site-header { height: 78px; }
+  .brand-logo { width: 116px; height: 48px; }
+  .brand-divider, .system-status { display: none; }
+  .brand-product { font-size: 9px; }
+  .header-actions { gap: 12px; }
+  .hero { padding: 48px 0 34px; }
+  .hero h1 { font-size: clamp(46px, 15vw, 66px); }
+  .hero-lede { font-size: 14px; }
+  .hero-art { height: 210px; transform: scale(.66); transform-origin: right top; margin-bottom: -54px; }
+  .workspace { padding: 44px 0 62px; }
+  .workspace-head h2 { font-size: 31px; }
+  kbd { display: none; }
+  .app-grid { grid-template-columns: 1fr; }
+  .app-card { min-height: 230px; }
+  .footer-content, .footer-content div { flex-direction: column; gap: 8px; }
+  .admin-shell { padding-top: 42px; }
+  .admin-intro h1 { font-size: 45px; }
+  .auth-panel, .panel { padding: 22px; }
+  .auth-panel { gap: 24px; }
+  .token-row { flex-direction: column; }
+  .profile-layout { grid-template-columns: 92px 1fr; }
+  .icon-preview, .icon-button { width: 82px; }
+  .icon-preview { height: 82px; border-radius: 19px; }
+  .two-fields { grid-template-columns: 1fr; }
+  .inspector-stats { grid-template-columns: 1fr 1fr; }
+  .inspector-stats > div:last-child { grid-column: 1 / -1; }
+  .existing-row { grid-template-columns: 44px 1fr; }
+  .existing-row img { width: 44px; height: 44px; }
+  .existing-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
