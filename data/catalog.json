@@ -14,6 +14,20 @@
       "updatedAt": "2026-09-02T07:12:42.137Z",
       "launchPath": "apps/pdf/PDF 頁面工作台.html",
       "iconPath": ""
+    },
+    {
+      "id": "pdf-pro",
+      "name": "PDF 頁面工作台pro",
+      "description": "加了放大功能和自訂檔名",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "icon": "icon.png",
+      "publishedAt": "2026-09-02T07:22:15.303Z",
+      "updatedAt": "2026-09-02T07:22:15.303Z",
+      "launchPath": "apps/pdf-pro/PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "iconPath": "apps/pdf-pro/icon.png"
     }
   ]
 }
