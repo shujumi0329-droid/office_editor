@@ -1,0 +1,12 @@
+{
+  "id": "app-d24uxt",
+  "name": "批量檔名修改器",
+  "description": "",
+  "category": "Office",
+  "entry": "批量檔名修改器.html",
+  "icon": "icon.png",
+  "version": "1.0.0",
+  "featured": false,
+  "publishedAt": "2026-09-02T07:43:14.651Z",
+  "updatedAt": "2026-09-02T07:43:14.651Z"
+}

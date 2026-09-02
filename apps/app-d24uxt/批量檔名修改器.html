@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>批量檔名修改器</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a2d;
+      --panel-2:#172138;
+      --text:#eef3ff;
+      --muted:#9fb0cf;
+      --line:#263554;
+      --accent:#7aa2ff;
+      --accent-2:#a6c1ff;
+      --danger:#ff7b86;
+      --warning:#ffc86b;
+      --ok:#6fdda8;
+      --shadow:0 18px 50px rgba(0,0,0,.28);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background:
+        radial-gradient(circle at 15% 0%, rgba(78,119,214,.22), transparent 32rem),
+        radial-gradient(circle at 90% 10%, rgba(111,221,168,.10), transparent 28rem),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    button,input,select{font:inherit}
+    .wrap{max-width:1180px;margin:0 auto;padding:34px 20px 60px}
+    .hero{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:22px}
+    h1{font-size:clamp(28px,4vw,42px);margin:0 0 8px;letter-spacing:-.03em}
+    .sub{color:var(--muted);margin:0;line-height:1.7}
+    .badge{
+      white-space:nowrap;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      border-radius:999px;
+      padding:8px 12px;
+      color:var(--accent-2);
+      font-size:13px;
+    }
+    .grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px}
+    .card{
+      background:rgba(18,26,45,.92);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{padding:20px 22px 14px;border-bottom:1px solid var(--line)}
+    .card .bd{padding:20px 22px}
+    .title{font-weight:800;font-size:17px;margin:0}
+    .hint{font-size:13px;color:var(--muted);line-height:1.6;margin-top:6px}
+    .section + .section{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+    .label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px}
+    input[type="text"],input[type="number"],select{
+      width:100%;border:1px solid var(--line);background:#0e1629;color:var(--text);
+      border-radius:11px;padding:11px 12px;outline:none;transition:.16s;
+    }
+    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(122,162,255,.12)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .mode{
+      display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px
+    }
+    .mode label{
+      cursor:pointer;border:1px solid var(--line);border-radius:12px;padding:12px;
+      background:#0e1629;transition:.15s;
+    }
+    .mode label:has(input:checked){border-color:var(--accent);background:rgba(122,162,255,.11)}
+    .mode input{margin-right:7px}
+    .btns{display:flex;flex-wrap:wrap;gap:10px}
+    button{
+      border:1px solid var(--line);background:#15213a;color:var(--text);border-radius:11px;
+      padding:10px 14px;font-weight:700;cursor:pointer;transition:.15s;
+    }
+    button:hover:not(:disabled){transform:translateY(-1px);border-color:#3b5686}
+    button:disabled{opacity:.42;cursor:not-allowed}
+    .primary{background:linear-gradient(180deg,#7aa2ff,#5d84df);color:#081126;border-color:transparent}
+    .danger{background:rgba(255,123,134,.11);color:#ffd7da;border-color:rgba(255,123,134,.35)}
+    .ghost{background:transparent}
+    .folderBox{
+      padding:13px 14px;border:1px dashed #38517f;border-radius:12px;background:rgba(122,162,255,.06);
+      margin-top:12px;color:var(--muted);font-size:13px;line-height:1.7
+    }
+    .folderBox strong{color:var(--text)}
+    .checks{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:12px}
+    .checks label{display:flex;align-items:center;gap:6px}
+    .toolbar{
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;
+      margin-bottom:12px
+    }
+    .toolbar .left,.toolbar .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .mini{font-size:12px;padding:7px 10px;border-radius:9px}
+    .count{font-size:13px;color:var(--muted)}
+    .tableWrap{
+      border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:560px;background:#0d1527
+    }
+    table{width:100%;border-collapse:collapse;min-width:720px}
+    th,td{padding:11px 12px;border-bottom:1px solid #1f2c47;text-align:left;vertical-align:middle}
+    th{position:sticky;top:0;background:#151f35;z-index:2;color:#b9c7e2;font-size:12px}
+    td{font-size:13px}
+    tbody tr:hover{background:rgba(255,255,255,.025)}
+    .name{word-break:break-all}
+    .arrow{color:#5f7297;width:28px;text-align:center}
+    .status{
+      display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:11px;
+      border:1px solid var(--line);white-space:nowrap
+    }
+    .status.ok{color:var(--ok);border-color:rgba(111,221,168,.35);background:rgba(111,221,168,.07)}
+    .status.warn{color:var(--warning);border-color:rgba(255,200,107,.35);background:rgba(255,200,107,.07)}
+    .status.err{color:var(--danger);border-color:rgba(255,123,134,.35);background:rgba(255,123,134,.07)}
+    .empty{padding:70px 20px;text-align:center;color:var(--muted)}
+    .message{
+      margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+      background:#0e1629;color:var(--muted);font-size:13px;line-height:1.65;white-space:pre-wrap
+    }
+    .message.ok{border-color:rgba(111,221,168,.28);color:#bff1d8}
+    .message.err{border-color:rgba(255,123,134,.33);color:#ffd1d5}
+    .message.warn{border-color:rgba(255,200,107,.33);color:#ffe0a6}
+    .support{
+      margin-top:18px;padding:14px 16px;border:1px solid rgba(255,200,107,.28);
+      background:rgba(255,200,107,.06);border-radius:13px;color:#e7cf9c;font-size:13px;line-height:1.7
+    }
+    .muted{color:var(--muted)}
+    .hidden{display:none!important}
+    code{background:#0b1324;border:1px solid var(--line);padding:2px 6px;border-radius:6px;color:#cbd8f4}
+    @media(max-width:900px){
+      .grid{grid-template-columns:1fr}
+      .hero{align-items:flex-start;flex-direction:column}
+    }
+    @media(max-width:520px){
+      .row,.row3,.mode{grid-template-columns:1fr}
+      .wrap{padding:22px 12px 40px}
+      .card .bd,.card .hd{padding-left:16px;padding-right:16px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>批量檔名修改器</h1>
+      <p class="sub">直接選擇電腦資料夾，預覽後一次改名。所有處理都在你的瀏覽器本機進行。</p>
+    </div>
+    <div class="badge">不需上傳檔案</div>
+  </div>
+
+  <div class="grid">
+    <aside class="card">
+      <div class="hd">
+        <p class="title">設定</p>
+        <div class="hint">先選資料夾，再選改名方式。</div>
+      </div>
+      <div class="bd">
+        <div class="section">
+          <div class="btns">
+            <button class="primary" id="pickBtn">選擇資料夾</button>
+            <button class="ghost" id="reloadBtn" disabled>重新讀取</button>
+          </div>
+          <div class="folderBox" id="folderBox">尚未選擇資料夾。</div>
+        </div>
+
+        <div class="section">
+          <span class="label">改名方式</span>
+          <div class="mode">
+            <label><input type="radio" name="mode" value="sequence" checked>完整改名＋序號</label>
+            <label><input type="radio" name="mode" value="affix">原檔名加前／後綴</label>
+          </div>
+
+          <div id="sequencePanel">
+            <label class="label" for="baseName">新的主檔名</label>
+            <input id="baseName" type="text" placeholder="例如：照片" value="檔案">
+            <div class="row3" style="margin-top:11px">
+              <div>
+                <label class="label" for="startNum">起始編號</label>
+                <input id="startNum" type="number" value="1" min="0" step="1">
+              </div>
+              <div>
+                <label class="label" for="stepNum">遞增值</label>
+                <input id="stepNum" type="number" value="1" min="1" step="1">
+              </div>
+              <div>
+                <label class="label" for="digits">補零位數</label>
+                <input id="digits" type="number" value="3" min="1" max="12" step="1">
+              </div>
+            </div>
+            <label class="label" for="separator" style="margin-top:11px">主檔名與編號之間</label>
+            <input id="separator" type="text" value="_" placeholder="例如：_ 或 -">
+          </div>
+
+          <div id="affixPanel" class="hidden">
+            <div class="row">
+              <div>
+                <label class="label" for="prefix">插到原檔名前面</label>
+                <input id="prefix" type="text" placeholder="例如：完成_">
+              </div>
+              <div>
+                <label class="label" for="suffix">插到原檔名後面</label>
+                <input id="suffix" type="text" placeholder="例如：_備份">
+              </div>
+            </div>
+            <div class="hint">前綴、後綴可只填一邊，也可以兩邊同時填。</div>
+          </div>
+
+          <div class="checks">
+            <label><input id="preserveExt" type="checkbox" checked>保留原副檔名</label>
+            <label><input id="sanitize" type="checkbox" checked>自動替換不安全字元</label>
+          </div>
+        </div>
+
+        <div class="section">
+          <label class="label" for="sortBy">編號／預覽排序</label>
+          <select id="sortBy">
+            <option value="name-asc">檔名 A → Z</option>
+            <option value="name-desc">檔名 Z → A</option>
+            <option value="time-asc">修改時間：舊 → 新</option>
+            <option value="time-desc">修改時間：新 → 舊</option>
+            <option value="size-asc">檔案大小：小 → 大</option>
+            <option value="size-desc">檔案大小：大 → 小</option>
+          </select>
+        </div>
+
+        <div class="section">
+          <div class="btns">
+            <button id="previewBtn" disabled>更新預覽</button>
+            <button class="primary" id="applyBtn" disabled>執行批量改名</button>
+            <button class="danger" id="undoBtn" disabled>復原上一次</button>
+          </div>
+          <div id="message" class="message">請先選擇資料夾。</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="card">
+      <div class="hd">
+        <p class="title">改名預覽</p>
+        <div class="hint">取消勾選即可略過個別檔案。資料夾本身不會被改名。</div>
+      </div>
+      <div class="bd">
+        <div class="toolbar">
+          <div class="left">
+            <button class="mini" id="selectAllBtn" disabled>全選</button>
+            <button class="mini" id="selectNoneBtn" disabled>全不選</button>
+          </div>
+          <div class="right">
+            <span class="count" id="countText">0 個檔案</span>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <div class="empty" id="emptyState">選擇資料夾後，這裡會顯示舊檔名與新檔名。</div>
+          <table id="previewTable" class="hidden">
+            <thead>
+              <tr>
+                <th style="width:42px"></th>
+                <th>原檔名</th>
+                <th class="arrow"></th>
+                <th>新檔名</th>
+                <th style="width:100px">狀態</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="support" id="supportBox">
+          建議使用桌面版 Chrome 或 Edge。瀏覽器只會操作你主動授權的資料夾；此頁不會把檔案上傳到任何伺服器。
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    pickBtn: $('pickBtn'), reloadBtn: $('reloadBtn'), folderBox: $('folderBox'),
+    baseName: $('baseName'), startNum: $('startNum'), stepNum: $('stepNum'), digits: $('digits'),
+    separator: $('separator'), prefix: $('prefix'), suffix: $('suffix'),
+    preserveExt: $('preserveExt'), sanitize: $('sanitize'), sortBy: $('sortBy'),
+    sequencePanel: $('sequencePanel'), affixPanel: $('affixPanel'),
+    previewBtn: $('previewBtn'), applyBtn: $('applyBtn'), undoBtn: $('undoBtn'),
+    selectAllBtn: $('selectAllBtn'), selectNoneBtn: $('selectNoneBtn'),
+    message: $('message'), countText: $('countText'),
+    emptyState: $('emptyState'), previewTable: $('previewTable'), tbody: $('tbody'),
+    supportBox: $('supportBox')
+  };
+
+  let dirHandle = null;
+  let files = [];
+  let allEntryNames = new Set();
+  let previewItems = [];
+  let lastUndo = null;
+  let busy = false;
+
+  const forbiddenRe = /[<>:"/\\|?*\u0000-\u001F]/g;
+  const reservedRe = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+
+  function setMessage(text, type='') {
+    els.message.textContent = text;
+    els.message.className = 'message' + (type ? ' ' + type : '');
+  }
+
+  function splitName(name) {
+    const i = name.lastIndexOf('.');
+    if (i <= 0) return { stem: name, ext: '' };
+    return { stem: name.slice(0, i), ext: name.slice(i) };
+  }
+
+  function cleanName(name) {
+    if (!els.sanitize.checked) return name;
+    let out = name.replace(forbiddenRe, '＿').replace(/[. ]+$/g, '');
+    const parts = splitName(out);
+    if (reservedRe.test(parts.stem)) out = '_' + out;
+    return out;
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    const units = ['KB','MB','GB','TB'];
+    let n = bytes / 1024, i = 0;
+    while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+    return n.toFixed(n >= 10 ? 1 : 2) + ' ' + units[i];
+  }
+
+  function getMode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+  }
+
+  function sortFiles(list) {
+    const mode = els.sortBy.value;
+    return [...list].sort((a,b) => {
+      if (mode === 'name-asc' || mode === 'name-desc') {
+        const v = a.name.localeCompare(b.name, 'zh-Hant', {numeric:true, sensitivity:'base'});
+        return mode === 'name-asc' ? v : -v;
+      }
+      if (mode === 'time-asc' || mode === 'time-desc') {
+        const v = a.lastModified - b.lastModified;
+        return mode === 'time-asc' ? v : -v;
+      }
+      const v = a.size - b.size;
+      return mode === 'size-asc' ? v : -v;
+    });
+  }
+
+  function buildNewName(file, sequenceIndex) {
+    const {stem, ext} = splitName(file.name);
+    const finalExt = els.preserveExt.checked ? ext : '';
+    let name;
+
+    if (getMode() === 'sequence') {
+      const start = Number.parseInt(els.startNum.value, 10) || 0;
+      const step = Number.parseInt(els.stepNum.value, 10) || 1;
+      const digits = Math.max(1, Math.min(12, Number.parseInt(els.digits.value, 10) || 1));
+      const number = start + sequenceIndex * step;
+      const numText = String(number).padStart(digits, '0');
+      name = `${els.baseName.value}${els.separator.value}${numText}${finalExt}`;
+    } else {
+      name = `${els.prefix.value}${stem}${els.suffix.value}${finalExt}`;
+    }
+    return cleanName(name);
+  }
+
+  function validatePreview(items) {
+    const selected = items.filter(x => x.selected);
+    const targetCounts = new Map();
+    const movingAway = new Set(selected.filter(x => x.oldName !== x.newName).map(x => x.oldName));
+
+    for (const x of selected) {
+      targetCounts.set(x.newName, (targetCounts.get(x.newName) || 0) + 1);
+    }
+
+    let fatal = 0;
+    for (const x of items) {
+      x.state = 'ok';
+      x.note = x.selected ? '可執行' : '略過';
+
+      if (!x.selected) {
+        x.state = 'warn';
+        continue;
+      }
+      if (!x.newName || x.newName === '.' || x.newName === '..') {
+        x.state = 'err'; x.note = '新檔名不可為空'; fatal++; continue;
+      }
+      if (/[\/\\]/.test(x.newName)) {
+        x.state = 'err'; x.note = '檔名含路徑字元'; fatal++; continue;
+      }
+      if (targetCounts.get(x.newName) > 1) {
+        x.state = 'err'; x.note = '新檔名重複'; fatal++; continue;
+      }
+      if (x.oldName === x.newName) {
+        x.state = 'warn'; x.note = '名稱不變'; continue;
+      }
+      if (allEntryNames.has(x.newName) && !movingAway.has(x.newName)) {
+        x.state = 'err'; x.note = '資料夾已有同名項目'; fatal++; continue;
+      }
+    }
+    return fatal;
+  }
+
+  function refreshPreview() {
+    if (!dirHandle) return;
+
+    const ordered = sortFiles(files);
+    let sequenceIndex = 0;
+    previewItems = ordered.map(file => {
+      const item = {
+        ...file,
+        selected: file.selected !== false,
+        oldName: file.name,
+        newName: ''
+      };
+      if (item.selected) {
+        item.newName = buildNewName(file, sequenceIndex);
+        sequenceIndex++;
+      } else {
+        item.newName = file.name;
+      }
+      return item;
+    });
+
+    const fatal = validatePreview(previewItems);
+    renderTable();
+
+    const selected = previewItems.filter(x => x.selected).length;
+    const changes = previewItems.filter(x => x.selected && x.oldName !== x.newName && x.state !== 'err').length;
+    els.countText.textContent = `${files.length} 個檔案｜已選 ${selected}｜將改名 ${changes}`;
+
+    if (!selected) {
+      els.applyBtn.disabled = true;
+      setMessage('目前沒有選取任何檔案。', 'warn');
+    } else if (fatal) {
+      els.applyBtn.disabled = true;
+      setMessage(`預覽中有 ${fatal} 個衝突／錯誤，請調整設定後再執行。`, 'err');
+    } else if (!changes) {
+      els.applyBtn.disabled = true;
+      setMessage('目前沒有需要改名的檔案。', 'warn');
+    } else {
+      els.applyBtn.disabled = busy;
+      setMessage(`預覽完成：${changes} 個檔案將被改名。請確認右側結果後再執行。`, 'ok');
+    }
+  }
+
+  function renderTable() {
+    els.emptyState.classList.toggle('hidden', previewItems.length > 0);
+    els.previewTable.classList.toggle('hidden', previewItems.length === 0);
+    els.tbody.innerHTML = '';
+
+    previewItems.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+
+      const tdCheck = document.createElement('td');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = item.selected;
+      cb.disabled = busy;
+      cb.addEventListener('change', () => {
+        const f = files.find(v => v.name === item.oldName);
+        if (f) f.selected = cb.checked;
+        refreshPreview();
+      });
+      tdCheck.appendChild(cb);
+
+      const tdOld = document.createElement('td');
+      tdOld.className = 'name';
+      tdOld.textContent = item.oldName;
+      tdOld.title = `${formatBytes(item.size)}｜${new Date(item.lastModified).toLocaleString()}`;
+
+      const tdArrow = document.createElement('td');
+      tdArrow.className = 'arrow';
+      tdArrow.textContent = '→';
+
+      const tdNew = document.createElement('td');
+      tdNew.className = 'name';
+      tdNew.textContent = item.newName;
+
+      const tdStatus = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = `status ${item.state}`;
+      badge.textContent = item.note;
+      tdStatus.appendChild(badge);
+
+      tr.append(tdCheck, tdOld, tdArrow, tdNew, tdStatus);
+      els.tbody.appendChild(tr);
+    });
+  }
+
+  async function ensurePermission() {
+    if (!dirHandle) return false;
+    if (typeof dirHandle.queryPermission !== 'function') return true;
+
+    let permission = await dirHandle.queryPermission({mode:'readwrite'});
+    if (permission === 'granted') return true;
+
+    if (typeof dirHandle.requestPermission === 'function') {
+      permission = await dirHandle.requestPermission({mode:'readwrite'});
+      return permission === 'granted';
+    }
+    return false;
+  }
+
+  async function loadDirectory() {
+    if (!dirHandle) return;
+    setMessage('正在讀取資料夾…');
+    const list = [];
+    const names = new Set();
+
+    for await (const [name, handle] of dirHandle.entries()) {
+      names.add(name);
+      if (handle.kind !== 'file') continue;
+      try {
+        const f = await handle.getFile();
+        list.push({
+          name,
+          size: f.size,
+          lastModified: f.lastModified,
+          selected: true
+        });
+      } catch (err) {
+        console.warn('無法讀取：', name, err);
+      }
+    }
+
+    files = list;
+    allEntryNames = names;
+    els.folderBox.innerHTML =
+      `<strong>${escapeHtml(dirHandle.name)}</strong><br>${files.length} 個檔案（只處理這一層，不進入子資料夾）`;
+    els.reloadBtn.disabled = false;
+    els.previewBtn.disabled = false;
+    els.selectAllBtn.disabled = files.length === 0;
+    els.selectNoneBtn.disabled = files.length === 0;
+    refreshPreview();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[c]);
+  }
+
+  async function entryExists(name) {
+    try {
+      await dirHandle.getFileHandle(name);
+      return true;
+    } catch (err) {
+      if (err && (err.name === 'NotFoundError' || err.name === 'TypeMismatchError')) return false;
+      return false;
+    }
+  }
+
+  async function uniqueTempName(i) {
+    for (let n = 0; n < 50; n++) {
+      const id = (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+      const candidate = `.__batch_rename_${i}_${id}.tmp`;
+      if (!allEntryNames.has(candidate) && !(await entryExists(candidate))) return candidate;
+    }
+    throw new Error('無法建立安全的暫存檔名。');
+  }
+
+  async function copyThenDelete(srcName, dstName) {
+    const src = await dirHandle.getFileHandle(srcName);
+    const file = await src.getFile();
+    const dst = await dirHandle.getFileHandle(dstName, {create:true});
+    const writable = await dst.createWritable();
+    try {
+      await writable.write(file);
+      await writable.close();
+    } catch (err) {
+      try { await writable.abort(); } catch {}
+      try { await dirHandle.removeEntry(dstName); } catch {}
+      throw err;
+    }
+    const verify = await (await dirHandle.getFileHandle(dstName)).getFile();
+    if (verify.size !== file.size) {
+      try { await dirHandle.removeEntry(dstName); } catch {}
+      throw new Error(`複製驗證失敗：${srcName}`);
+    }
+    await dirHandle.removeEntry(srcName);
+  }
+
+  async function renameOne(srcName, dstName) {
+    const handle = await dirHandle.getFileHandle(srcName);
+    if (typeof handle.move === 'function') {
+      await handle.move(dstName);
+    } else {
+      await copyThenDelete(srcName, dstName);
+    }
+  }
+
+  async function rollbackStages(stages) {
+    // 回復也採兩階段：先把目前位置全部移到新的暫存名，再逐一還原原名，避免回復時互撞。
+    const recovery = [];
+    for (let i = 0; i < stages.length; i++) {
+      const s = stages[i];
+      const currentName = s.phase === 2 ? s.newName : s.tempName;
+      try {
+        if (await entryExists(currentName)) {
+          const rollbackTemp = await uniqueTempName(`rollback_${i}`);
+          await renameOne(currentName, rollbackTemp);
+          recovery.push({oldName:s.oldName, tempName:rollbackTemp});
+        }
+      } catch (e) {
+        console.error('rollback stage 1 failed', s, e);
+      }
+    }
+
+    for (const r of recovery) {
+      try {
+        if (await entryExists(r.tempName) && !(await entryExists(r.oldName))) {
+          await renameOne(r.tempName, r.oldName);
+        }
+      } catch (e) {
+        console.error('rollback stage 2 failed', r, e);
+      }
+    }
+  }
+
+  async function executeMapping(mapping, isUndo=false) {
+    if (busy || !mapping.length) return;
+    busy = true;
+    setUiBusy(true);
+    const stages = [];
+
+    try {
+      if (!(await ensurePermission())) throw new Error('沒有取得資料夾的寫入權限。');
+
+      // 執行前重新確認名稱衝突
+      await loadDirectory();
+      const currentNames = new Set(allEntryNames);
+      const movingOld = new Set(mapping.map(x => x.oldName));
+      const targetSet = new Set();
+
+      for (const x of mapping) {
+        if (targetSet.has(x.newName)) throw new Error(`新檔名重複：${x.newName}`);
+        targetSet.add(x.newName);
+        if (!currentNames.has(x.oldName)) throw new Error(`找不到原檔案：${x.oldName}`);
+        if (currentNames.has(x.newName) && !movingOld.has(x.newName)) {
+          throw new Error(`資料夾已存在：${x.newName}`);
+        }
+      }
+
+      setMessage(`正在進行第 1 階段：建立安全暫存名稱（0 / ${mapping.length}）…`);
+
+      // Phase 1: 所有來源先搬到唯一暫存名稱，避免互相覆蓋。
+      for (let i = 0; i < mapping.length; i++) {
+        const x = mapping[i];
+        const tempName = await uniqueTempName(i);
+        await renameOne(x.oldName, tempName);
+        stages.push({...x, tempName, phase:1});
+        setMessage(`正在進行第 1 階段：建立安全暫存名稱（${i+1} / ${mapping.length}）…`);
+      }
+
+      setMessage(`正在進行第 2 階段：套用新檔名（0 / ${mapping.length}）…`);
+
+      // Phase 2: 暫存名稱再搬到最終名稱。
+      for (let i = 0; i < stages.length; i++) {
+        const s = stages[i];
+        await renameOne(s.tempName, s.newName);
+        s.phase = 2;
+        setMessage(`正在進行第 2 階段：套用新檔名（${i+1} / ${mapping.length}）…`);
+      }
+
+      if (!isUndo) {
+        lastUndo = mapping.map(x => ({oldName:x.newName, newName:x.oldName}));
+        els.undoBtn.disabled = false;
+      } else {
+        lastUndo = null;
+        els.undoBtn.disabled = true;
+      }
+
+      await loadDirectory();
+      setMessage(isUndo
+        ? `已復原 ${mapping.length} 個檔案。`
+        : `完成：已成功改名 ${mapping.length} 個檔案。`, 'ok');
+
+    } catch (err) {
+      console.error(err);
+      // 若中途失敗，盡力將已改動項目退回原名稱
+      if (stages.length) {
+        try { await rollbackStages(stages); } catch {}
+      }
+      try { await loadDirectory(); } catch {}
+      setMessage(`執行失敗：${err?.message || err}\n若部分檔案被其他程式占用，請關閉該程式後再試一次。`, 'err');
+    } finally {
+      busy = false;
+      setUiBusy(false);
+      if (dirHandle) refreshPreview();
+    }
+  }
+
+  function setUiBusy(on) {
+    els.pickBtn.disabled = on;
+    els.reloadBtn.disabled = on || !dirHandle;
+    els.previewBtn.disabled = on || !dirHandle;
+    els.applyBtn.disabled = on || els.applyBtn.disabled;
+    els.selectAllBtn.disabled = on || !files.length;
+    els.selectNoneBtn.disabled = on || !files.length;
+    document.querySelectorAll('input,select').forEach(el => {
+      if (!el.closest('tbody')) el.disabled = on;
+    });
+    document.querySelectorAll('#tbody input[type="checkbox"]').forEach(el => el.disabled = on);
+    if (!on) {
+      document.querySelectorAll('input,select').forEach(el => el.disabled = false);
+    }
+  }
+
+  els.pickBtn.addEventListener('click', async () => {
+    if (!('showDirectoryPicker' in window)) {
+      setMessage('此瀏覽器不支援直接選資料夾與改名。請改用桌面版 Chrome 或 Edge。', 'err');
+      return;
+    }
+    try {
+      dirHandle = await window.showDirectoryPicker({mode:'readwrite'});
+      lastUndo = null;
+      els.undoBtn.disabled = true;
+      await loadDirectory();
+    } catch (err) {
+      if (err?.name !== 'AbortError') setMessage(`無法開啟資料夾：${err?.message || err}`, 'err');
+    }
+  });
+
+  els.reloadBtn.addEventListener('click', loadDirectory);
+  els.previewBtn.addEventListener('click', refreshPreview);
+
+  els.applyBtn.addEventListener('click', async () => {
+    refreshPreview();
+    const errors = previewItems.some(x => x.selected && x.state === 'err');
+    if (errors) return;
+    const mapping = previewItems
+      .filter(x => x.selected && x.oldName !== x.newName)
+      .map(x => ({oldName:x.oldName, newName:x.newName}));
+    if (!mapping.length) return;
+
+    const sample = mapping.slice(0, 4).map(x => `${x.oldName}  →  ${x.newName}`).join('\n');
+    const more = mapping.length > 4 ? `\n…以及另外 ${mapping.length - 4} 個檔案` : '';
+    if (!confirm(`確定要改名 ${mapping.length} 個檔案嗎？\n\n${sample}${more}`)) return;
+    await executeMapping(mapping, false);
+  });
+
+  els.undoBtn.addEventListener('click', async () => {
+    if (!lastUndo?.length) return;
+    if (!confirm(`確定要復原上一次的 ${lastUndo.length} 個改名嗎？`)) return;
+    await executeMapping(lastUndo, true);
+  });
+
+  els.selectAllBtn.addEventListener('click', () => {
+    files.forEach(f => f.selected = true);
+    refreshPreview();
+  });
+  els.selectNoneBtn.addEventListener('click', () => {
+    files.forEach(f => f.selected = false);
+    refreshPreview();
+  });
+
+  document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', () => {
+    const sequence = getMode() === 'sequence';
+    els.sequencePanel.classList.toggle('hidden', !sequence);
+    els.affixPanel.classList.toggle('hidden', sequence);
+    if (dirHandle) refreshPreview();
+  }));
+
+  [
+    els.baseName, els.startNum, els.stepNum, els.digits, els.separator,
+    els.prefix, els.suffix, els.preserveExt, els.sanitize, els.sortBy
+  ].forEach(el => el.addEventListener('input', () => { if (dirHandle && !busy) refreshPreview(); }));
+  els.sortBy.addEventListener('change', () => { if (dirHandle && !busy) refreshPreview(); });
+
+  if (!('showDirectoryPicker' in window)) {
+    els.supportBox.innerHTML =
+      '<strong>目前瀏覽器不支援直接改本機檔名。</strong><br>請以桌面版 Chrome 或 Edge 開啟這個 HTML。';
+    els.pickBtn.disabled = true;
+    setMessage('請改用支援 File System Access API 的桌面瀏覽器。', 'warn');
+  } else if (!window.isSecureContext) {
+    els.supportBox.innerHTML =
+      '<strong>目前頁面不是安全環境。</strong><br>若「選擇資料夾」無法使用，請以 Chrome / Edge 直接開啟本 HTML，或透過 localhost / HTTPS 執行。';
+  }
+})();
+</script>
+</body>
+</html>

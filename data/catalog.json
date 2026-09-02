@@ -2,6 +2,34 @@
   "schemaVersion": 1,
   "apps": [
     {
+      "id": "app-d24uxt",
+      "name": "批量檔名修改器",
+      "description": "",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "批量檔名修改器.html",
+      "icon": "icon.png",
+      "publishedAt": "2026-09-02T07:43:14.651Z",
+      "updatedAt": "2026-09-02T07:43:14.651Z",
+      "launchPath": "apps/app-d24uxt/批量檔名修改器.html",
+      "iconPath": "apps/app-d24uxt/icon.png"
+    },
+    {
+      "id": "app-ira8ob",
+      "name": "表格美化器",
+      "description": "",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "表格美化器.html",
+      "icon": "icon.png",
+      "publishedAt": "2026-09-02T07:37:33.583Z",
+      "updatedAt": "2026-09-02T07:37:33.583Z",
+      "launchPath": "apps/app-ira8ob/表格美化器.html",
+      "iconPath": "apps/app-ira8ob/icon.png"
+    },
+    {
       "id": "pdf",
       "name": "PDF 頁面工作台",
       "description": "整理pdf",
@@ -28,20 +56,6 @@
       "updatedAt": "2026-09-02T07:22:15.303Z",
       "launchPath": "apps/pdf-pro/PDF 頁面工作台_加放大鏡與自訂檔名.html",
       "iconPath": "apps/pdf-pro/icon.png"
-    },
-    {
-      "id": "app-ira8ob",
-      "name": "表格美化器",
-      "description": "",
-      "category": "Office",
-      "version": "1.0.0",
-      "featured": false,
-      "entry": "表格美化器.html",
-      "icon": "icon.png",
-      "publishedAt": "2026-09-02T07:37:33.583Z",
-      "updatedAt": "2026-09-02T07:37:33.583Z",
-      "launchPath": "apps/app-ira8ob/表格美化器.html",
-      "iconPath": "apps/app-ira8ob/icon.png"
     }
   ]
 }
