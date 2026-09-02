@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Torsio Toletana default tool icon">
+  <rect width="256" height="256" rx="58" fill="#f4f0e8"/>
+  <path d="M0 0h128v128H0z" fill="#f5b51b"/>
+  <path d="M128 128h128v128H128z" fill="#171719"/>
+  <circle cx="190" cy="66" r="42" fill="#14547f"/>
+  <path d="M0 176A80 80 0 0 1 80 96v160H0z" fill="#df401f"/>
+  <path d="M105 38h18v180h-18zM53 100h123v18H53z" fill="#171719"/>
+  <text x="177" y="211" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="42" font-weight="800" fill="#f4f0e8">TT</text>
+</svg>

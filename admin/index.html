@@ -12,7 +12,7 @@
   <div class="page-noise" aria-hidden="true"></div>
   <header class="site-header shell">
     <a class="brand-lockup" href="../" aria-label="回到 Office Deck">
-      <img class="brand-logo" data-brand-logo alt="Torsio Toletana">
+      <img class="brand-logo" src="../assets/brand/torsio-toletana-logo.webp" alt="Torsio Toletana" width="480" height="377" decoding="async">
       <span class="brand-divider" aria-hidden="true"></span>
       <span class="brand-product">PUBLISHER</span>
     </a>
@@ -36,6 +36,15 @@
         <h2>解鎖發布器</h2>
         <p>使用 Fine-grained GitHub Token。Repository access 只選 <code>office_editor</code>，Repository permissions 將 <code>Contents</code> 設為 <strong>Read and write</strong>。</p>
         <div class="security-note"><span>●</span> Token 僅保留在這個頁面的記憶體；重新整理或按「鎖定」後即清除。</div>
+        <p><a class="button button-light" href="https://github.com/settings/personal-access-tokens/new?name=Office+Deck+Publisher&amp;description=Publish+HTML+tools+to+office_editor&amp;target_name=shujumi0329-droid&amp;expires_in=90&amp;contents=write" target="_blank" rel="noopener noreferrer">在 GitHub 建立 Token ↗</a></p>
+        <ol class="field-help">
+          <li><strong>Resource owner</strong>：選 <code>shujumi0329-droid</code>。</li>
+          <li><strong>Repository access</strong>：選 <code>Only select repositories</code>，再勾 <code>office_editor</code>。</li>
+          <li><strong>Repository permissions</strong>：找到 <code>Contents</code>，設為 <strong>Read and write</strong>。</li>
+          <li>按 <strong>Generate token</strong>，立刻複製開頭為 <code>github_pat_</code> 的 Token。</li>
+          <li>回到右側貼上 Token，按「解鎖」。</li>
+        </ol>
+        <p class="field-help">上面的按鈕會預填名稱、90 天期限與 Contents 寫入權限；GitHub 仍會要求你自行指定 <code>office_editor</code>。</p>
       </div>
       <div class="auth-form">
         <label for="token-input">Fine-grained token</label>
@@ -95,7 +104,7 @@
 
           <div class="profile-layout">
             <div class="icon-editor">
-              <div class="icon-preview"><img id="icon-preview" alt="工具圖示預覽"></div>
+              <div class="icon-preview"><img id="icon-preview" src="../assets/brand/default-app-icon.svg" alt="工具圖示預覽"></div>
               <label class="mini-button icon-button">自訂圖示<input id="icon-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" hidden></label>
               <button class="mini-button" id="clear-icon" type="button">使用預設</button>
             </div>
