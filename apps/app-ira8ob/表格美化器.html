@@ -1,0 +1,2342 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>貼上表格 → 美化 / 簽到 / PPT / Excel / PDF</title>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"></script>
+
+  <style>
+    :root{
+      --bg:#eef2f6;
+      --panel:#ffffff;
+      --ink:#18212b;
+      --muted:#697586;
+      --line:#d7dee8;
+      --accent:#245f8e;
+      --accent-soft:#eaf3fa;
+      --danger:#b42318;
+      --shadow:0 12px 34px rgba(15,23,42,.10);
+      --output-serif:"Times New Roman","BiauKai","DFKai-SB","KaiTi","STKaiti","Kaiti TC",serif;
+      --output-sans:"Microsoft JhengHei","PingFang TC","Noto Sans TC",Arial,sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink)}
+    body{font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",Arial,sans-serif}
+    button,input,select,textarea{font:inherit}
+
+    .app{
+      min-height:100vh;
+      display:grid;
+      grid-template-columns:370px 1fr;
+    }
+
+    .side{
+      background:#fff;
+      border-right:1px solid var(--line);
+      padding:20px;
+      height:100vh;
+      position:sticky;
+      top:0;
+      overflow:auto;
+      z-index:5;
+    }
+
+    .brand{font-weight:800;font-size:20px;margin-bottom:4px}
+    .desc{color:var(--muted);font-size:12px;line-height:1.65;margin-bottom:14px}
+
+    .pastebox{
+      min-height:145px;
+      border:2px dashed #9fb2c6;
+      border-radius:14px;
+      background:#f8fbfd;
+      padding:18px;
+      outline:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color:#526274;
+      line-height:1.65;
+      cursor:text;
+      transition:.15s ease;
+      white-space:pre-wrap;
+    }
+
+    .pastebox:focus{
+      border-color:var(--accent);
+      background:#fff;
+      box-shadow:0 0 0 4px rgba(36,95,142,.08);
+    }
+
+    .pastebox.has-data{
+      align-items:flex-start;
+      justify-content:flex-start;
+      text-align:left;
+      overflow:auto;
+      max-height:190px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:11px;
+    }
+
+    .tip{
+      font-size:11px;
+      color:var(--muted);
+      margin:8px 2px 0;
+      line-height:1.55;
+    }
+
+    .section{
+      border-top:1px solid var(--line);
+      margin-top:16px;
+      padding-top:14px;
+    }
+
+    .section.first{
+      border-top:0;
+      margin-top:12px;
+      padding-top:0;
+    }
+
+    .section h3{margin:0 0 10px;font-size:13px}
+    .field{margin:9px 0}
+
+    .field label{
+      display:block;
+      font-size:11px;
+      color:#536173;
+      margin-bottom:5px;
+    }
+
+    input[type=text],input[type=number],select{
+      width:100%;
+      border:1px solid #cbd5e1;
+      border-radius:9px;
+      background:#fff;
+      padding:8px 9px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      margin:9px 0;
+    }
+
+    .mode-note{
+      padding:9px 10px;
+      border-radius:10px;
+      background:#f7f9fb;
+      color:#5d6877;
+      font-size:11px;
+      line-height:1.55;
+      margin-top:8px;
+    }
+
+    .hidden{display:none!important}
+
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:14px;
+    }
+
+    button{
+      padding:10px 11px;
+      border-radius:10px;
+      border:1px solid #cbd5e1;
+      background:#fff;
+      color:#25313e;
+      cursor:pointer;
+      font-weight:750;
+      font-size:12px;
+    }
+
+    button:hover{filter:brightness(.985)}
+    button.primary{
+      background:var(--accent);
+      border-color:var(--accent);
+      color:#fff;
+    }
+    button:disabled{opacity:.42;cursor:not-allowed}
+
+    .status{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.55;
+    }
+    .status.error{color:var(--danger)}
+
+    .main{
+      min-width:0;
+      padding:22px 24px 70px;
+      overflow:auto;
+    }
+
+    .topbar{
+      max-width:1280px;
+      margin:0 auto 15px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .badge{
+      background:var(--accent-soft);
+      color:var(--accent);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .stats{color:var(--muted);font-size:12px}
+
+    #preview{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:20px;
+    }
+
+    .empty{
+      width:min(760px,95%);
+      background:#fff;
+      border:1px dashed #bbc7d4;
+      border-radius:15px;
+      padding:56px 28px;
+      text-align:center;
+      color:var(--muted);
+      box-shadow:var(--shadow);
+      line-height:1.75;
+    }
+    .empty strong{color:#324151}
+
+    .paper{
+      background:#fff;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+      padding:9mm 10mm 8mm;
+    }
+
+    .paper.portrait{width:210mm;min-height:297mm}
+    .paper.landscape{width:297mm;min-height:210mm}
+    .paper-head{text-align:center;margin-bottom:4mm}
+    .paper-title{font-size:19pt;font-weight:800;letter-spacing:.035em}
+    .paper-subtitle{font-size:10pt;color:#444;margin-top:1.5mm}
+
+    .paper-meta{
+      margin-top:2.5mm;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:#555;
+      font-size:8.5pt;
+    }
+
+    .continuation{
+      color:#4b5563;
+      font-size:.7em;
+      margin-left:1mm;
+      font-weight:700;
+    }
+
+    .page-no{
+      position:absolute;
+      right:10mm;
+      bottom:3mm;
+      color:#666;
+      font-size:7.5pt;
+    }
+
+    .output-font-mixed{font-family:var(--output-serif)}
+    .output-font-source{font-family:var(--output-serif)}
+    .output-font-sans{font-family:var(--output-sans)}
+
+    table.sheet{
+      border-collapse:collapse;
+      table-layout:fixed;
+      width:100%;
+      letter-spacing:.006em;
+    }
+
+    .sheet th,.sheet td{
+      padding:1.9mm 2.1mm;
+      vertical-align:middle;
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+      line-height:1.36;
+    }
+
+    .sheet th{font-weight:700}
+    .sheet [data-align="left"]{text-align:left}
+    .sheet [data-align="right"]{text-align:right;font-variant-numeric:tabular-nums}
+    .sheet [data-align="center"]{text-align:center}
+    .sheet [rowspan],.sheet [colspan]{vertical-align:middle}
+    .sheet .merged-cell{font-weight:inherit}
+
+    .sheet td[contenteditable=true]:focus,
+    .sheet th[contenteditable=true]:focus{
+      outline:2px solid #60a5fa;
+      outline-offset:-2px;
+      background:#eff6ff!important;
+    }
+
+    /* 1. 美化表格：正式、乾淨，合併儲存格仍保有群組感 */
+    .sheet.beautify{
+      border-top:1.4px solid #66788a;
+      border-bottom:1.4px solid #66788a;
+      color:#17212b;
+    }
+    .sheet.beautify th{
+      background:#f2f5f7;
+      color:#17212b;
+      text-align:center;
+      border-left:1px solid #d7dee6;
+      border-right:1px solid #d7dee6;
+      border-bottom:1.15px solid #9eabb7;
+    }
+    .sheet.beautify td{
+      border-left:1px solid #e0e5ea;
+      border-right:1px solid #e0e5ea;
+      border-bottom:1px solid #e7ebef;
+      background:#fff;
+    }
+    .sheet.beautify tbody tr:last-child td{border-bottom:0}
+    .sheet.beautify td.merged-cell{
+      background:#f8fafb;
+      border-top:1px solid #c7d0d8;
+      border-bottom:1px solid #c7d0d8;
+    }
+
+    /* 2. 簽到表：正式全框、較大留白 */
+    .sheet.attendance th,.sheet.attendance td{border:1px solid #333}
+    .sheet.attendance th{background:#f2f4f7;text-align:center}
+
+    /* 3. PPT preview */
+    .slide{
+      width:320mm;
+      min-height:180mm;
+      background:#fff;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+      padding:12mm 14mm 10mm;
+    }
+
+    .slide-head{margin-bottom:7mm}
+    .slide-title{font-weight:800;letter-spacing:.01em}
+    .slide-subtitle{margin-top:2mm;color:#64748b}
+
+    /* 一般 PPT：都保持樸素，差別主要在表頭、線條與留白 */
+    .slide.clean{padding:13mm 16mm 11mm}
+    .slide.clean .slide-head{margin-bottom:5mm}
+    .slide.clean .slide-title{font-size:22pt;font-weight:700}
+    .slide.clean .slide-subtitle{font-size:10.5pt;color:#66717d}
+    .slide.clean table{font-size:12pt}
+    .slide.clean .sheet{border-top:1.3px solid #7a8793;border-bottom:1.3px solid #7a8793}
+    .slide.clean .sheet th{
+      background:#fff;
+      color:#1f2933;
+      text-align:center;
+      border:0;
+      border-bottom:1px solid #aab4bd;
+      padding:2mm 2.3mm;
+    }
+    .slide.clean .sheet td{
+      border:0;
+      border-bottom:1px solid #e1e6ea;
+      padding:1.9mm 2.3mm;
+      background:#fff;
+    }
+    .slide.clean .sheet tbody tr:last-child td{border-bottom:0}
+
+    .slide.soft{padding:13mm 16mm 11mm}
+    .slide.soft .slide-head{margin-bottom:5.5mm}
+    .slide.soft .slide-title{font-size:22pt;font-weight:700}
+    .slide.soft .slide-subtitle{font-size:10.5pt;color:#66717d}
+    .slide.soft table{font-size:12pt}
+    .slide.soft .sheet th{
+      background:#f1f3f5;
+      color:#202830;
+      text-align:center;
+      border:1px solid #c9d0d6;
+      padding:2mm 2.3mm;
+    }
+    .slide.soft .sheet td{
+      border:1px solid #dbe0e5;
+      padding:1.9mm 2.3mm;
+      background:#fff;
+    }
+
+    .slide.rule{padding:13mm 16mm 11mm}
+    .slide.rule .slide-head{margin-bottom:5mm}
+    .slide.rule .slide-title{font-size:22pt;font-weight:700;color:#22384a}
+    .slide.rule .slide-subtitle{font-size:10.5pt;color:#6b7782}
+    .slide.rule table{font-size:12pt}
+    .slide.rule .sheet{border-top:1.7px solid #4a6a86;border-bottom:1.2px solid #4a6a86}
+    .slide.rule .sheet th{
+      background:#f7f9fb;
+      color:#25445f;
+      text-align:center;
+      border:0;
+      border-bottom:1px solid #7890a4;
+      padding:2mm 2.3mm;
+    }
+    .slide.rule .sheet td{
+      border:0;
+      border-bottom:1px solid #dfe5ea;
+      padding:1.9mm 2.3mm;
+      background:#fff;
+    }
+    .slide.rule .sheet tbody tr:last-child td{border-bottom:0}
+
+    .slide.academic{padding:13mm 17mm 11mm}
+    .slide.academic .slide-head{margin-bottom:5mm}
+    .slide.academic .slide-title{font-size:18pt;text-align:left}
+    .slide.academic .slide-subtitle{font-size:10.5pt;color:#444}
+    .slide.academic table{
+      font-family:inherit;
+      font-size:11.5pt;
+    }
+    .slide.academic .sheet{
+      border-top:1.6px solid #111;
+      border-bottom:1.6px solid #111;
+    }
+    .slide.academic .sheet th{
+      background:#fff;
+      color:#111;
+      text-align:center;
+      border:0;
+      border-bottom:1px solid #111;
+      padding:1.7mm 2.2mm;
+    }
+    .slide.academic .sheet td{
+      border:0;
+      padding:1.6mm 2.2mm;
+      background:#fff;
+    }
+
+    .slide-no{
+      position:absolute;
+      right:12mm;
+      bottom:5mm;
+      color:#94a3b8;
+      font-size:8pt;
+    }
+
+    @media(max-width:900px){
+      .app{grid-template-columns:1fr}
+      .side{
+        position:relative;
+        height:auto;
+        border-right:0;
+        border-bottom:1px solid var(--line);
+      }
+    }
+
+    @media print{
+      body{background:#fff}
+      .side,.topbar{display:none!important}
+      .main{padding:0}
+      #preview{display:block;padding:0}
+      .paper,.slide{
+        box-shadow:none;
+        margin:0;
+        page-break-after:always;
+      }
+      .paper:last-child,.slide:last-child{page-break-after:auto}
+    }
+  </style>
+
+  <style id="pageStyle">@page{size:A4 portrait;margin:0}</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">貼上表格排版器</div>
+    <div class="desc">
+      從 Excel、Google Sheets 或網頁複製表格，貼上後依用途自動排版；不需要上傳整份活頁簿。
+    </div>
+
+    <div id="pasteBox" class="pastebox" contenteditable="true" spellcheck="false">
+      點這裡後 Ctrl+V / ⌘V<br>
+      貼上從 Excel、Google Sheets 或網頁複製的表格
+    </div>
+    <div class="tip">
+      預設是「美化表格」：先依每一欄內容估算舒適欄寬，再決定是否需要拆成續表。
+    </div>
+
+    <div class="section first">
+      <h3>模式</h3>
+      <div class="field">
+        <label>排版用途</label>
+        <select id="mode">
+          <option value="beautify" selected>美化表格</option>
+          <option value="attendance">簽到表</option>
+          <option value="ppt">PPT 簡報</option>
+        </select>
+      </div>
+
+      <div id="pptStyleWrap" class="field hidden">
+        <label>PPT 表格樣式</label>
+        <select id="pptStyle">
+          <option value="clean" selected>簡約白底（推薦）</option>
+          <option value="soft">淡灰框線</option>
+          <option value="rule">細藍線報告式</option>
+          <option value="academic">學術表格</option>
+        </select>
+      </div>
+
+      <div id="modeNote" class="mode-note">
+        美化表格會依內容長短、數字欄、文字欄自動分配欄寬；不預設加簽到欄。
+      </div>
+    </div>
+
+    <div id="pageSection" class="section">
+      <h3>版面</h3>
+      <div class="grid2">
+        <div class="field">
+          <label>A4 方向</label>
+          <select id="orientation">
+            <option value="portrait">直向</option>
+            <option value="landscape">橫向</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>表頭列數</label>
+          <input id="headerRows" type="number" min="0" max="8" value="1">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>每頁最多欄（0＝自動）</label>
+          <input id="maxCols" type="number" min="0" max="30" value="0">
+        </div>
+        <div class="field">
+          <label>續表重複前幾欄</label>
+          <input id="repeatCols" type="number" min="0" max="8" value="0">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>字級 pt</label>
+          <input id="fontSize" type="number" min="7" max="18" value="10" step=".5">
+        </div>
+        <div class="field">
+          <label>資料列最小高度 mm</label>
+          <input id="rowHeight" type="number" min="6" max="25" value="8.5" step=".5">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>文字與對齊</h3>
+      <div class="field">
+        <label>預設字型</label>
+        <select id="fontMode">
+          <option value="mixed" selected>中文楷體＋英數 Times New Roman</option>
+          <option value="source">保留來源字型（可辨識時）</option>
+          <option value="sans">系統黑體</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>水平對齊</label>
+        <select id="alignMode">
+          <option value="auto" selected>自動判斷</option>
+          <option value="center">全部置中</option>
+          <option value="left">全部靠左</option>
+          <option value="right">全部靠右</option>
+          <option value="source">沿用來源對齊（可辨識時）</option>
+        </select>
+      </div>
+      <div class="mode-note">
+        預設採中英混排字型：英文字母、數字與常見符號優先 Times New Roman；中文字形由楷體系列補上。合併儲存格會維持水平／垂直置中能力。
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>標題</h3>
+      <div class="field">
+        <label>標題</label>
+        <input id="title" type="text" placeholder="例如：活動名單、研究結果、比較表">
+      </div>
+      <div class="field">
+        <label>副標題</label>
+        <input id="subtitle" type="text" placeholder="日期、單位、樣本說明，可留白">
+      </div>
+      <label class="check">
+        <input id="showTitle" type="checkbox">
+        顯示標題區
+      </label>
+    </div>
+
+    <div id="quickSection" class="section hidden">
+      <h3>簽到表補欄</h3>
+      <label class="check"><input id="addNo" type="checkbox"> 左側加「序號」</label>
+      <label class="check"><input id="addSign" type="checkbox"> 右側加「簽到」</label>
+      <label class="check"><input id="addNote" type="checkbox"> 右側加「備註」</label>
+    </div>
+
+    <div class="actions">
+      <button id="clearBtn">清除</button>
+      <button id="refreshBtn" class="primary" disabled>重新排版</button>
+      <button id="xlsxBtn" disabled>Excel</button>
+      <button id="csvBtn" disabled>CSV</button>
+      <button id="pptxBtn" class="hidden" disabled>PowerPoint</button>
+      <button id="pdfBtn" disabled>PDF</button>
+      <button id="printBtn" disabled>列印</button>
+    </div>
+
+    <div id="status" class="status">尚未貼上表格。</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div id="badge" class="badge">美化表格 · A4 直向</div>
+      <div id="stats" class="stats">0 列 × 0 欄</div>
+    </div>
+
+    <div id="preview">
+      <div class="empty">
+        <strong>最簡單的用法：</strong><br><br>
+        Excel 裡框選表格 → 複製 → 點左邊貼上。<br>
+        預設先做「美化表格」，需要簽到表或 PPT 再切換模式。
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const state = {
+    data: [],
+    merges: [],
+    sourceStyles: {},
+    pages: []
+  };
+
+  const els = {
+    pasteBox:$("pasteBox"),
+    mode:$("mode"),
+    pptStyle:$("pptStyle"),
+    pptStyleWrap:$("pptStyleWrap"),
+    modeNote:$("modeNote"),
+    pageSection:$("pageSection"),
+    quickSection:$("quickSection"),
+    orientation:$("orientation"),
+    headerRows:$("headerRows"),
+    maxCols:$("maxCols"),
+    repeatCols:$("repeatCols"),
+    fontSize:$("fontSize"),
+    rowHeight:$("rowHeight"),
+    fontMode:$("fontMode"),
+    alignMode:$("alignMode"),
+    title:$("title"),
+    subtitle:$("subtitle"),
+    showTitle:$("showTitle"),
+    addNo:$("addNo"),
+    addSign:$("addSign"),
+    addNote:$("addNote"),
+    clearBtn:$("clearBtn"),
+    refreshBtn:$("refreshBtn"),
+    xlsxBtn:$("xlsxBtn"),
+    csvBtn:$("csvBtn"),
+    pptxBtn:$("pptxBtn"),
+    pdfBtn:$("pdfBtn"),
+    printBtn:$("printBtn"),
+    status:$("status"),
+    badge:$("badge"),
+    stats:$("stats"),
+    preview:$("preview"),
+    pageStyle:$("pageStyle")
+  };
+
+  const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+  function esc(v){
+    return String(v ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
+    })[c]);
+  }
+
+  function safeFilename(s){
+    return (s || "表格").replace(/[\\/:*?"<>|]+/g,"_").slice(0,100);
+  }
+
+  function setStatus(msg, isError=false){
+    els.status.textContent = msg;
+    els.status.className = "status" + (isError ? " error" : "");
+  }
+
+  function normalize(data,minCols=0,minRows=0){
+    const rows = (data || []).map(r => Array.isArray(r) ? r.map(v => v ?? "") : []);
+    while(rows.length>minRows && rows[rows.length-1].every(v => String(v).trim()==="")) rows.pop();
+    if(!rows.length) return [];
+
+    const maxLen = Math.max(minCols,...rows.map(r => r.length));
+    rows.forEach(r => {
+      while(r.length < maxLen) r.push("");
+    });
+
+    let lastNonEmptyCol = -1;
+    for(let c=0;c<maxLen;c++){
+      if(rows.some(r => String(r[c] ?? "").trim() !== "")) lastNonEmptyCol = c;
+    }
+
+    const keep = Math.max(lastNonEmptyCol+1,minCols);
+    if(keep <= 0) return [];
+    return rows.map(r => r.slice(0,keep));
+  }
+
+  function parsePlainText(text){
+    const clean = text.replace(/\r\n?/g,"\n").replace(/\n+$/,"");
+    if(!clean.trim()) return [];
+
+    if(clean.includes("\t")){
+      return normalize(clean.split("\n").map(line => line.split("\t")));
+    }
+
+    if(clean.includes(",") && window.XLSX){
+      try{
+        const wb = XLSX.read(clean,{type:"string"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        return normalize(XLSX.utils.sheet_to_json(ws,{
+          header:1,
+          defval:"",
+          raw:false
+        }));
+      }catch(e){}
+    }
+
+    return normalize(clean.split("\n").map(line => [line]));
+  }
+
+  function safeFontFamily(v){
+    return String(v || "")
+      .replace(/[<>;{}\r\n]/g,"")
+      .trim()
+      .slice(0,220);
+  }
+
+  function cssAlign(v){
+    const t = String(v || "").toLowerCase();
+    if(["left","center","right"].includes(t)) return t;
+    if(t === "start") return "left";
+    if(t === "end") return "right";
+    return "";
+  }
+
+  function captureSourceCellStyles(doc,table){
+    const inline = [...table.querySelectorAll("th,td")].map(cell=>({
+      fontFamily:safeFontFamily(cell.style?.fontFamily || ""),
+      textAlign:cssAlign(cell.style?.textAlign || cell.getAttribute("align") || ""),
+      verticalAlign:String(cell.style?.verticalAlign || cell.getAttribute("valign") || "").toLowerCase(),
+      fontWeight:String(cell.style?.fontWeight || "")
+    }));
+
+    let host = null;
+    try{
+      host = document.createElement("div");
+      host.style.cssText = "position:fixed;left:-100000px;top:0;width:1400px;visibility:hidden;pointer-events:none;z-index:-1";
+      const shadow = host.attachShadow({mode:"open"});
+
+      [...doc.querySelectorAll("style")].forEach(src=>{
+        const st = document.createElement("style");
+        st.textContent = src.textContent || "";
+        shadow.appendChild(st);
+      });
+
+      const clone = table.cloneNode(true);
+      shadow.appendChild(clone);
+      document.body.appendChild(host);
+
+      const computedCells = [...clone.querySelectorAll("th,td")];
+      computedCells.forEach((cell,i)=>{
+        const cs = getComputedStyle(cell);
+        inline[i] = {
+          fontFamily:safeFontFamily(cs.fontFamily) || inline[i]?.fontFamily || "",
+          textAlign:cssAlign(cs.textAlign) || inline[i]?.textAlign || "",
+          verticalAlign:String(cs.verticalAlign || inline[i]?.verticalAlign || "").toLowerCase(),
+          fontWeight:String(cs.fontWeight || inline[i]?.fontWeight || "")
+        };
+      });
+    }catch(e){
+      // 來源樣式讀不到時仍可保留資料與合併關係。
+    }finally{
+      host?.remove();
+    }
+
+    return inline;
+  }
+
+  function expandHtmlTable(table,sourceCellStyles=[]){
+    const grid = [];
+    const occupied = {};
+    const merges = [];
+    const sourceStyles = {};
+    let maxOccupiedCol = 0;
+    let maxOccupiedRow = 0;
+    let cellIndex = 0;
+
+    [...table.rows].forEach((tr,r) => {
+      grid[r] = grid[r] || [];
+      let c = 0;
+
+      [...tr.cells].forEach(cell => {
+        while(occupied[`${r},${c}`]) c++;
+
+        const rs = Math.max(1,parseInt(cell.rowSpan || 1,10));
+        const cs = Math.max(1,parseInt(cell.colSpan || 1,10));
+        const value = (cell.innerText ?? cell.textContent ?? "")
+          .replace(/\r\n?/g,"\n")
+          .trim();
+
+        const srcStyle = sourceCellStyles[cellIndex++] || {};
+        sourceStyles[`${r},${c}`] = srcStyle;
+
+        if(rs>1 || cs>1){
+          merges.push({
+            s:{r,c},
+            e:{r:r+rs-1,c:c+cs-1}
+          });
+        }
+
+        for(let rr=0;rr<rs;rr++){
+          grid[r+rr] = grid[r+rr] || [];
+          for(let cc=0;cc<cs;cc++){
+            grid[r+rr][c+cc] = (rr===0 && cc===0) ? value : "";
+            occupied[`${r+rr},${c+cc}`] = true;
+          }
+        }
+        c += cs;
+        maxOccupiedCol = Math.max(maxOccupiedCol,c);
+        maxOccupiedRow = Math.max(maxOccupiedRow,r+rs);
+      });
+    });
+
+    return {
+      data:normalize(grid,maxOccupiedCol,maxOccupiedRow),
+      merges,
+      sourceStyles
+    };
+  }
+
+  function parseHtml(html){
+    try{
+      const doc = new DOMParser().parseFromString(html,"text/html");
+      const table = doc.querySelector("table");
+      if(table){
+        const styles = captureSourceCellStyles(doc,table);
+        return expandHtmlTable(table,styles);
+      }
+    }catch(e){}
+    return {data:[],merges:[],sourceStyles:{}};
+  }
+
+  function textPreview(data){
+    const rows = data.slice(0,8).map(r => r.slice(0,8).join("\t"));
+    let txt = rows.join("\n");
+    if(data.length > 8) txt += "\n…";
+    return txt;
+  }
+
+  function getSettings(){
+    return {
+      mode:els.mode.value,
+      pptStyle:els.pptStyle.value,
+      orientation:els.orientation.value,
+      headerRows:Math.max(0,parseInt(els.headerRows.value || "0",10)),
+      maxCols:Math.max(0,parseInt(els.maxCols.value || "0",10)),
+      repeatCols:Math.max(0,parseInt(els.repeatCols.value || "0",10)),
+      fontSize:Math.max(7,parseFloat(els.fontSize.value || "10")),
+      rowHeight:Math.max(6,parseFloat(els.rowHeight.value || "8.5")),
+      fontMode:els.fontMode.value,
+      alignMode:els.alignMode.value,
+      title:els.title.value.trim(),
+      subtitle:els.subtitle.value.trim(),
+      showTitle:els.showTitle.checked,
+      addNo:els.addNo.checked,
+      addSign:els.addSign.checked,
+      addNote:els.addNote.checked
+    };
+  }
+
+  function applyModeDefaults(){
+    const mode = els.mode.value;
+
+    if(mode === "beautify"){
+      els.maxCols.value = "0";
+      els.repeatCols.value = "0";
+      els.fontSize.value = "10";
+      els.rowHeight.value = "8.5";
+      els.addNo.checked = false;
+      els.addSign.checked = false;
+      els.addNote.checked = false;
+      els.showTitle.checked = false;
+    }
+
+    if(mode === "attendance"){
+      els.maxCols.value = "8";
+      els.repeatCols.value = "1";
+      els.fontSize.value = "10";
+      els.rowHeight.value = "12";
+      els.addNo.checked = true;
+      els.addSign.checked = true;
+      els.addNote.checked = false;
+      els.showTitle.checked = true;
+    }
+
+    if(mode === "ppt"){
+      els.addNo.checked = false;
+      els.addSign.checked = false;
+      els.addNote.checked = false;
+      els.showTitle.checked = true;
+    }
+  }
+
+  function updateModeUI(){
+    const mode = els.mode.value;
+
+    els.pptStyleWrap.classList.toggle("hidden", mode !== "ppt");
+    els.pageSection.classList.toggle("hidden", mode === "ppt");
+    els.quickSection.classList.toggle("hidden", mode !== "attendance");
+    els.pptxBtn.classList.toggle("hidden", mode !== "ppt");
+    els.pdfBtn.classList.toggle("hidden", mode === "ppt");
+    els.printBtn.classList.toggle("hidden", mode === "ppt");
+
+    if(mode === "beautify"){
+      els.modeNote.textContent =
+        "美化表格會依內容長短、數字欄、文字欄自動分配欄寬；不預設加簽到欄。";
+    }
+
+    if(mode === "attendance"){
+      els.modeNote.textContent =
+        "簽到表預設加序號與簽到欄，採正式全框線與較高資料列，方便列印手寫。";
+    }
+
+    if(mode === "ppt"){
+      const notes = {
+        clean:"簡約白底採白底、細水平線與較大的留白；沒有大色塊，適合一般報告與會議投影。",
+        soft:"淡灰框線以淺灰表頭與細框線整理資料，適合欄列較多、需要清楚分格的表格。",
+        rule:"細藍線報告式以低飽和藍灰線條建立層級，保留正式感但不做深色表頭。",
+        academic:"學術表格採期刊常見極簡線條：無直線、不框每一格，以頂線、表頭分隔線與底線建立結構。"
+      };
+      els.modeNote.textContent = notes[els.pptStyle.value] || notes.clean;
+    }
+
+    updateButtons();
+  }
+
+  function shiftSourceStyles(styles,delta){
+    const out = {};
+    Object.entries(styles || {}).forEach(([key,val])=>{
+      const [r,c] = key.split(",").map(Number);
+      if(Number.isFinite(r) && Number.isFinite(c)){
+        out[`${r},${c+delta}`] = val;
+      }
+    });
+    return out;
+  }
+
+  function outputModel(){
+    const s = getSettings();
+    const raw = state.data.map(r => r.slice());
+    if(!raw.length) return {data:[],merges:[],sourceStyles:{}};
+
+    let merges = state.merges.map(m=>({
+      s:{r:m.s.r,c:m.s.c},
+      e:{r:m.e.r,c:m.e.c}
+    }));
+    let sourceStyles = {...state.sourceStyles};
+    const h = Math.min(s.headerRows,raw.length);
+
+    if(s.mode==="attendance" && s.addNo){
+      raw.forEach((r,i)=>
+        r.unshift(i<h ? (i===0 ? "序號" : "") : String(i-h+1))
+      );
+      merges = merges.map(m=>({
+        s:{r:m.s.r,c:m.s.c+1},
+        e:{r:m.e.r,c:m.e.c+1}
+      }));
+      sourceStyles = shiftSourceStyles(sourceStyles,1);
+    }
+
+    if(s.mode==="attendance" && s.addSign){
+      raw.forEach((r,i)=>
+        r.push(i<h ? (i===0 ? "簽到" : "") : "")
+      );
+    }
+
+    if(s.mode==="attendance" && s.addNote){
+      raw.forEach((r,i)=>
+        r.push(i<h ? (i===0 ? "備註" : "") : "")
+      );
+    }
+
+    return {data:raw,merges,sourceStyles};
+  }
+
+  function outputData(){
+    return outputModel().data;
+  }
+
+  function textUnits(v){
+    const lines = String(v ?? "").split(/\n/);
+    return Math.max(
+      0,
+      ...lines.map(line =>
+        [...line].reduce((n,ch)=>
+          n + (/[\u3000-\u9fff\u3040-\u30ff\uac00-\ud7af]/.test(ch) ? 2 : 1)
+        ,0)
+      )
+    );
+  }
+
+  function numericLike(v){
+    const t = String(v ?? "")
+      .trim()
+      .replace(/[,，%％$￥€£\s]/g,"");
+    return !!t && /^[-+]?\d+(\.\d+)?$/.test(t);
+  }
+
+  function dateLike(v){
+    const t = String(v ?? "").trim();
+    return /^(\d{4}[\/-]\d{1,2}([\/-]\d{1,2})?|\d{1,2}[\/-]\d{1,2}([\/-]\d{2,4})?)$/.test(t);
+  }
+
+  function columnWeights(data,cols,mode="beautify",merges=[]){
+    const weights = cols.map(c=>{
+      const vals = data
+        .slice(0,120)
+        .map(r=>String(r[c] ?? ""))
+        .filter(v=>v.trim()!=="");
+
+      const lens = vals.map(textUnits).sort((a,b)=>a-b);
+      const p85 = lens.length
+        ? lens[Math.floor((lens.length-1)*.85)]
+        : 4;
+
+      const head = textUnits(data[0]?.[c] ?? "");
+      const numericRatio = vals.length
+        ? vals.filter(numericLike).length / vals.length
+        : 0;
+
+      const dateRatio = vals.length
+        ? vals.filter(dateLike).length / vals.length
+        : 0;
+
+      let w = Math.max(4, head*1.08, p85+2);
+
+      if(numericRatio > .7) w = Math.min(w,10);
+      if(dateRatio > .6) w = Math.max(9,Math.min(w,13));
+
+      const h = String(data[0]?.[c] ?? "");
+
+      if(/備註|說明|描述|內容|comment|note|description/i.test(h)){
+        w = Math.max(w,17);
+      }
+
+      if(/簽到|簽名|signature/i.test(h)){
+        w = Math.max(w,12);
+      }
+
+      if(mode==="attendance" && /姓名|name/i.test(h)){
+        w = Math.max(w,10);
+      }
+
+      return clamp(w,4,30);
+    });
+
+    // 橫向合併的文字不應只把寬度壓在左上角那一欄。
+    (merges || []).forEach(m=>{
+      if(!m?.s || !m?.e || m.e.c <= m.s.c) return;
+      const idxs = [];
+      cols.forEach((c,i)=>{
+        if(c>=m.s.c && c<=m.e.c) idxs.push(i);
+      });
+      if(!idxs.length) return;
+
+      const value = data[m.s.r]?.[m.s.c] ?? "";
+      const need = clamp(textUnits(value)+4,8,42);
+      const have = idxs.reduce((n,i)=>n+weights[i],0);
+      if(have >= need) return;
+
+      const add = (need-have)/idxs.length;
+      idxs.forEach(i=>weights[i]=clamp(weights[i]+add,4,30));
+    });
+
+    return weights;
+  }
+
+  function columnAlignments(data,cols){
+    return cols.map(c=>{
+      const vals = data
+        .slice(1,80)
+        .map(r=>String(r[c] ?? ""))
+        .filter(v=>v.trim()!=="");
+
+      if(!vals.length) return "left";
+
+      const numericRatio = vals.filter(numericLike).length / vals.length;
+      if(numericRatio > .72) return "right";
+
+      const avg = vals.reduce((a,v)=>a+textUnits(v),0) / vals.length;
+      if(avg <= 5) return "center";
+
+      return "left";
+    });
+  }
+
+  function fontClass(s){
+    return s.fontMode==="source"
+      ? "output-font-source"
+      : (s.fontMode==="sans" ? "output-font-sans" : "output-font-mixed");
+  }
+
+  function sourceStyleAt(styles,r,c){
+    return styles?.[`${r},${c}`] || {};
+  }
+
+  function resolveCellAlignment(r,c,autoAlign,s,styles,isHeader=false,isMerged=false){
+    if(["left","center","right"].includes(s.alignMode)){
+      return s.alignMode;
+    }
+
+    if(s.alignMode==="source"){
+      const fromSource = cssAlign(sourceStyleAt(styles,r,c).textAlign);
+      if(fromSource) return fromSource;
+    }
+
+    if(isMerged) return "center";
+
+    if(isHeader){
+      return "center";
+    }
+
+    return autoAlign || "left";
+  }
+
+  function findMerge(merges,r,c){
+    return (merges || []).find(m=>
+      r>=m.s.r && r<=m.e.r && c>=m.s.c && c<=m.e.c
+    ) || null;
+  }
+
+  function visibleMergeInfo(merge,rowIndices,cols,r,c){
+    const rowPos = rowIndices.indexOf(r);
+    const colPos = cols.indexOf(c);
+    if(rowPos < 0 || colPos < 0) return null;
+
+    const visibleRows = rowIndices.filter(x=>x>=merge.s.r && x<=merge.e.r);
+    if(!visibleRows.length) return null;
+
+    let left = colPos;
+    while(
+      left>0 &&
+      cols[left-1]>=merge.s.c && cols[left-1]<=merge.e.c &&
+      cols[left]-cols[left-1]===1
+    ) left--;
+
+    let right = colPos;
+    while(
+      right<cols.length-1 &&
+      cols[right+1]>=merge.s.c && cols[right+1]<=merge.e.c &&
+      cols[right+1]-cols[right]===1
+    ) right++;
+
+    const firstVisibleRow = visibleRows[0];
+    return {
+      anchor:r===firstVisibleRow && colPos===left,
+      rowspan:visibleRows.length,
+      colspan:right-left+1
+    };
+  }
+
+  function htmlCellStyle(sourceR,sourceC,s,styles,rowHeight,isHeader){
+    const parts = [];
+    if(!isHeader && rowHeight) parts.push(`height:${rowHeight}mm`);
+
+    if(s.fontMode==="source"){
+      const family = safeFontFamily(sourceStyleAt(styles,sourceR,sourceC).fontFamily);
+      if(family) parts.push(`font-family:${family}`);
+    }
+
+    return parts.length ? ` style="${esc(parts.join(";"))}"` : "";
+  }
+
+  function buildHtmlRows(data,rowIndices,cols,merges,styles,s,aligns,isHeader,rowHeight=0){
+    const tag = isHeader ? "th" : "td";
+
+    return rowIndices.map(sourceR=>{
+      const cells = [];
+
+      cols.forEach((c,j)=>{
+        const merge = findMerge(merges,sourceR,c);
+        let valueR = sourceR;
+        let valueC = c;
+        let rowspan = 1;
+        let colspan = 1;
+        let merged = false;
+
+        if(merge){
+          const info = visibleMergeInfo(merge,rowIndices,cols,sourceR,c);
+          if(!info?.anchor) return;
+          valueR = merge.s.r;
+          valueC = merge.s.c;
+          rowspan = info.rowspan;
+          colspan = info.colspan;
+          merged = true;
+        }
+
+        const align = resolveCellAlignment(
+          valueR,
+          valueC,
+          aligns[j],
+          s,
+          styles,
+          isHeader,
+          merged
+        );
+        const spans =
+          `${rowspan>1 ? ` rowspan="${rowspan}"` : ""}` +
+          `${colspan>1 ? ` colspan="${colspan}"` : ""}`;
+        const cls = merged ? ` class="merged-cell"` : "";
+        const style = htmlCellStyle(valueR,valueC,s,styles,rowHeight,isHeader);
+
+        cells.push(
+          `<${tag}${cls}${spans} contenteditable="true" data-r="${valueR}" data-c="${valueC}" data-align="${align}"${style}>${esc(data[valueR]?.[valueC] ?? "")}</${tag}>`
+        );
+      });
+
+      return `<tr>${cells.join("")}</tr>`;
+    }).join("");
+  }
+
+  function splitColumnGroups(data,s,forPpt=false,merges=[]){
+    const n = data[0]?.length || 0;
+    if(!n) return [];
+
+    const all = Array.from({length:n},(_,i)=>i);
+    const weights = columnWeights(data,all,s.mode,merges);
+
+    const limit = forPpt
+      ? (s.pptStyle==="academic" ? 126 : 118)
+      : (s.orientation==="portrait" ? 80 : 118);
+
+    const hardMax = forPpt
+      ? Infinity
+      : (s.maxCols>0 ? s.maxCols : Infinity);
+
+    const total = weights.reduce((a,b)=>a+b,0);
+
+    if(total<=limit && n<=hardMax){
+      return [all];
+    }
+
+    const repeated = forPpt
+      ? 0
+      : Math.min(
+          s.repeatCols,
+          Math.max(0,n-1),
+          Number.isFinite(hardMax)
+            ? Math.max(0,hardMax-1)
+            : n-1
+        );
+
+    const prefix = Array.from({length:repeated},(_,i)=>i);
+    const rest = Array.from({length:n-repeated},(_,i)=>i+repeated);
+    const groups = [];
+
+    let cur = [...prefix];
+    let sum = prefix.reduce((a,c)=>a+weights[c],0);
+
+    for(const c of rest){
+      const nextCount = cur.length + 1;
+      const tooMany = nextCount > hardMax;
+      const tooWide =
+        cur.length > prefix.length &&
+        sum + weights[c] > limit;
+
+      if(tooMany || tooWide){
+        groups.push(cur);
+        cur = [...prefix];
+        sum = prefix.reduce((a,x)=>a+weights[x],0);
+      }
+
+      cur.push(c);
+      sum += weights[c];
+    }
+
+    if(cur.length > prefix.length || !groups.length){
+      groups.push(cur);
+    }
+
+    return groups;
+  }
+
+  function rowsPerPage(s){
+    const pageH = s.orientation==="portrait" ? 297 : 210;
+    const padding = 17;
+    const titleArea = s.showTitle ? (s.subtitle ? 31 : 25) : 9;
+    const footer = 6;
+    const h = Math.max(0,s.headerRows);
+    const headerMm = h * Math.max(7.5,s.rowHeight*.72);
+    const usable = pageH-padding-titleArea-footer-headerMm;
+    return Math.max(2,Math.floor(usable/s.rowHeight));
+  }
+
+  function pptRowsPerSlide(s,colCount){
+    const base = s.pptStyle==="academic" ? 14 : 11;
+    return Math.max(
+      5,
+      base-Math.max(0,Math.ceil((colCount-7)/2))
+    );
+  }
+
+  function buildPptPages(data,s,merges=[]){
+    const h = Math.min(s.headerRows,data.length);
+    const body = data.slice(h);
+    const groups = splitColumnGroups(data,s,true,merges);
+    const pages = [];
+
+    groups.forEach((cols,gi)=>{
+      const rps = pptRowsPerSlide(s,cols.length);
+
+      if(!body.length){
+        pages.push({
+          cols,
+          gi,
+          ri:0,
+          bodyStart:h,
+          rows:[]
+        });
+      }else{
+        for(let i=0;i<body.length;i+=rps){
+          pages.push({
+            cols,
+            gi,
+            ri:i/rps,
+            bodyStart:h+i,
+            rows:body.slice(i,i+rps)
+          });
+        }
+      }
+    });
+
+    return pages;
+  }
+
+  function render(){
+    const model = outputModel();
+    const data = model.data;
+
+    if(!data.length){
+      renderEmpty();
+      return;
+    }
+
+    const s = getSettings();
+
+    if(s.mode==="ppt"){
+      renderPpt(model,s);
+    }else{
+      renderA4(model,s);
+    }
+
+    updateButtons();
+  }
+
+  function renderA4(model,s){
+    const {data,merges,sourceStyles} = model;
+    const h = Math.min(s.headerRows,data.length);
+    const body = data.slice(h);
+    const groups = splitColumnGroups(data,s,false,merges);
+    const rpp = rowsPerPage(s);
+    const chunks = [];
+
+    if(!body.length){
+      chunks.push({rows:[],start:0});
+    }else{
+      for(let i=0;i<body.length;i+=rpp){
+        chunks.push({rows:body.slice(i,i+rpp),start:i});
+      }
+    }
+
+    const pages = [];
+    groups.forEach((cols,gi)=>{
+      chunks.forEach((chunk,ri)=>{
+        pages.push({
+          cols,
+          gi,
+          ri,
+          bodyStart:h+chunk.start,
+          rows:chunk.rows
+        });
+      });
+    });
+
+    state.pages = pages;
+
+    els.pageStyle.textContent =
+      `@page{size:A4 ${s.orientation};margin:0}`;
+
+    els.badge.textContent =
+      `${s.mode==="attendance" ? "簽到表" : "美化表格"} · A4 ${s.orientation==="portrait" ? "直向" : "橫向"}`;
+
+    els.stats.textContent =
+      `${data.length} 列 × ${data[0].length} 欄 · ${pages.length} 頁 · ${merges.length} 合併區`;
+
+    els.preview.innerHTML = pages.map((p,idx)=>{
+      const weights = columnWeights(data,p.cols,s.mode,merges);
+      const total = weights.reduce((a,b)=>a+b,0);
+      const aligns = columnAlignments(data,p.cols);
+      const headerRows = Array.from({length:h},(_,i)=>i);
+      const bodyRows = p.rows.map((_,ri)=>p.bodyStart+ri);
+
+      const cg =
+        `<colgroup>${
+          weights.map(w=>
+            `<col style="width:${(w/total*100).toFixed(3)}%">`
+          ).join("")
+        }</colgroup>`;
+
+      const th = buildHtmlRows(
+        data,headerRows,p.cols,merges,sourceStyles,s,aligns,true,0
+      );
+      const td = buildHtmlRows(
+        data,bodyRows,p.cols,merges,sourceStyles,s,aligns,false,s.rowHeight
+      );
+
+      const cont = idx===0
+        ? ""
+        : `<span class="continuation">（續${idx}）</span>`;
+
+      return `<section class="paper ${s.orientation} ${fontClass(s)}">
+        ${s.showTitle ? `<div class="paper-head">
+          <div class="paper-title">${esc(s.title || "表格")}${cont}</div>
+          ${s.subtitle ? `<div class="paper-subtitle">${esc(s.subtitle)}</div>` : ""}
+          <div class="paper-meta">
+            <span>${data.length} 列 × ${data[0].length} 欄${merges.length ? ` · ${merges.length} 個合併區` : ""}</span>
+            <span>第 ${idx+1} / ${pages.length} 頁</span>
+          </div>
+        </div>` : ""}
+
+        <table class="sheet ${s.mode}" style="font-size:${s.fontSize}pt">
+          ${cg}
+          ${h ? `<thead>${th}</thead>` : ""}
+          <tbody>${td}</tbody>
+        </table>
+
+        <div class="page-no">${idx+1}</div>
+      </section>`;
+    }).join("");
+
+    bindCellEdits(s);
+
+    setStatus(
+      `已排版：${s.mode==="attendance" ? "簽到表" : "美化表格"}，${data.length} 列 × ${data[0].length} 欄，共 ${pages.length} 頁${merges.length ? `；已保留 ${merges.length} 個合併儲存格區域` : ""}。`
+    );
+  }
+
+  function renderPpt(model,s){
+    const {data,merges,sourceStyles} = model;
+    const pages = buildPptPages(data,s,merges);
+    const h = Math.min(s.headerRows,data.length);
+    state.pages = pages;
+
+    els.pageStyle.textContent =
+      "@page{size:13.333in 7.5in;margin:0}";
+
+    const pptLabels = {clean:"簡約白底",soft:"淡灰框線",rule:"細藍線報告式",academic:"學術表格"};
+    els.badge.textContent =
+      `PPT · ${pptLabels[s.pptStyle] || pptLabels.clean}`;
+
+    els.stats.textContent =
+      `${data.length} 列 × ${data[0].length} 欄 · ${pages.length} 張投影片 · ${merges.length} 合併區`;
+
+    els.preview.innerHTML = pages.map((p,idx)=>{
+      const weights = columnWeights(data,p.cols,s.mode,merges);
+      const total = weights.reduce((a,b)=>a+b,0);
+      const aligns = columnAlignments(data,p.cols);
+      const headerRows = Array.from({length:h},(_,i)=>i);
+      const bodyRows = p.rows.map((_,ri)=>p.bodyStart+ri);
+
+      const cg =
+        `<colgroup>${
+          weights.map(w=>
+            `<col style="width:${(w/total*100).toFixed(3)}%">`
+          ).join("")
+        }</colgroup>`;
+
+      const th = buildHtmlRows(
+        data,headerRows,p.cols,merges,sourceStyles,s,aligns,true,0
+      );
+      const td = buildHtmlRows(
+        data,bodyRows,p.cols,merges,sourceStyles,s,aligns,false,0
+      );
+
+      const cont = idx===0
+        ? ""
+        : `<span class="continuation">（續${idx}）</span>`;
+
+      return `<section class="slide ${s.pptStyle} ${fontClass(s)}">
+        ${s.showTitle ? `<div class="slide-head">
+          <div class="slide-title">${esc(s.title || "表格")}${cont}</div>
+          ${s.subtitle ? `<div class="slide-subtitle">${esc(s.subtitle)}</div>` : ""}
+        </div>` : ""}
+
+        <table class="sheet">
+          ${cg}
+          ${h ? `<thead>${th}</thead>` : ""}
+          <tbody>${td}</tbody>
+        </table>
+
+        <div class="slide-no">${idx+1}</div>
+      </section>`;
+    }).join("");
+
+    bindCellEdits(s);
+
+    setStatus(
+      `已排版：PPT ${pptLabels[s.pptStyle] || pptLabels.clean}，共 ${pages.length} 張投影片${merges.length ? `；已保留 ${merges.length} 個合併儲存格區域` : ""}。`
+    );
+  }
+
+  function bindCellEdits(s){
+    els.preview
+      .querySelectorAll("[contenteditable=true][data-r][data-c]")
+      .forEach(cell=>{
+        cell.addEventListener("blur",()=>{
+          const r = parseInt(cell.dataset.r,10);
+          const c = parseInt(cell.dataset.c,10);
+
+          if(
+            s.mode==="attendance" &&
+            (s.addNo || s.addSign || s.addNote)
+          ){
+            return;
+          }
+
+          if(state.data[r] && c < state.data[r].length){
+            state.data[r][c] =
+              cell.innerText.replace(/\r\n?/g,"\n");
+
+            els.pasteBox.textContent =
+              textPreview(state.data);
+          }
+        });
+      });
+  }
+
+  function renderEmpty(){
+    els.preview.innerHTML = `<div class="empty">
+      <strong>最簡單的用法：</strong><br><br>
+      Excel 裡框選表格 → 複製 → 點左邊貼上。<br>
+      預設先做「美化表格」，需要簽到表或 PPT 再切換模式。
+    </div>`;
+
+    els.badge.textContent = "美化表格 · A4 直向";
+    els.stats.textContent = "0 列 × 0 欄";
+  }
+
+  function updateButtons(){
+    const ready = state.data.length > 0;
+
+    [
+      els.refreshBtn,
+      els.xlsxBtn,
+      els.csvBtn,
+      els.pptxBtn,
+      els.pdfBtn,
+      els.printBtn
+    ].forEach(b=>b.disabled=!ready);
+  }
+
+  function clearAll(){
+    state.data = [];
+    state.merges = [];
+    state.sourceStyles = {};
+    state.pages = [];
+
+    els.pasteBox.classList.remove("has-data");
+    els.pasteBox.innerHTML =
+      "點這裡後 Ctrl+V / ⌘V<br>貼上從 Excel、Google Sheets 或網頁複製的表格";
+
+    setStatus("尚未貼上表格。");
+    renderEmpty();
+    updateButtons();
+  }
+
+  function setData(input){
+    const parsed = Array.isArray(input)
+      ? {data:input,merges:[],sourceStyles:{}}
+      : (input || {data:[],merges:[],sourceStyles:{}});
+
+    const mergeMinCols = Math.max(0,...(parsed.merges || []).map(m=>(m?.e?.c ?? -1)+1));
+    const mergeMinRows = Math.max(0,...(parsed.merges || []).map(m=>(m?.e?.r ?? -1)+1));
+    state.data = normalize(parsed.data || [],mergeMinCols,mergeMinRows);
+    state.merges = (parsed.merges || []).filter(m=>
+      m?.s && m?.e &&
+      m.s.r >= 0 && m.s.c >= 0 &&
+      m.e.r < state.data.length &&
+      m.e.c < (state.data[0]?.length || 0)
+    );
+    state.sourceStyles = parsed.sourceStyles || {};
+
+    if(!state.data.length){
+      clearAll();
+      return;
+    }
+
+    els.pasteBox.classList.add("has-data");
+    els.pasteBox.textContent = textPreview(state.data);
+
+    updateButtons();
+    render();
+  }
+
+  function excelLineUnits(v){
+    const lines = String(v ?? "").split(/\n/);
+    return Math.max(0,...lines.map(line=>
+      [...line].reduce((n,ch)=>{
+        if(/[\u3000-\u9fff\u3040-\u30ff\uac00-\ud7af]/.test(ch)) return n+2;
+        if(/[MW@#%&]/.test(ch)) return n+1.25;
+        if(/[ilI1'.,:;|]/.test(ch)) return n+.55;
+        return n+1;
+      },0)
+    ));
+  }
+
+  function excelColumnWidths(data,merges,s){
+    const n = data[0]?.length || 0;
+    const widths = Array.from({length:n},(_,c)=>{
+      const samples = [];
+      for(let r=0;r<data.length;r++){
+        const merge = findMerge(merges,r,c);
+        if(merge && (merge.s.r!==r || merge.s.c!==c || merge.e.c>merge.s.c)) continue;
+        const v = data[r]?.[c] ?? "";
+        if(String(v).trim()!=="") samples.push(excelLineUnits(v));
+      }
+      samples.sort((a,b)=>a-b);
+      const p90 = samples.length ? samples[Math.floor((samples.length-1)*.90)] : 4;
+      const max = samples.length ? samples[samples.length-1] : 4;
+      const header = excelLineUnits(data[0]?.[c] ?? "");
+      const base = Math.max(header+2.2,p90+2.1,Math.min(max+1.5,p90*1.28+3),6);
+      return clamp(base*(s.fontSize/10),6,40);
+    });
+
+    (merges || []).forEach(m=>{
+      if(!m?.s || !m?.e || m.e.c<=m.s.c) return;
+      const start = Math.max(0,m.s.c);
+      const end = Math.min(n-1,m.e.c);
+      if(end<start) return;
+      const need = clamp((excelLineUnits(data[m.s.r]?.[m.s.c] ?? "")+3)*(s.fontSize/10),8,70);
+      const have = widths.slice(start,end+1).reduce((a,b)=>a+b,0);
+      if(have>=need) return;
+      const deficit = need-have;
+      const span = end-start+1;
+      for(let c=start;c<=end;c++) widths[c] = clamp(widths[c]+deficit/span,6,44);
+    });
+
+    return widths.map(w=>Math.round(w*10)/10);
+  }
+
+  function excelMixedRichText(text,s,bold=false,color="FF17212B"){
+    const runs = [];
+    let buf = "";
+    let current = null;
+    const flush = ()=>{
+      if(!buf) return;
+      runs.push({
+        text:buf,
+        font:{
+          name:current ? "DFKai-SB" : "Times New Roman",
+          size:s.fontSize,
+          bold,
+          color:{argb:color}
+        }
+      });
+      buf="";
+    };
+    [...String(text ?? "")].forEach(ch=>{
+      const isCjk = cjkChar(ch);
+      if(current===null) current=isCjk;
+      if(isCjk!==current){flush();current=isCjk;}
+      buf += ch;
+    });
+    flush();
+    return {richText:runs.length ? runs : [{text:"",font:{name:"Times New Roman",size:s.fontSize,bold,color:{argb:color}}}]};
+  }
+
+  function excelCellFontAndValue(cell,text,s,sourceStyle,isHeader,color="FF17212B"){
+    if(s.fontMode==="mixed"){
+      cell.value = excelMixedRichText(text,s,isHeader,color);
+      return;
+    }
+
+    const face = s.fontMode==="source"
+      ? (firstFontName(sourceStyle?.fontFamily || "") || "DFKai-SB")
+      : "Microsoft JhengHei";
+    cell.value = String(text ?? "");
+    cell.font = {name:face,size:s.fontSize,bold:isHeader,color:{argb:color}};
+  }
+
+  function excelThin(color="FFD9E0E6"){
+    return {style:"thin",color:{argb:color}};
+  }
+
+  function styleExcelCell(cell,{mode,isHeader,isMerged}){
+    if(mode==="attendance"){
+      cell.fill = isHeader
+        ? {type:"pattern",pattern:"solid",fgColor:{argb:"FFF2F4F7"}}
+        : {type:"pattern",pattern:"solid",fgColor:{argb:"FFFFFFFF"}};
+      const b = excelThin("FF444444");
+      cell.border = {top:b,left:b,bottom:b,right:b};
+      return;
+    }
+
+    if(isHeader){
+      cell.fill = {type:"pattern",pattern:"solid",fgColor:{argb:"FFF2F5F7"}};
+      cell.border = {
+        left:excelThin("FFD7DEE6"),
+        right:excelThin("FFD7DEE6"),
+        bottom:excelThin("FF9EABB7")
+      };
+    }else{
+      cell.fill = {type:"pattern",pattern:"solid",fgColor:{argb:isMerged ? "FFF8FAFB" : "FFFFFFFF"}};
+      cell.border = {
+        left:excelThin("FFE0E5EA"),
+        right:excelThin("FFE0E5EA"),
+        bottom:excelThin(isMerged ? "FFC7D0D8" : "FFE7EBEF")
+      };
+    }
+  }
+
+  async function exportXlsx(){
+    const model = outputModel();
+    const {data,merges,sourceStyles} = model;
+    if(!data.length) return;
+
+    const s = getSettings();
+    if(typeof window.ExcelJS !== "object"){
+      setStatus("Excel 排版元件尚未載入，請確認網路連線後再試。",true);
+      return;
+    }
+
+    try{
+      setStatus("正在建立格式化 Excel…");
+      const wb = new ExcelJS.Workbook();
+      wb.creator = "貼上表格排版器";
+      wb.created = new Date();
+      const ws = wb.addWorksheet("表格",{
+        views:s.headerRows>0 ? [{state:"frozen",ySplit:Math.min(s.headerRows,data.length)}] : []
+      });
+
+      const widths = excelColumnWidths(data,merges,s);
+      widths.forEach((w,c)=>{ ws.getColumn(c+1).width = w; });
+
+      data.forEach((row,r)=>{
+        const excelRow = ws.getRow(r+1);
+        excelRow.height = r<s.headerRows
+          ? Math.max(21,s.fontSize*2.15)
+          : Math.max(20,s.rowHeight*2.83465);
+        row.forEach((value,c)=>{
+          ws.getCell(r+1,c+1).value = String(value ?? "");
+        });
+      });
+
+      (merges || []).forEach(m=>{
+        ws.mergeCells(m.s.r+1,m.s.c+1,m.e.r+1,m.e.c+1);
+      });
+
+      const autoAligns = columnAlignments(data,Array.from({length:data[0].length},(_,i)=>i));
+      for(let r=0;r<data.length;r++){
+        for(let c=0;c<data[r].length;c++){
+          const merge = findMerge(merges,r,c);
+          if(merge && (merge.s.r!==r || merge.s.c!==c)) continue;
+          const isHeader = r<s.headerRows;
+          const isMerged = !!merge;
+          const valueR = merge ? merge.s.r : r;
+          const valueC = merge ? merge.s.c : c;
+          const cell = ws.getCell(r+1,c+1);
+          const align = resolveCellAlignment(
+            valueR,valueC,autoAligns[c] || "left",s,sourceStyles,isHeader,isMerged
+          );
+
+          cell.alignment = {
+            horizontal:align,
+            vertical:"middle",
+            wrapText:true,
+            shrinkToFit:false
+          };
+          excelCellFontAndValue(
+            cell,data[valueR]?.[valueC] ?? "",s,sourceStyleAt(sourceStyles,valueR,valueC),isHeader
+          );
+          styleExcelCell(cell,{mode:s.mode,isHeader,isMerged});
+        }
+      }
+
+      ws.pageSetup = {
+        paperSize:9,
+        orientation:s.orientation,
+        fitToPage:true,
+        fitToWidth:1,
+        fitToHeight:0,
+        horizontalCentered:true,
+        margins:{left:.35,right:.35,top:.5,bottom:.5,header:.2,footer:.2}
+      };
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer],{
+        type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${safeFilename(s.title || "表格")}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},150);
+      setStatus(`Excel 已建立：欄寬、合併儲存格與垂直置中均已寫入。`);
+    }catch(err){
+      console.error(err);
+      setStatus(`Excel 匯出失敗：${err?.message || err}`,true);
+    }
+  }
+
+  function csvEscape(v){
+    const s = String(v ?? "");
+    return /[",\n]/.test(s)
+      ? `"${s.replace(/"/g,'""')}"`
+      : s;
+  }
+
+  function exportCsv(){
+    const data = outputData();
+    if(!data.length) return;
+
+    const csv =
+      "\ufeff" +
+      data.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+
+    const blob =
+      new Blob([csv],{type:"text/csv;charset=utf-8"});
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download =
+      `${safeFilename(getSettings().title || "表格")}.csv`;
+
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(()=>{
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    },100);
+  }
+
+  function printDocument(){
+    render();
+    requestAnimationFrame(()=>window.print());
+  }
+
+  function pptBorderNone(){
+    return {
+      type:"none",
+      pt:0,
+      color:"FFFFFF"
+    };
+  }
+
+  function firstFontName(fontFamily){
+    const first = safeFontFamily(fontFamily)
+      .split(",")[0]
+      .trim()
+      .replace(/^["']|["']$/g,"");
+    return first || "";
+  }
+
+  function cjkChar(ch){
+    return /[\u3000-\u9fff\u3040-\u30ff\uac00-\ud7af]/.test(ch);
+  }
+
+  function mixedPptRuns(text){
+    const chars = [...String(text ?? "")];
+    if(!chars.length) return [{text:"",options:{fontFace:"Times New Roman"}}];
+
+    const runs = [];
+    let buf = "";
+    let current = null;
+
+    const flush = ()=>{
+      if(!buf) return;
+      runs.push({
+        text:buf,
+        options:{fontFace:current ? "DFKai-SB" : "Times New Roman"}
+      });
+      buf = "";
+    };
+
+    chars.forEach(ch=>{
+      const isCjk = cjkChar(ch);
+      if(current===null) current=isCjk;
+      if(isCjk!==current){
+        flush();
+        current=isCjk;
+      }
+      buf += ch;
+    });
+    flush();
+    return runs;
+  }
+
+  function pptDefaultFontFace(s){
+    return s.fontMode==="sans" ? "Microsoft JhengHei" : "Times New Roman";
+  }
+
+  function applyPptCellFont(cell,text,s,sourceStyle){
+    if(s.fontMode==="mixed"){
+      cell.text = mixedPptRuns(text);
+      return cell;
+    }
+
+    if(s.fontMode==="source"){
+      const face = firstFontName(sourceStyle?.fontFamily || "");
+      if(face) cell.options.fontFace = face;
+      cell.text = String(text ?? "");
+      return cell;
+    }
+
+    cell.options.fontFace = "Microsoft JhengHei";
+    cell.text = String(text ?? "");
+    return cell;
+  }
+
+  function academicCell(
+    text,
+    {
+      header=false,
+      first=false,
+      last=false,
+      align="left"
+    }={}
+  ){
+    const none = pptBorderNone();
+
+    const top = (header || first)
+      ? {type:"solid",pt:1.2,color:"111111"}
+      : none;
+
+    const bottom = header
+      ? {type:"solid",pt:.8,color:"111111"}
+      : (
+          last
+            ? {type:"solid",pt:1.2,color:"111111"}
+            : none
+        );
+
+    return {
+      text:String(text ?? ""),
+      options:{
+        border:[top,none,bottom,none],
+        fill:"FFFFFF",
+        color:"111111",
+        bold:header,
+        align,
+        valign:"middle",
+        margin:[4,6,4,6]
+      }
+    };
+  }
+
+  function cleanCell(text,{header=false,align="left"}={}){
+    const none = pptBorderNone();
+    return {
+      text:String(text ?? ""),
+      options:{
+        border:header
+          ? [
+              {type:"solid",pt:1.15,color:"7A8793"},
+              none,
+              {type:"solid",pt:.75,color:"AAB4BD"},
+              none
+            ]
+          : [none,none,{type:"solid",pt:.4,color:"E1E6EA"},none],
+        fill:{color:"FFFFFF"},
+        color:"1F2933",
+        bold:header,
+        align,
+        valign:"middle",
+        margin:[5,7,5,7]
+      }
+    };
+  }
+
+  function softCell(text,{header=false,align="left"}={}){
+    return {
+      text:String(text ?? ""),
+      options:{
+        border:{type:"solid",pt:.45,color:header ? "C9D0D6" : "DBE0E5"},
+        fill:{color:header ? "F1F3F5" : "FFFFFF"},
+        color:"202830",
+        bold:header,
+        align,
+        valign:"middle",
+        margin:[5,7,5,7]
+      }
+    };
+  }
+
+  function ruleCell(text,{header=false,align="left"}={}){
+    const none = pptBorderNone();
+    return {
+      text:String(text ?? ""),
+      options:{
+        border:header
+          ? [
+              {type:"solid",pt:1.45,color:"4A6A86"},
+              none,
+              {type:"solid",pt:.8,color:"7890A4"},
+              none
+            ]
+          : [none,none,{type:"solid",pt:.4,color:"DFE5EA"},none],
+        fill:{color:header ? "F7F9FB" : "FFFFFF"},
+        color:header ? "25445F" : "22303C",
+        bold:header,
+        align,
+        valign:"middle",
+        margin:[5,7,5,7]
+      }
+    };
+  }
+
+  function regularPptCell(style,text,opts){
+    if(style==="soft") return softCell(text,opts);
+    if(style==="rule") return ruleCell(text,opts);
+    return cleanCell(text,opts);
+  }
+
+  function buildPptTableRows(data,rowIndices,cols,merges,styles,s,h){
+    const aligns = columnAlignments(data,cols);
+
+    return rowIndices.map((sourceR,localR)=>{
+      const row = [];
+
+      cols.forEach((c,j)=>{
+        const merge = findMerge(merges,sourceR,c);
+        let valueR = sourceR;
+        let valueC = c;
+        let rowspan = 1;
+        let colspan = 1;
+
+        if(merge){
+          const info = visibleMergeInfo(merge,rowIndices,cols,sourceR,c);
+          if(!info?.anchor) return;
+          valueR = merge.s.r;
+          valueC = merge.s.c;
+          rowspan = info.rowspan;
+          colspan = info.colspan;
+        }
+
+        const isHeader = sourceR < h;
+        const align = resolveCellAlignment(
+          valueR,valueC,aligns[j],s,styles,isHeader,!!merge
+        );
+        const text = data[valueR]?.[valueC] ?? "";
+        const first = localR===0;
+        const last = localR===rowIndices.length-1;
+
+        let cell = s.pptStyle==="academic"
+          ? academicCell(text,{header:isHeader,first,last,align})
+          : regularPptCell(s.pptStyle,text,{header:isHeader,align});
+
+        if(rowspan>1) cell.options.rowspan = rowspan;
+        if(colspan>1) cell.options.colspan = colspan;
+
+        cell = applyPptCellFont(
+          cell,text,s,sourceStyleAt(styles,valueR,valueC)
+        );
+        row.push(cell);
+      });
+
+      return row;
+    });
+  }
+
+  async function exportPptx(){
+    const model = outputModel();
+    const {data,merges,sourceStyles} = model;
+    const s = getSettings();
+
+    if(!data.length) return;
+
+    if(typeof window.PptxGenJS !== "function"){
+      setStatus(
+        "PowerPoint 元件尚未載入，請確認網路連線後再試。",
+        true
+      );
+      return;
+    }
+
+    try{
+      setStatus("正在建立 PowerPoint…");
+
+      const pptx = new PptxGenJS();
+      pptx.layout = "LAYOUT_WIDE";
+      pptx.author = "貼上表格排版器";
+      pptx.subject = "Table export";
+      pptx.title = s.title || "表格";
+      pptx.lang = "zh-TW";
+
+      const pages = buildPptPages(data,s,merges);
+      const h = Math.min(s.headerRows,data.length);
+
+      pages.forEach((p,idx)=>{
+        const slide = pptx.addSlide();
+        slide.background = {color:"FFFFFF"};
+
+        const titleY = .42;
+        const tableY =
+          s.showTitle
+            ? (s.subtitle ? 1.38 : 1.12)
+            : .48;
+
+        if(s.showTitle){
+          const titleText = `${s.title || "表格"}${idx ? `（續${idx}）` : ""}`;
+          slide.addText(
+            s.fontMode==="sans" ? titleText : mixedPptRuns(titleText),
+            {
+              x:.65,
+              y:titleY,
+              w:12.05,
+              h:.42,
+              fontFace:pptDefaultFontFace(s),
+              fontSize:s.pptStyle==="academic" ? 18 : 22,
+              bold:true,
+              color:"18212B",
+              margin:0
+            }
+          );
+
+          if(s.subtitle){
+            slide.addText(
+              s.fontMode==="sans" ? s.subtitle : mixedPptRuns(s.subtitle),
+              {
+                x:.65,
+                y:.9,
+                w:12.05,
+                h:.28,
+                fontFace:pptDefaultFontFace(s),
+                fontSize:10.5,
+                color:"64748B",
+                margin:0
+              }
+            );
+          }
+        }
+
+        const weights = columnWeights(data,p.cols,s.mode,merges);
+        const sum = weights.reduce((a,b)=>a+b,0);
+        const tableW = 12.0;
+        const colW = weights.map(w=>tableW*w/sum);
+        const rowIndices = [
+          ...Array.from({length:h},(_,i)=>i),
+          ...p.rows.map((_,ri)=>p.bodyStart+ri)
+        ];
+        const rows = buildPptTableRows(
+          data,rowIndices,p.cols,merges,sourceStyles,s,h
+        );
+
+        slide.addTable(
+          rows,
+          {
+            x:.65,
+            y:tableY,
+            w:tableW,
+            colW,
+            fontFace:pptDefaultFontFace(s),
+            fontSize:s.pptStyle==="academic" ? 11.5 : 12,
+            color:"1F2937",
+            valign:"middle",
+            margin:0
+          }
+        );
+
+        slide.addText(
+          String(idx+1),
+          {
+            x:12.15,
+            y:7.08,
+            w:.5,
+            h:.18,
+            fontFace:"Times New Roman",
+            fontSize:7.5,
+            color:"94A3B8",
+            align:"right",
+            margin:0
+          }
+        );
+      });
+
+      const pptSuffix = {clean:"簡約白底",soft:"淡灰框線",rule:"細藍線",academic:"學術表格"};
+      await pptx.writeFile({
+        fileName:
+          `${safeFilename(s.title || "表格")}_${pptSuffix[s.pptStyle] || pptSuffix.clean}.pptx`,
+        compression:true
+      });
+
+      setStatus(
+        `PowerPoint 已建立：${pptSuffix[s.pptStyle] || pptSuffix.clean}，${pages.length} 張投影片${merges.length ? `，保留 ${merges.length} 個合併區域` : ""}。`
+      );
+    }catch(err){
+      console.error(err);
+      setStatus(
+        `PowerPoint 匯出失敗：${err?.message || err}`,
+        true
+      );
+    }
+  }
+
+  els.pasteBox.addEventListener("paste",e=>{
+    e.preventDefault();
+
+    const html =
+      e.clipboardData?.getData("text/html") || "";
+
+    const text =
+      e.clipboardData?.getData("text/plain") || "";
+
+    let parsed = {data:[],merges:[],sourceStyles:{}};
+
+    if(html) parsed = parseHtml(html);
+    if(!parsed.data.length){
+      parsed = {data:parsePlainText(text),merges:[],sourceStyles:{}};
+    }
+
+    if(!parsed.data.length){
+      setStatus(
+        "沒有讀到表格內容，請重新複製後再貼上。",
+        true
+      );
+      return;
+    }
+
+    setData(parsed);
+  });
+
+  els.pasteBox.addEventListener("keydown",e=>{
+    const key = e.key.toLowerCase();
+    const paste =
+      (e.ctrlKey || e.metaKey) && key==="v";
+    const selectAll =
+      (e.ctrlKey || e.metaKey) && key==="a";
+
+    if(!paste && !selectAll && key!=="tab"){
+      e.preventDefault();
+    }
+  });
+
+  els.mode.addEventListener("change",()=>{
+    applyModeDefaults();
+    updateModeUI();
+    if(state.data.length) render();
+  });
+
+  els.pptStyle.addEventListener("change",()=>{
+    updateModeUI();
+    if(state.data.length) render();
+  });
+
+  els.clearBtn.addEventListener("click",clearAll);
+  els.refreshBtn.addEventListener("click",render);
+  els.xlsxBtn.addEventListener("click",exportXlsx);
+  els.csvBtn.addEventListener("click",exportCsv);
+  els.pptxBtn.addEventListener("click",exportPptx);
+
+  els.pdfBtn.addEventListener("click",()=>{
+    setStatus(
+      "PDF：已開啟列印視窗，目的地選『另存為 PDF』即可。"
+    );
+    printDocument();
+  });
+
+  els.printBtn.addEventListener(
+    "click",
+    printDocument
+  );
+
+  [
+    els.orientation,
+    els.headerRows,
+    els.maxCols,
+    els.repeatCols,
+    els.fontSize,
+    els.rowHeight,
+    els.fontMode,
+    els.alignMode,
+    els.title,
+    els.subtitle,
+    els.showTitle,
+    els.addNo,
+    els.addSign,
+    els.addNote
+  ].forEach(el=>{
+    el.addEventListener(
+      "change",
+      ()=>state.data.length && render()
+    );
+  });
+
+  els.orientation.addEventListener("change",()=>{
+    if(
+      els.orientation.value==="portrait" &&
+      parseInt(els.maxCols.value || "0",10)>8 &&
+      els.mode.value==="attendance"
+    ){
+      els.maxCols.value="8";
+    }
+
+    if(
+      els.orientation.value==="landscape" &&
+      parseInt(els.maxCols.value || "0",10)===8 &&
+      els.mode.value==="attendance"
+    ){
+      els.maxCols.value="12";
+    }
+
+    if(state.data.length) render();
+  });
+
+  updateModeUI();
+  updateButtons();
+})();
+</script>
+</body>
+</html>
