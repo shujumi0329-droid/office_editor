@@ -23,15 +23,30 @@ test('admin exposes token lock, package inputs, metadata fields and publish acti
   assert.doesNotMatch(html, /(?:src|href)="\/(?!\/)/);
 });
 
+test('brand logos have static image sources and do not depend on JavaScript to appear', async () => {
+  const publicHtml = await text('../index.html');
+  const adminHtml = await text('../admin/index.html');
+  assert.match(publicHtml, /<img[^>]+src="\.\/assets\/brand\/torsio-toletana-logo\.webp"[^>]*>/);
+  assert.match(adminHtml, /<img[^>]+src="\.\.\/assets\/brand\/torsio-toletana-logo\.webp"[^>]*>/);
+});
+
+test('admin provides a direct GitHub fine-grained token creation link and Chinese setup steps', async () => {
+  const html = await text('../admin/index.html');
+  assert.match(html, /github\.com\/settings\/personal-access-tokens\/new/);
+  assert.match(html, /Contents/);
+  assert.match(html, /Read and write/);
+  assert.match(html, /office_editor/);
+});
+
 test('admin source never persists credentials in browser storage', async () => {
   const source = await text('../assets/admin.mjs');
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|document\.cookie/i);
   assert.doesNotMatch(source, /github_pat_[A-Za-z0-9_]+/);
 });
 
-test('brand module embeds an optimized copy of the supplied logo as a JPEG data URI', async () => {
+test('brand module contains only runtime helpers, while the primary logo is served as a static asset', async () => {
   const source = await text('../assets/brand.mjs');
-  assert.match(source, /data:image\/jpeg;base64,/);
+  assert.doesNotMatch(source, /data:image\/jpeg;base64,/);
 });
 
 test('initial catalog is a valid empty catalog', async () => {
