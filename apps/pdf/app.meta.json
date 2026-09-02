@@ -1,0 +1,12 @@
+{
+  "id": "pdf",
+  "name": "PDF 頁面工作台",
+  "description": "整理pdf",
+  "category": "Office",
+  "entry": "PDF 頁面工作台.html",
+  "icon": "",
+  "version": "1.0.0",
+  "featured": false,
+  "publishedAt": "2026-09-02T07:12:42.137Z",
+  "updatedAt": "2026-09-02T07:12:42.137Z"
+}

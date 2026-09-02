@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF 頁面工作台</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f3f5f8;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --text: #172033;
+      --muted: #667085;
+      --line: #d7dde8;
+      --accent: #315efb;
+      --accent-2: #2448c9;
+      --danger: #c93737;
+      --danger-bg: #fff1f1;
+      --shadow: 0 10px 28px rgba(20, 35, 70, 0.10);
+      --radius: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #10131a;
+        --panel: #181d27;
+        --panel-2: #202633;
+        --text: #ecf0f8;
+        --muted: #a4aec0;
+        --line: #343d4d;
+        --accent: #7da2ff;
+        --accent-2: #a9c0ff;
+        --danger: #ff8888;
+        --danger-bg: #3a2024;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+    .app {
+      width: min(1500px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: clamp(1.45rem, 2.4vw, 2rem);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .privacy-badge {
+      flex: 0 0 auto;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .drop-zone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 112px;
+      padding: 18px;
+      border: 2px dashed var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      text-align: center;
+      transition: border-color .15s ease, background .15s ease, transform .15s ease;
+    }
+
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--panel) 88%, var(--accent) 12%);
+      transform: translateY(-1px);
+    }
+
+    .drop-zone strong { display: block; margin-bottom: 4px; }
+    .drop-zone small { color: var(--muted); }
+
+    .button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 11px;
+      background: var(--panel);
+      color: var(--text);
+      line-height: 1.15;
+      transition: background .12s ease, border-color .12s ease, transform .08s ease;
+    }
+
+    .button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--panel-2);
+    }
+
+    .button:active:not(:disabled) { transform: translateY(1px); }
+    .button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .button.primary:hover:not(:disabled) { background: var(--accent-2); }
+    .button.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+    .button.danger:hover:not(:disabled) { background: var(--danger-bg); }
+    .button.small { padding: 6px 8px; font-size: 0.82rem; }
+
+    .controls {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 14px 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-row + .control-row {
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px solid var(--line);
+    }
+
+    .range-box {
+      display: flex;
+      flex: 1 1 320px;
+      min-width: 250px;
+      gap: 7px;
+    }
+
+    .text-input {
+      min-width: 0;
+      flex: 1 1 auto;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 8px 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      outline: none;
+    }
+
+    .text-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 18px;
+      margin: 12px 2px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .summary strong { color: var(--text); }
+
+    .pages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 48px 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .page-card {
+      position: relative;
+      overflow: hidden;
+      border: 2px solid transparent;
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 5px 16px rgba(25, 40, 75, 0.08);
+      transition: border-color .12s ease, transform .12s ease, opacity .12s ease;
+    }
+
+    .page-card:hover { transform: translateY(-2px); }
+    .page-card.selected { border-color: var(--accent); }
+    .page-card.dragging { opacity: 0.42; }
+    .page-card.drag-target { outline: 3px solid color-mix(in srgb, var(--accent) 65%, transparent); outline-offset: 2px; }
+
+    .thumb-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 230px;
+      padding: 12px;
+      background:
+        linear-gradient(45deg, color-mix(in srgb, var(--line) 30%, transparent) 25%, transparent 25%) 0 0 / 16px 16px,
+        linear-gradient(-45deg, color-mix(in srgb, var(--line) 30%, transparent) 25%, transparent 25%) 0 8px / 16px 16px,
+        linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--line) 30%, transparent) 75%) 8px -8px / 16px 16px,
+        linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--line) 30%, transparent) 75%) -8px 0 / 16px 16px;
+    }
+
+    .thumb {
+      display: block;
+      max-width: 100%;
+      max-height: 260px;
+      object-fit: contain;
+      background: white;
+      box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    }
+
+    .thumb-loading {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .page-select {
+      position: absolute;
+      top: 9px;
+      left: 9px;
+      z-index: 3;
+      width: 21px;
+      height: 21px;
+      accent-color: var(--accent);
+    }
+
+    .drag-handle {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 3;
+      padding: 5px 7px;
+      border: 1px solid rgba(0,0,0,.13);
+      border-radius: 7px;
+      background: rgba(255,255,255,.90);
+      color: #333;
+      font-size: 0.82rem;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .card-info { padding: 10px; border-top: 1px solid var(--line); }
+    .page-title { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
+    .source-name { margin-top: 4px; color: var(--muted); font-size: 0.77rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rotation-label { color: var(--muted); font-size: 0.76rem; font-weight: 500; }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-top: 9px;
+    }
+
+    .card-actions .button { padding: 6px 4px; }
+
+    .busy-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      background: rgba(15, 20, 30, 0.48);
+      backdrop-filter: blur(3px);
+    }
+
+    .busy-overlay.show { display: grid; }
+
+    .busy-card {
+      min-width: min(360px, calc(100vw - 32px));
+      padding: 22px;
+      border-radius: 14px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .spinner {
+      width: 35px;
+      height: 35px;
+      margin: 0 auto 12px;
+      border: 4px solid var(--line);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 110;
+      max-width: min(440px, calc(100vw - 36px));
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+
+    .help {
+      margin-top: 16px;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.65;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    @media (max-width: 680px) {
+      .app { padding: 12px; }
+      .topbar { flex-direction: column; }
+      .privacy-badge { align-self: flex-start; }
+      .controls { position: static; }
+      .pages-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
+      .thumb-wrap { min-height: 190px; padding: 9px; }
+      .range-box { flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>PDF 頁面工作台</h1>
+        <p class="subtitle">預覽、排序、刪頁、旋轉、合併、拆分，全部在瀏覽器內完成。</p>
+      </div>
+      <div class="privacy-badge">本機處理，不上傳伺服器</div>
+    </header>
+
+    <section id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="選擇或拖曳 PDF 檔案">
+      <div>
+        <strong>拖曳一個或多個 PDF 到這裡</strong>
+        <small>或按此選檔；再次加入檔案即為合併</small><br /><br />
+        <button id="openButton" class="button primary" type="button">開啟 / 加入 PDF</button>
+        <input id="fileInput" type="file" accept="application/pdf,.pdf" multiple hidden />
+      </div>
+    </section>
+
+    <section class="controls" aria-label="PDF 操作工具列">
+      <div class="control-row">
+        <button id="selectAllButton" class="button" type="button">全選</button>
+        <button id="clearSelectionButton" class="button" type="button">取消選取</button>
+        <button id="invertSelectionButton" class="button" type="button">反向選取</button>
+        <button id="moveLeftButton" class="button" type="button">所選前移</button>
+        <button id="moveRightButton" class="button" type="button">所選後移</button>
+        <button id="rotateLeftButton" class="button" type="button">所選左轉 90°</button>
+        <button id="rotateRightButton" class="button" type="button">所選右轉 90°</button>
+        <button id="deleteButton" class="button danger" type="button">刪除所選</button>
+      </div>
+
+      <div class="control-row">
+        <div class="range-box">
+          <input id="selectionRange" class="text-input" type="text" placeholder="依目前頁序選取，例如：1-3, 6, 9-" aria-label="頁碼範圍" />
+          <button id="selectRangeButton" class="button" type="button">套用頁碼選取</button>
+        </div>
+        <button id="exportAllButton" class="button primary" type="button">匯出完整 PDF</button>
+        <button id="exportSelectedButton" class="button" type="button">匯出所選 PDF</button>
+      </div>
+
+      <div class="control-row">
+        <div class="range-box">
+          <input id="splitRange" class="text-input" type="text" placeholder="拆分區段：1-3 | 4-6 | 7-；留白則每頁一檔" aria-label="拆分範圍" />
+          <button id="splitButton" class="button" type="button">拆分為 ZIP</button>
+        </div>
+        <button id="resetButton" class="button danger" type="button">清空全部</button>
+      </div>
+    </section>
+
+    <div class="summary" aria-live="polite">
+      <span>來源檔案：<strong id="sourceCount">0</strong></span>
+      <span>目前頁數：<strong id="pageCount">0</strong></span>
+      <span>已選頁數：<strong id="selectedCount">0</strong></span>
+      <span id="statusText">尚未載入 PDF</span>
+    </div>
+
+    <section id="pagesGrid" class="pages-grid" aria-label="PDF 頁面縮圖">
+      <div class="empty-state">載入 PDF 後，每一頁會在此顯示為可拖曳的縮圖。</div>
+    </section>
+
+    <aside class="help">
+      <strong>操作說明：</strong>
+      拖曳縮圖可改變頁序；縮圖右下方按鈕可單頁移動、旋轉與刪除。
+      頁碼範圍依「目前排列順序」計算，支援 <code>1-3, 6, 9-</code>。
+      拆分區段使用直線分隔，例如 <code>1-3 | 4,6 | 7-</code>；留白則每頁各自輸出一個 PDF，並包成 ZIP。
+    </aside>
+  </main>
+
+  <div id="busyOverlay" class="busy-overlay" aria-hidden="true">
+    <div class="busy-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="busyText">處理中…</div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- 固定版本，避免 CDN 更新造成相容性變動。 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <script>
+    "use strict";
+
+    const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+
+    const { PDFDocument, degrees } = PDFLib;
+
+    const state = {
+      sources: new Map(),
+      pages: [],
+      selected: new Set(),
+      thumbnailCache: new Map(),
+      draggedUid: null,
+      renderGeneration: 0,
+      busy: false,
+    };
+
+    const els = {
+      dropZone: document.getElementById("dropZone"),
+      openButton: document.getElementById("openButton"),
+      fileInput: document.getElementById("fileInput"),
+      pagesGrid: document.getElementById("pagesGrid"),
+      sourceCount: document.getElementById("sourceCount"),
+      pageCount: document.getElementById("pageCount"),
+      selectedCount: document.getElementById("selectedCount"),
+      statusText: document.getElementById("statusText"),
+      selectionRange: document.getElementById("selectionRange"),
+      splitRange: document.getElementById("splitRange"),
+      busyOverlay: document.getElementById("busyOverlay"),
+      busyText: document.getElementById("busyText"),
+      toast: document.getElementById("toast"),
+      selectAllButton: document.getElementById("selectAllButton"),
+      clearSelectionButton: document.getElementById("clearSelectionButton"),
+      invertSelectionButton: document.getElementById("invertSelectionButton"),
+      moveLeftButton: document.getElementById("moveLeftButton"),
+      moveRightButton: document.getElementById("moveRightButton"),
+      rotateLeftButton: document.getElementById("rotateLeftButton"),
+      rotateRightButton: document.getElementById("rotateRightButton"),
+      deleteButton: document.getElementById("deleteButton"),
+      selectRangeButton: document.getElementById("selectRangeButton"),
+      exportAllButton: document.getElementById("exportAllButton"),
+      exportSelectedButton: document.getElementById("exportSelectedButton"),
+      splitButton: document.getElementById("splitButton"),
+      resetButton: document.getElementById("resetButton"),
+    };
+
+    let toastTimer = null;
+
+    function uid(prefix = "id") {
+      if (globalThis.crypto?.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    function normalizeRotation(angle) {
+      return ((Number(angle) % 360) + 360) % 360;
+    }
+
+    function sanitizeFilename(name) {
+      return String(name || "pdf")
+        .replace(/\.pdf$/i, "")
+        .replace(/[\\/:*?"<>|\x00-\x1F]/g, "_")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 90) || "pdf";
+    }
+
+    function setBusy(isBusy, message = "處理中…") {
+      state.busy = isBusy;
+      els.busyText.textContent = message;
+      els.busyOverlay.classList.toggle("show", isBusy);
+      els.busyOverlay.setAttribute("aria-hidden", String(!isBusy));
+      updateButtons();
+    }
+
+    function showToast(message, isError = false) {
+      clearTimeout(toastTimer);
+      els.toast.textContent = message;
+      els.toast.classList.toggle("error", isError);
+      els.toast.classList.add("show");
+      toastTimer = setTimeout(() => els.toast.classList.remove("show"), 3200);
+    }
+
+    function updateSummary() {
+      els.sourceCount.textContent = String(state.sources.size);
+      els.pageCount.textContent = String(state.pages.length);
+      els.selectedCount.textContent = String(state.selected.size);
+      els.statusText.textContent = state.pages.length
+        ? "拖曳縮圖可排序；匯出時會套用目前頁序與旋轉角度。"
+        : "尚未載入 PDF";
+      updateButtons();
+    }
+
+    function updateButtons() {
+      const hasPages = state.pages.length > 0;
+      const hasSelected = state.selected.size > 0;
+      const disabledAll = state.busy;
+
+      [
+        els.selectAllButton, els.clearSelectionButton, els.invertSelectionButton,
+        els.selectRangeButton, els.exportAllButton, els.splitButton, els.resetButton
+      ].forEach((button) => { button.disabled = disabledAll || !hasPages; });
+
+      [
+        els.moveLeftButton, els.moveRightButton, els.rotateLeftButton,
+        els.rotateRightButton, els.deleteButton, els.exportSelectedButton
+      ].forEach((button) => { button.disabled = disabledAll || !hasSelected; });
+
+      els.openButton.disabled = disabledAll;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderGrid() {
+      state.renderGeneration += 1;
+      const generation = state.renderGeneration;
+
+      if (!state.pages.length) {
+        els.pagesGrid.innerHTML = '<div class="empty-state">載入 PDF 後，每一頁會在此顯示為可拖曳的縮圖。</div>';
+        updateSummary();
+        return;
+      }
+
+      els.pagesGrid.innerHTML = state.pages.map((item, index) => {
+        const selected = state.selected.has(item.uid);
+        const source = state.sources.get(item.sourceId);
+        const sourceName = source?.name || "未知檔案";
+        return `
+          <article class="page-card${selected ? " selected" : ""}" draggable="true" data-uid="${item.uid}" aria-label="目前第 ${index + 1} 頁">
+            <div class="thumb-wrap">
+              <input class="page-select" type="checkbox" ${selected ? "checked" : ""} aria-label="選取目前第 ${index + 1} 頁" />
+              <span class="drag-handle" title="拖曳排序">拖曳</span>
+              <span class="thumb-loading">縮圖載入中…</span>
+              <img class="thumb" alt="目前第 ${index + 1} 頁預覽" hidden />
+            </div>
+            <div class="card-info">
+              <div class="page-title">
+                <span>第 ${index + 1} 頁</span>
+                <span class="rotation-label">旋轉 ${normalizeRotation(item.rotationDelta)}°</span>
+              </div>
+              <div class="source-name" title="${escapeHtml(sourceName)}">來源：${escapeHtml(sourceName)} / 原第 ${item.sourcePageIndex + 1} 頁</div>
+              <div class="card-actions">
+                <button class="button small" data-action="left" type="button" title="向前移一頁">←</button>
+                <button class="button small" data-action="right" type="button" title="向後移一頁">→</button>
+                <button class="button small" data-action="rotate" type="button" title="右轉 90 度">↻</button>
+                <button class="button small danger" data-action="delete" type="button" title="刪除此頁">刪</button>
+              </div>
+            </div>
+          </article>`;
+      }).join("");
+
+      bindCardEvents();
+      updateSummary();
+      void renderThumbnails(generation);
+    }
+
+    function bindCardEvents() {
+      els.pagesGrid.querySelectorAll(".page-card").forEach((card) => {
+        const itemUid = card.dataset.uid;
+        const checkbox = card.querySelector(".page-select");
+
+        checkbox.addEventListener("change", () => {
+          setPageSelected(itemUid, checkbox.checked);
+        });
+
+        card.querySelectorAll("button[data-action]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const action = button.dataset.action;
+            if (action === "left") moveSingle(itemUid, -1);
+            if (action === "right") moveSingle(itemUid, 1);
+            if (action === "rotate") rotateSingle(itemUid, 90);
+            if (action === "delete") deleteSingle(itemUid);
+          });
+        });
+
+        card.addEventListener("click", (event) => {
+          if (event.target.closest("button, input, .drag-handle")) return;
+          setPageSelected(itemUid, !state.selected.has(itemUid));
+        });
+
+        card.addEventListener("dragstart", (event) => {
+          state.draggedUid = itemUid;
+          card.classList.add("dragging");
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", itemUid);
+        });
+
+        card.addEventListener("dragend", () => {
+          state.draggedUid = null;
+          els.pagesGrid.querySelectorAll(".page-card").forEach((el) => el.classList.remove("dragging", "drag-target"));
+        });
+
+        card.addEventListener("dragover", (event) => {
+          if (!state.draggedUid || state.draggedUid === itemUid) return;
+          event.preventDefault();
+          card.classList.add("drag-target");
+          event.dataTransfer.dropEffect = "move";
+        });
+
+        card.addEventListener("dragleave", () => card.classList.remove("drag-target"));
+
+        card.addEventListener("drop", (event) => {
+          if (!state.draggedUid || state.draggedUid === itemUid) return;
+          event.preventDefault();
+          card.classList.remove("drag-target");
+          reorderByDrop(state.draggedUid, itemUid);
+        });
+      });
+    }
+
+    async function renderThumbnails(generation) {
+      const queue = [...state.pages];
+      const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
+        while (queue.length && generation === state.renderGeneration) {
+          const item = queue.shift();
+          try {
+            const dataUrl = await getThumbnail(item);
+            if (generation !== state.renderGeneration) return;
+            const card = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(item.uid)}"]`);
+            if (!card) continue;
+            const img = card.querySelector(".thumb");
+            const loading = card.querySelector(".thumb-loading");
+            img.src = dataUrl;
+            img.hidden = false;
+            loading.hidden = true;
+          } catch (error) {
+            console.error(error);
+            const card = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(item.uid)}"]`);
+            if (card) card.querySelector(".thumb-loading").textContent = "無法產生縮圖";
+          }
+        }
+      });
+      await Promise.all(workers);
+    }
+
+    async function getThumbnail(item) {
+      const cacheKey = `${item.sourceId}:${item.sourcePageIndex}:${normalizeRotation(item.rotationDelta)}`;
+      if (state.thumbnailCache.has(cacheKey)) return state.thumbnailCache.get(cacheKey);
+
+      const source = state.sources.get(item.sourceId);
+      if (!source) throw new Error("找不到來源 PDF");
+      const page = await source.pdfjsDoc.getPage(item.sourcePageIndex + 1);
+      const rotation = normalizeRotation((page.rotate || 0) + item.rotationDelta);
+      const baseViewport = page.getViewport({ scale: 1, rotation });
+      const desiredWidth = 175;
+      const scale = desiredWidth / baseViewport.width;
+      const viewport = page.getViewport({ scale, rotation });
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d", { alpha: false });
+      canvas.width = Math.max(1, Math.floor(viewport.width * pixelRatio));
+      canvas.height = Math.max(1, Math.floor(viewport.height * pixelRatio));
+
+      await page.render({
+        canvasContext: context,
+        viewport,
+        transform: pixelRatio === 1 ? null : [pixelRatio, 0, 0, pixelRatio, 0, 0],
+        background: "rgb(255,255,255)",
+      }).promise;
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+      state.thumbnailCache.set(cacheKey, dataUrl);
+      return dataUrl;
+    }
+
+    function setPageSelected(itemUid, selected) {
+      if (selected) state.selected.add(itemUid);
+      else state.selected.delete(itemUid);
+
+      const card = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(itemUid)}"]`);
+      if (card) {
+        card.classList.toggle("selected", selected);
+        card.querySelector(".page-select").checked = selected;
+      }
+      updateSummary();
+    }
+
+    function selectAll() {
+      state.pages.forEach((item) => state.selected.add(item.uid));
+      renderGrid();
+    }
+
+    function clearSelection() {
+      state.selected.clear();
+      renderGrid();
+    }
+
+    function invertSelection() {
+      const next = new Set();
+      state.pages.forEach((item) => {
+        if (!state.selected.has(item.uid)) next.add(item.uid);
+      });
+      state.selected = next;
+      renderGrid();
+    }
+
+    function moveSingle(itemUid, direction) {
+      const index = state.pages.findIndex((item) => item.uid === itemUid);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= state.pages.length) return;
+      [state.pages[index], state.pages[target]] = [state.pages[target], state.pages[index]];
+      renderGrid();
+    }
+
+    function moveSelected(direction) {
+      if (!state.selected.size) return;
+      if (direction < 0) {
+        for (let i = 1; i < state.pages.length; i += 1) {
+          if (state.selected.has(state.pages[i].uid) && !state.selected.has(state.pages[i - 1].uid)) {
+            [state.pages[i - 1], state.pages[i]] = [state.pages[i], state.pages[i - 1]];
+          }
+        }
+      } else {
+        for (let i = state.pages.length - 2; i >= 0; i -= 1) {
+          if (state.selected.has(state.pages[i].uid) && !state.selected.has(state.pages[i + 1].uid)) {
+            [state.pages[i], state.pages[i + 1]] = [state.pages[i + 1], state.pages[i]];
+          }
+        }
+      }
+      renderGrid();
+    }
+
+    function reorderByDrop(dragUid, targetUid) {
+      const from = state.pages.findIndex((item) => item.uid === dragUid);
+      let to = state.pages.findIndex((item) => item.uid === targetUid);
+      if (from < 0 || to < 0 || from === to) return;
+      const [moved] = state.pages.splice(from, 1);
+      if (from < to) to -= 1;
+      state.pages.splice(to, 0, moved);
+      renderGrid();
+    }
+
+    function rotateSingle(itemUid, amount) {
+      const item = state.pages.find((page) => page.uid === itemUid);
+      if (!item) return;
+      item.rotationDelta = normalizeRotation(item.rotationDelta + amount);
+      renderGrid();
+    }
+
+    function rotateSelected(amount) {
+      state.pages.forEach((item) => {
+        if (state.selected.has(item.uid)) item.rotationDelta = normalizeRotation(item.rotationDelta + amount);
+      });
+      renderGrid();
+    }
+
+    function deleteSingle(itemUid) {
+      state.pages = state.pages.filter((item) => item.uid !== itemUid);
+      state.selected.delete(itemUid);
+      cleanupUnusedSources();
+      renderGrid();
+    }
+
+    function deleteSelected() {
+      if (!state.selected.size) return;
+      state.pages = state.pages.filter((item) => !state.selected.has(item.uid));
+      state.selected.clear();
+      cleanupUnusedSources();
+      renderGrid();
+      showToast("已刪除所選頁面");
+    }
+
+    function cleanupUnusedSources() {
+      const used = new Set(state.pages.map((item) => item.sourceId));
+      for (const id of state.sources.keys()) {
+        if (!used.has(id)) state.sources.delete(id);
+      }
+    }
+
+    function parsePageSpec(spec, totalPages) {
+      const text = String(spec || "").trim();
+      if (!text) return [];
+      const result = [];
+      const seen = new Set();
+      const tokens = text.split(/[，,]+/).map((part) => part.trim()).filter(Boolean);
+
+      for (const token of tokens) {
+        const rangeMatch = token.match(/^(\d*)\s*[-–—~～]\s*(\d*)$/);
+        if (rangeMatch) {
+          if (!rangeMatch[1] && !rangeMatch[2]) throw new Error(`無效範圍：${token}`);
+          let start = rangeMatch[1] ? Number(rangeMatch[1]) : 1;
+          let end = rangeMatch[2] ? Number(rangeMatch[2]) : totalPages;
+          if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < 1 || start > end) {
+            throw new Error(`無效範圍：${token}`);
+          }
+          start = Math.max(1, start);
+          end = Math.min(totalPages, end);
+          for (let page = start; page <= end; page += 1) {
+            if (!seen.has(page - 1)) {
+              seen.add(page - 1);
+              result.push(page - 1);
+            }
+          }
+          continue;
+        }
+
+        if (!/^\d+$/.test(token)) throw new Error(`無效頁碼：${token}`);
+        const page = Number(token);
+        if (page < 1 || page > totalPages) throw new Error(`頁碼超出範圍：${page}`);
+        if (!seen.has(page - 1)) {
+          seen.add(page - 1);
+          result.push(page - 1);
+        }
+      }
+      return result;
+    }
+
+    function applyRangeSelection() {
+      try {
+        const indices = parsePageSpec(els.selectionRange.value, state.pages.length);
+        if (!indices.length) throw new Error("請輸入頁碼範圍");
+        state.selected.clear();
+        indices.forEach((index) => state.selected.add(state.pages[index].uid));
+        renderGrid();
+        showToast(`已選取 ${indices.length} 頁`);
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    function parseSplitGroups(spec, totalPages) {
+      const text = String(spec || "").trim();
+      if (!text) return Array.from({ length: totalPages }, (_, index) => [index]);
+      const chunks = text.split(/[|｜\n]+/).map((part) => part.trim()).filter(Boolean);
+      if (!chunks.length) throw new Error("請輸入有效的拆分區段");
+      return chunks.map((chunk) => {
+        const group = parsePageSpec(chunk, totalPages);
+        if (!group.length) throw new Error(`空白拆分區段：${chunk}`);
+        return group;
+      });
+    }
+
+    async function addFiles(fileList) {
+      const files = Array.from(fileList || []).filter((file) => file.type === "application/pdf" || /\.pdf$/i.test(file.name));
+      if (!files.length) {
+        showToast("請選擇 PDF 檔案", true);
+        return;
+      }
+
+      setBusy(true, `正在載入 ${files.length} 個 PDF…`);
+      let addedPages = 0;
+      let failed = 0;
+
+      try {
+        for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+          const file = files[fileIndex];
+          setBusy(true, `載入 ${file.name}（${fileIndex + 1}/${files.length}）…`);
+          try {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const loadingTask = pdfjsLib.getDocument({ data: bytes.slice() });
+            const pdfjsDoc = await loadingTask.promise;
+            const sourceId = uid("source");
+            state.sources.set(sourceId, {
+              id: sourceId,
+              name: file.name,
+              bytes,
+              pdfjsDoc,
+              pageCount: pdfjsDoc.numPages,
+            });
+
+            for (let pageIndex = 0; pageIndex < pdfjsDoc.numPages; pageIndex += 1) {
+              state.pages.push({
+                uid: uid("page"),
+                sourceId,
+                sourcePageIndex: pageIndex,
+                rotationDelta: 0,
+              });
+              addedPages += 1;
+            }
+          } catch (error) {
+            failed += 1;
+            console.error(`無法載入 ${file.name}`, error);
+          }
+        }
+      } finally {
+        setBusy(false);
+        els.fileInput.value = "";
+        renderGrid();
+      }
+
+      if (addedPages) showToast(`已加入 ${addedPages} 頁${failed ? `；${failed} 個檔案載入失敗` : ""}`);
+      else showToast("PDF 載入失敗；加密或損壞的檔案可能無法處理", true);
+    }
+
+    async function buildPdf(items) {
+      if (!items.length) throw new Error("沒有可匯出的頁面");
+      const out = await PDFDocument.create();
+      const loadedSources = new Map();
+
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        const source = state.sources.get(item.sourceId);
+        if (!source) throw new Error("來源 PDF 已不存在");
+
+        let sourceDoc = loadedSources.get(item.sourceId);
+        if (!sourceDoc) {
+          sourceDoc = await PDFDocument.load(source.bytes, { updateMetadata: false });
+          loadedSources.set(item.sourceId, sourceDoc);
+        }
+
+        const [copiedPage] = await out.copyPages(sourceDoc, [item.sourcePageIndex]);
+        const originalRotation = copiedPage.getRotation().angle || 0;
+        copiedPage.setRotation(degrees(normalizeRotation(originalRotation + item.rotationDelta)));
+        out.addPage(copiedPage);
+      }
+
+      out.setProducer("PDF 頁面工作台（pdf-lib）");
+      out.setModificationDate(new Date());
+      return out.save({ useObjectStreams: true });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function defaultOutputName(suffix = "已編輯") {
+      const firstSource = state.sources.values().next().value;
+      const base = sanitizeFilename(firstSource?.name || "PDF");
+      return `${base}_${suffix}.pdf`;
+    }
+
+    async function exportItems(items, filename) {
+      setBusy(true, `正在建立 ${filename}…`);
+      try {
+        const bytes = await buildPdf(items);
+        downloadBlob(new Blob([bytes], { type: "application/pdf" }), filename);
+        showToast(`已匯出 ${items.length} 頁`);
+      } catch (error) {
+        console.error(error);
+        const hint = /encrypted|password/i.test(String(error)) ? "（加密 PDF 暫不支援）" : "";
+        showToast(`匯出失敗${hint}：${error.message}`, true);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function splitToZip() {
+      setBusy(true, "正在準備拆分…");
+      try {
+        const groups = parseSplitGroups(els.splitRange.value, state.pages.length);
+        const zip = new JSZip();
+        const base = sanitizeFilename(state.sources.values().next().value?.name || "PDF");
+        const pad = String(groups.length).length;
+
+        for (let i = 0; i < groups.length; i += 1) {
+          const indices = groups[i];
+          const items = indices.map((index) => state.pages[index]);
+          setBusy(true, `建立拆分檔 ${i + 1}/${groups.length}…`);
+          const bytes = await buildPdf(items);
+          const label = String(i + 1).padStart(pad, "0");
+          const pageLabel = indices.length === 1
+            ? `p${indices[0] + 1}`
+            : `pages_${indices.map((index) => index + 1).join("-")}`;
+          zip.file(`${base}_${label}_${pageLabel}.pdf`, bytes);
+        }
+
+        setBusy(true, "正在壓縮 ZIP…");
+        const zipBlob = await zip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 6 },
+        });
+        downloadBlob(zipBlob, `${base}_拆分.zip`);
+        showToast(`已拆分為 ${groups.length} 個 PDF`);
+      } catch (error) {
+        console.error(error);
+        showToast(`拆分失敗：${error.message}`, true);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function resetAll() {
+      state.renderGeneration += 1;
+      for (const source of state.sources.values()) {
+        try { source.pdfjsDoc?.destroy?.(); } catch (_) { /* ignore */ }
+      }
+      state.sources.clear();
+      state.pages = [];
+      state.selected.clear();
+      state.thumbnailCache.clear();
+      els.selectionRange.value = "";
+      els.splitRange.value = "";
+      renderGrid();
+      showToast("已清空全部檔案");
+    }
+
+    els.openButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      els.fileInput.click();
+    });
+    els.dropZone.addEventListener("click", (event) => {
+      if (event.target === els.openButton) return;
+      els.fileInput.click();
+    });
+    els.dropZone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        els.fileInput.click();
+      }
+    });
+    els.fileInput.addEventListener("change", () => void addFiles(els.fileInput.files));
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      els.dropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        if (!state.draggedUid) els.dropZone.classList.add("dragover");
+      });
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+      els.dropZone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        els.dropZone.classList.remove("dragover");
+      });
+    });
+    els.dropZone.addEventListener("drop", (event) => {
+      if (state.draggedUid) return;
+      void addFiles(event.dataTransfer.files);
+    });
+
+    document.addEventListener("dragover", (event) => {
+      if (!state.draggedUid && event.dataTransfer?.types?.includes("Files")) event.preventDefault();
+    });
+    document.addEventListener("drop", (event) => {
+      if (!state.draggedUid && event.dataTransfer?.files?.length && !els.dropZone.contains(event.target)) {
+        event.preventDefault();
+        void addFiles(event.dataTransfer.files);
+      }
+    });
+
+    els.selectAllButton.addEventListener("click", selectAll);
+    els.clearSelectionButton.addEventListener("click", clearSelection);
+    els.invertSelectionButton.addEventListener("click", invertSelection);
+    els.moveLeftButton.addEventListener("click", () => moveSelected(-1));
+    els.moveRightButton.addEventListener("click", () => moveSelected(1));
+    els.rotateLeftButton.addEventListener("click", () => rotateSelected(-90));
+    els.rotateRightButton.addEventListener("click", () => rotateSelected(90));
+    els.deleteButton.addEventListener("click", deleteSelected);
+    els.selectRangeButton.addEventListener("click", applyRangeSelection);
+    els.selectionRange.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") applyRangeSelection();
+    });
+    els.exportAllButton.addEventListener("click", () => void exportItems(state.pages, defaultOutputName("已編輯")));
+    els.exportSelectedButton.addEventListener("click", () => {
+      const items = state.pages.filter((item) => state.selected.has(item.uid));
+      void exportItems(items, defaultOutputName("所選頁面"));
+    });
+    els.splitButton.addEventListener("click", () => void splitToZip());
+    els.resetButton.addEventListener("click", resetAll);
+
+    renderGrid();
+  </script>
+</body>
+</html>

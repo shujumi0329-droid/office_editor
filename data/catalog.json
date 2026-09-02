@@ -1,4 +1,19 @@
 {
   "schemaVersion": 1,
-  "apps": []
+  "apps": [
+    {
+      "id": "pdf",
+      "name": "PDF 頁面工作台",
+      "description": "整理pdf",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "PDF 頁面工作台.html",
+      "icon": "",
+      "publishedAt": "2026-09-02T07:12:42.137Z",
+      "updatedAt": "2026-09-02T07:12:42.137Z",
+      "launchPath": "apps/pdf/PDF 頁面工作台.html",
+      "iconPath": ""
+    }
+  ]
 }
