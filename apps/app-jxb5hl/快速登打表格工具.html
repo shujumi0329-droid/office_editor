@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>快速登打表格工具</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg:#f5f7fb;--panel:#fff;--ink:#162033;--muted:#657089;--line:#dce2ec;
+      --brand:#4f46e5;--brand2:#3730a3;--good:#067647;--warn:#b54708;--bad:#b42318;
+      --soft:#eef2ff;--soft2:#f8fafc;--chip:#edf2f7;--shadow:0 18px 46px rgba(15,23,42,.09);
+      --radius:18px;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --font:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}
+    body{margin:0;background:linear-gradient(180deg,#eef2ff 0,#f5f7fb 28rem);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55}
+    button,input,select,textarea{font:inherit}button{touch-action:manipulation}
+    .shell{max-width:1540px;margin:auto;padding:22px}
+    .hero{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.8fr);gap:16px;margin-bottom:16px}
+    .card,.heroPanel{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.98);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .heroPanel{padding:22px}.card{padding:16px;border-color:var(--line);box-shadow:0 10px 28px rgba(15,23,42,.06)}
+    h1{font-size:30px;line-height:1.2;margin:0 0 8px;letter-spacing:.02em}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:0 0 10px}
+    p{margin:0 0 9px}.muted{color:var(--muted)}.smallText{font-size:12px}.strong{font-weight:900}
+    .featureLine{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:var(--chip);padding:4px 9px;font-size:12px;font-weight:900;color:#334155}.pill.good{background:#dcfae6;color:#067647}.pill.warn{background:#fef0c7;color:#b54708}.pill.bad{background:#fee4e2;color:#b42318}.pill.blue{background:#dbeafe;color:#1d4ed8}.pill.purple{background:#ede9fe;color:#6d28d9}
+    .mainGrid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:16px;align-items:start}
+    .side{position:sticky;top:12px;display:grid;gap:14px}.workspace{display:grid;gap:16px;min-width:0}
+    .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.space{justify-content:space-between}.grow{flex:1;min-width:180px}
+    .btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;padding:9px 12px;font-weight:900;cursor:pointer;display:inline-flex;gap:7px;align-items:center;justify-content:center;text-decoration:none}
+    .btn:hover{border-color:#aab4c5;background:#f8fafc}.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}.btn.primary:hover{background:var(--brand2)}.btn.good{background:var(--good);border-color:var(--good);color:#fff}.btn.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}.btn.bad{background:#fef3f2;border-color:#fecdca;color:#b42318}.btn.small{padding:6px 9px;border-radius:10px;font-size:12px}.btn.icon{width:36px;height:36px;padding:0}.btn:disabled{opacity:.5;cursor:not-allowed}
+    input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:9px 10px;background:#fff;color:var(--ink);outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(79,70,229,.13)}textarea{min-height:86px;resize:vertical}
+    label{display:block;font-weight:900;margin-bottom:5px}.hint{font-size:12px;color:var(--muted);margin-top:4px}
+    .projectList{display:flex;gap:7px;flex-wrap:wrap}.projectBtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;font-weight:900;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.projectBtn.active{background:var(--soft);border-color:#a5b4fc;color:#3730a3}.projectMeta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.metaBox{border:1px solid var(--line);background:var(--soft2);border-radius:12px;padding:9px}.metaBox strong{display:block;font-size:18px}.metaBox span{font-size:11px;color:var(--muted);font-weight:800}
+    .dropZone{border:1.5px dashed #aab4c5;background:#f8fbff;border-radius:15px;padding:13px;text-align:center;transition:.18s}.dropZone.drag{border-color:var(--brand);background:var(--soft)}.dropZone.ready{border-color:#75e0a7;background:#f0fdf4}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar .spacer{flex:1}
+    .notice{border-left:4px solid var(--brand);background:#eff6ff;border-radius:10px;padding:9px 11px;color:#1849a9}.notice.good{border-left-color:var(--good);background:#ecfdf3;color:#05603a}.notice.warn{border-left-color:var(--warn);background:#fffaeb;color:#93370d}.notice.bad{border-left-color:var(--bad);background:#fef3f2;color:#912018}
+    .entryTop{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,1.25fr);gap:14px;margin-bottom:14px}.searchPanel,.smartPanel{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft2)}
+    .recordResults{display:grid;gap:7px;margin-top:8px;max-height:220px;overflow:auto}.recordItem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px}.recordItem:hover{border-color:#aab4c5}.recordTitle{font-weight:950}.recordSub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .formGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.fieldBox{border:1px solid var(--line);background:#fff;border-radius:14px;padding:11px;min-width:0}.fieldBox.keyField{border-color:#86efac;background:#f0fdf4}.fieldBox.dateField{border-color:#c4b5fd;background:#faf8ff}.fieldLabel{display:flex;gap:7px;align-items:center;justify-content:space-between}.fieldLabel label{margin:0;overflow:hidden;text-overflow:ellipsis}.fieldActions{display:flex;gap:4px;flex:none}.miniIcon{border:0;background:transparent;cursor:pointer;border-radius:8px;padding:3px 5px;color:#667085}.miniIcon:hover,.miniIcon.active{background:#eef2ff;color:#4338ca}.quickValues{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.quickChip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:850;color:#344054;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.quickChip:hover{background:var(--soft);border-color:#a5b4fc;color:#3730a3}.quickChip.top:before{content:'⚡';margin-right:3px}.learnNote{font-size:11px;color:var(--muted);margin-top:5px}.draftLine{margin-top:12px}
+    details.fold{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}details.fold>summary{list-style:none;cursor:pointer;padding:12px 14px;font-weight:950;display:flex;justify-content:space-between;gap:10px;align-items:center}details.fold>summary::-webkit-details-marker{display:none}details.fold>summary:after{content:'展開';font-size:11px;background:var(--soft);color:var(--brand);padding:3px 8px;border-radius:999px}details.fold[open]>summary:after{content:'收合'}.foldBody{border-top:1px solid var(--line);padding:13px}
+    .settingGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.settingRow{display:grid;grid-template-columns:minmax(130px,1fr) 145px 72px 72px;gap:7px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}.settingRow:last-child{border-bottom:0}.settingName{font-weight:900;overflow:hidden;text-overflow:ellipsis}.check{width:auto;margin:0 4px 0 0;vertical-align:middle}
+    .tableTools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.tableWrap{border:1px solid var(--line);border-radius:14px;overflow:auto;background:#fff;max-height:520px}.dataTable{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13px}.dataTable th,.dataTable td{border-bottom:1px solid var(--line);border-right:1px solid #eef1f5;padding:7px 9px;text-align:left;vertical-align:top;white-space:pre-wrap;min-width:110px;max-width:320px}.dataTable th{position:sticky;top:0;z-index:2;background:#f8fafc;color:#475467;font-size:12px}.dataTable th:first-child,.dataTable td:first-child{position:sticky;left:0;z-index:1;background:#fff;min-width:54px}.dataTable th:first-child{z-index:3;background:#f8fafc}.dataTable tr:hover td{background:#fbfdff}.dataTable tr:hover td:first-child{background:#fbfdff}.rowAction{display:flex;gap:4px}.empty{padding:28px;text-align:center;color:var(--muted)}
+    .customizeGrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.customPanel{border:1px solid var(--line);border-radius:13px;padding:12px;background:var(--soft2);min-width:0}.sortValueList,.outputFieldList{display:grid;gap:6px;margin-top:9px;max-height:310px;overflow:auto}.sortItem{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto;gap:7px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:7px;background:#fff;cursor:grab}.sortItem:active{cursor:grabbing}.sortItem.dragging{opacity:.45}.dragHandle{font-size:17px;color:#98a2b3;text-align:center;user-select:none}.sortLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:850}.sortCount{font-size:11px;color:var(--muted);font-weight:800;white-space:nowrap}.sortArrows{display:flex;gap:3px}.sortArrows .btn{min-width:28px;padding:4px 6px}.outputItem{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:7px 9px;background:#fff;font-weight:800}.outputItem input{flex:none}.outputItem span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.customEmpty{padding:14px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;background:#fff}
+    .statusBar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.statusBox{border:1px solid var(--line);border-radius:12px;padding:9px;background:#fff}.statusBox strong{display:block;font-size:19px}.statusBox span{font-size:11px;color:var(--muted);font-weight:800}
+    .footerLog{white-space:pre-wrap;background:#111827;color:#e5e7eb;border-radius:13px;padding:11px;font-family:var(--mono);font-size:11px;max-height:160px;overflow:auto}.hidden{display:none!important}.mono{font-family:var(--mono)}
+    .toast{position:fixed;right:20px;bottom:20px;z-index:50;background:#111827;color:#fff;border-radius:12px;padding:10px 13px;box-shadow:var(--shadow);max-width:min(430px,calc(100vw - 40px));opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}
+    .modalBackdrop{position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:40;display:grid;place-items:center;padding:18px}.modal{width:min(620px,100%);background:#fff;border-radius:18px;box-shadow:0 24px 80px rgba(15,23,42,.28);padding:18px}.modal h2{margin-bottom:14px}
+    @media(max-width:1150px){.mainGrid{grid-template-columns:1fr}.side{position:static}.formGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.entryTop{grid-template-columns:1fr}}
+    @media(max-width:720px){.shell{padding:12px}.hero{grid-template-columns:1fr}.formGrid,.settingGrid,.statusBar,.customizeGrid{grid-template-columns:1fr}.settingRow{grid-template-columns:1fr 1fr}.settingName{grid-column:1/-1}.toolbar .spacer{display:none}.btn{flex:1}.projectMeta{grid-template-columns:repeat(2,minmax(0,1fr))}.sortArrows .btn{flex:none}}
+    @media print{.side,.hero,.toolbar,.tableTools,.rowAction,.noPrint,details.fold{display:none!important}.mainGrid{display:block}.shell{padding:0}.card{box-shadow:none;border:0}.tableWrap{max-height:none;overflow:visible}.dataTable{width:100%}.dataTable th:first-child,.dataTable td:first-child{position:static}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="hero">
+    <div class="heroPanel">
+      <h1>快速登打表格工具</h1>
+      <p class="muted">每個匯入檔固定以第 1 列作為表頭；同名欄位直接銜接，新欄位依出現順序追加。日期底層一律以文字保存，方便民國／西元切換。</p>
+      <div class="featureLine">
+        <span class="pill purple">多檔連續銜接</span><span class="pill good">欄位自動聯集</span><span class="pill blue">日期純文字保存</span><span class="pill">快速登打／修改</span><span class="pill warn">XLSX・XLS・ODS・CSV</span>
+      </div>
+    </div>
+    <div class="heroPanel">
+      <h2>最快工作流</h2>
+      <p>① 上傳一個或多個表格　② 比對每個檔案第 1 列欄名並自動銜接　③ 用主鍵快速新增／修改，按 <b>Ctrl / ⌘ + Enter</b> 儲存。</p>
+      <p class="muted">同一主鍵會更新既有列；新主鍵會新增。新檔多出的欄位會自動加入，原有資料不被覆蓋。</p>
+      <div class="row"><button class="btn small" id="newBlankProjectTop">建立空白專案</button><button class="btn small" id="focusUpload">上傳表格</button></div>
+    </div>
+  </header>
+
+  <div class="mainGrid">
+    <aside class="side">
+      <section class="card">
+        <div class="row space"><h2>專案</h2><button class="btn small" id="newBlankProject">＋ 新增</button></div>
+        <div id="projectList" class="projectList"></div>
+        <div id="projectMeta" class="projectMeta"></div>
+        <div class="row" style="margin-top:10px"><button class="btn small" id="renameProject">重新命名</button><button class="btn small bad" id="deleteProject">刪除</button></div>
+      </section>
+
+      <section class="card" id="uploadCard">
+        <h2>載入表格</h2>
+        <div class="dropZone" id="dropZone">
+          <p class="strong">拖曳檔案到這裡</p>
+          <p class="muted smallText">可一次多選：XLSX / XLS / XLSM / XLSB / ODS / CSV / TSV / TXT</p>
+          <input id="tableFile" type="file" multiple accept=".xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.tsv,.txt" />
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label style="font-weight:700;margin:0"><input class="check" type="radio" name="loadMode" value="append" checked> 智慧銜接目前專案</label>
+          <label style="font-weight:700;margin:0"><input class="check" type="radio" name="loadMode" value="new"> 建立新專案</label>
+          <label style="font-weight:700;margin:0"><input class="check" type="radio" name="loadMode" value="replace"> 取代目前專案</label>
+        </div>
+        <div class="hint">每個檔案固定把第 1 列當表頭、第 2 列起當資料。「智慧銜接」逐欄比較表頭：同名欄位沿用；首次出現的欄名依原順序追加到最右側。</div>
+        <div id="xlsxWarn" class="notice warn hidden" style="margin-top:10px">試算表解析套件未載入；仍可使用 CSV / TSV / TXT。連網重新整理後可讀寫 Excel / ODS。</div>
+        <div id="importSummary" class="notice good hidden" style="margin-top:10px"></div>
+      </section>
+
+      <section class="card">
+        <h2>專案移轉</h2>
+        <div class="row"><button class="btn small" id="exportAllJson">匯出全部 JSON</button><button class="btn small" id="exportProjectJson">匯出本專案</button></div>
+        <label style="margin-top:9px">匯入 JSON</label>
+        <input id="importJson" type="file" accept=".json" />
+        <div class="hint">匯入時會合併專案；同 ID 專案會另存副本，避免覆蓋。</div>
+      </section>
+
+      <section class="card">
+        <h2>狀態</h2>
+        <div id="sideStatus" class="statusBar"></div>
+        <details class="fold" style="margin-top:10px"><summary>操作紀錄</summary><div class="foldBody"><div id="log" class="footerLog">尚未操作。</div></div></details>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <section class="card">
+        <div class="row space">
+          <div><h2>快速登打</h2><div id="activeProjectLead" class="muted">請先建立或載入專案。</div></div>
+          <div class="toolbar noPrint">
+            <button class="btn small" id="newRecord">清空 / 新增</button>
+            <button class="btn small" id="useLastRecord">沿用上一筆</button>
+            <button class="btn small" id="undoSave">復原上次儲存</button>
+            <button class="btn primary" id="saveRecord">儲存資料</button>
+          </div>
+        </div>
+
+        <div class="entryTop" id="entryTop">
+          <div class="searchPanel">
+            <label>搜尋／選取既有資料</label>
+            <input id="recordSearch" placeholder="輸入主鍵或任一欄位關鍵字" autocomplete="off" />
+            <div id="recordResults" class="recordResults"></div>
+          </div>
+          <div class="smartPanel">
+            <div class="row space"><div><b>智慧登打</b><div class="muted smallText">常用值會依使用次數與最近使用時間自動排序。</div></div><span class="pill purple">越用越順手</span></div>
+            <div class="settingGrid" style="margin-top:10px">
+              <div><label>主鍵欄位</label><select id="keyFieldSelect"></select></div>
+              <div><label>日期顯示</label><select id="dateMode"><option value="ROC">民國年（3 位）</option><option value="AD">西元年（4 位）</option></select></div>
+              <div><label>智慧預填</label><select id="smartPrefill"><option value="on">開啟</option><option value="off">關閉</option></select></div>
+              <div><label>表格列數</label><select id="previewLimit"><option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="500">500</option></select></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="noProject" class="empty">上傳表格後會自動辨識欄位並在此生成登打介面。</div>
+        <div id="formArea" class="formGrid"></div>
+        <div id="draftNotice" class="notice hidden draftLine"></div>
+        <div class="hint noPrint" style="margin-top:10px">日期短碼：<span class="mono">0317</span>、<span class="mono">3/17</span>、<span class="mono">1150317</span>、<span class="mono">20260317</span>。日期底層一律保存為文字；切換民國／西元只改文字顯示，不建立日期物件。</div>
+
+        <details class="fold noPrint" style="margin-top:14px" id="fieldSettingsDetails">
+          <summary><span>欄位設定</span><span class="muted smallText">修正自動辨識、必填、固定沿用</span></summary>
+          <div class="foldBody"><div id="fieldSettings"></div></div>
+        </details>
+      </section>
+
+      <section class="card">
+        <div class="row space">
+          <div><h2>即時資料表</h2><div class="muted">可直接框選複製，或按「複製 TSV」貼進 Excel / Google 試算表。</div></div>
+          <div class="toolbar noPrint"><button class="btn small" id="copyTsv">複製 TSV</button><button class="btn small" id="downloadCsv">下載 CSV</button><button class="btn small good" id="downloadXlsx">下載 XLSX</button></div>
+        </div>
+        <div class="tableTools noPrint">
+          <input id="tableSearch" class="grow" placeholder="篩選即時表格" />
+          <label style="font-weight:700;margin:0"><input id="newestFirst" class="check" type="checkbox" checked> 新資料在前</label>
+          <span id="tableCount" class="pill"></span>
+          <span id="outputCount" class="pill blue"></span>
+        </div>
+        <details class="fold noPrint" id="tableCustomizeDetails" style="margin-bottom:10px">
+          <summary><span>排序與輸出欄位</span><span class="muted smallText">拖曳排序・勾選輸出</span></summary>
+          <div class="foldBody">
+            <div class="customizeGrid">
+              <div class="customPanel">
+                <div class="row space"><h3 style="margin:0">自訂排序</h3><button class="btn small" id="clearCustomSort">清除排序</button></div>
+                <label style="margin-top:10px">排序欄位</label>
+                <select id="customSortField"></select>
+                <div class="hint">選欄位後會讀出該欄目前出現過的值與筆數。直接拖曳調整先後；也可用 ↑ ↓。新出現的值會自動補到最後。</div>
+                <div id="sortValueList" class="sortValueList"></div>
+              </div>
+              <div class="customPanel">
+                <div class="row space"><h3 style="margin:0">輸出欄位</h3><div class="row"><button class="btn small" id="selectAllOutput">全選</button><button class="btn small" id="clearAllOutput">全不選</button></div></div>
+                <div class="hint">勾選的欄位會套用到即時資料表、複製 TSV、CSV 與 XLSX；快速登打仍保留全部欄位。</div>
+                <div id="outputFieldList" class="outputFieldList"></div>
+              </div>
+            </div>
+          </div>
+        </details>
+        <div class="tableWrap"><table id="dataTable" class="dataTable"></table></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="modalBackdrop" class="modalBackdrop hidden">
+  <div class="modal">
+    <h2>建立空白專案</h2>
+    <div class="grid">
+      <label>專案名稱</label><input id="blankProjectName" placeholder="例如：訪談名單、盤點紀錄" />
+      <label style="margin-top:10px">欄位名稱 <span class="muted smallText">（可完全留白）</span></label><textarea id="blankProjectFields" placeholder="可留白；也可現在輸入欄位名稱，每行一個欄位或用逗號分隔"></textarea>
+      <div class="hint">建立後仍可在欄位設定中修改資料型態。</div>
+      <div class="row" style="margin-top:12px"><button class="btn primary" id="confirmBlankProject">建立</button><button class="btn" id="cancelBlankProject">取消</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const STORAGE_KEY='evolving_universal_entry_v2';
+  const APP_VERSION=3;
+  const qs=s=>document.querySelector(s);
+  const qsa=s=>Array.from(document.querySelectorAll(s));
+  const nowIso=()=>new Date().toISOString();
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const hasVal=v=>!(v===undefined||v===null||String(v).trim()==='');
+  const norm=v=>String(v??'').replace(/\u3000/g,' ').trim().replace(/\s+/g,'').toLowerCase();
+  const uid=()=> 'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+  const clone=v=>JSON.parse(JSON.stringify(v));
+  const state={projects:[],activeProjectId:'',lastUndo:null};
+  let toastTimer=null;
+
+  function activeProject(){return state.projects.find(p=>p.id===state.activeProjectId)||null;}
+  function defaultProject(name,headers=[],rows=[]){
+    const p={id:uid(),name:name||'未命名專案',headers:[...headers],rows:rows.map(r=>({...r})),fieldConfig:{},keyField:'',dateMode:'ROC',smartPrefill:true,previewLimit:100,usage:{},lastValues:{},pinned:{},sortConfig:{field:'',order:[]},outputHeaders:[...headers],sourceName:'',sourceNames:[],createdAt:nowIso(),updatedAt:nowIso()};
+    p.headers.forEach(h=>p.fieldConfig[h]={type:detectFieldType(h,p.rows.map(r=>r[h]).slice(0,80)),required:false,quick:true});
+    p.keyField=guessKeyField(p.headers,p.rows);
+    if(p.keyField&&p.fieldConfig[p.keyField]) p.fieldConfig[p.keyField].required=true;
+    seedUsage(p);
+    return p;
+  }
+  function normalizeProject(p){
+    p.id=p.id||uid();p.name=p.name||'匯入專案';p.headers=Array.isArray(p.headers)?p.headers:[];p.rows=Array.isArray(p.rows)?p.rows:[];
+    p.fieldConfig=p.fieldConfig||{};p.usage=p.usage||{};p.lastValues=p.lastValues||{};p.pinned=p.pinned||{};
+    p.sortConfig=p.sortConfig&&typeof p.sortConfig==='object'?p.sortConfig:{field:'',order:[]};p.sortConfig.field=p.headers.includes(p.sortConfig.field)?p.sortConfig.field:'';p.sortConfig.order=Array.isArray(p.sortConfig.order)?p.sortConfig.order.map(v=>String(v)):[];
+    p.outputHeaders=Array.isArray(p.outputHeaders)?p.outputHeaders.filter(h=>p.headers.includes(h)):p.headers.slice();
+    p.dateMode=p.dateMode==='AD'?'AD':'ROC';p.smartPrefill=p.smartPrefill!==false;p.previewLimit=Number(p.previewLimit)||100;
+    p.createdAt=p.createdAt||nowIso();p.updatedAt=p.updatedAt||nowIso();p.sourceName=p.sourceName||'';p.sourceNames=Array.isArray(p.sourceNames)?p.sourceNames:(p.sourceName?[p.sourceName]:[]);
+    p.headers.forEach(h=>{if(!p.fieldConfig[h])p.fieldConfig[h]={type:detectFieldType(h,p.rows.map(r=>r[h]).slice(0,80)),required:false,quick:true};});
+    if(!p.keyField||!p.headers.includes(p.keyField))p.keyField=guessKeyField(p.headers,p.rows);
+    return p;
+  }
+  function saveLocal(){
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:APP_VERSION,savedAt:nowIso(),state}));}
+    catch(e){toast('本機儲存空間不足，請先匯出 JSON 備份。','bad');}
+  }
+  function loadLocal(){
+    try{
+      let raw=localStorage.getItem(STORAGE_KEY),migrated=false;
+      if(!raw){raw=localStorage.getItem('evolving_universal_entry_v1');migrated=!!raw;}
+      if(!raw)return;
+      const payload=JSON.parse(raw),data=payload.state||payload;
+      state.projects=(data.projects||[]).map(normalizeProject);state.activeProjectId=data.activeProjectId||state.projects[0]?.id||'';
+      if(migrated){saveLocal();log('已自動載入舊版 v1 的本機專案。');}
+    }catch(e){console.warn(e);}
+  }
+  function log(msg){const el=qs('#log');const old=el.textContent==='尚未操作。'?'':el.textContent+'\n';el.textContent=old+'['+new Date().toLocaleTimeString('zh-TW',{hour12:false})+'] '+msg;el.scrollTop=el.scrollHeight;}
+  function toast(msg,type=''){const el=qs('#toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
+
+  function toHalfWidthDigits(s){return String(s??'').replace(/[０-９]/g,ch=>String.fromCharCode(ch.charCodeAt(0)-0xFEE0));}
+  function isDateHeader(h){return /(日期|日期時間|時間|年月日|date|day|核銷日|申請日|到期日|生日)/i.test(String(h));}
+  function isNumberHeader(h){return /(金額|數量|人數|次數|單價|總價|比例|百分比|分數|里程|number|amount|qty|count|price)/i.test(String(h));}
+  function isLongTextHeader(h){return /(備註|說明|描述|內容|地址|意見|摘要|note|remark|description|address)/i.test(String(h));}
+  function looksDate(v){const s=toHalfWidthDigits(v).trim();return /^\d{3,4}[\/\-.年]\d{1,2}[\/\-.月]\d{1,2}日?$/.test(s)||/^\d{7,8}$/.test(s);}
+  function detectFieldType(h,values=[]){
+    if(isDateHeader(h))return'date';if(isLongTextHeader(h))return'textarea';if(isNumberHeader(h))return'number';
+    const nonEmpty=values.filter(hasVal).map(v=>String(v).trim());if(nonEmpty.length){const dateRatio=nonEmpty.filter(looksDate).length/nonEmpty.length;if(dateRatio>=.65)return'date';const numRatio=nonEmpty.filter(v=>!isNaN(Number(String(v).replace(/,/g,'')))).length/nonEmpty.length;if(numRatio>=.85)return'number';}
+    return'text';
+  }
+  function uniquenessScore(h,rows){const vals=rows.map(r=>norm(r[h])).filter(Boolean);if(!vals.length)return 0;return new Set(vals).size/vals.length;}
+  function guessKeyField(headers,rows){
+    const exact=['ID','id','編號','序號','案件編號','單號','姓名','名稱','標題','代碼','身分證字號','身份證字號','email','Email','電子郵件'];
+    for(const x of exact){const h=headers.find(v=>String(v).trim()===x);if(h&&uniquenessScore(h,rows)>=.72)return h;}
+    const candidates=headers.map((h,i)=>({h,i,score:uniquenessScore(h,rows),blank:rows.filter(r=>!hasVal(r[h])).length})).filter(x=>x.score>=.85).sort((a,b)=>b.score-a.score||a.blank-b.blank||a.i-b.i);
+    return candidates[0]?.h||headers[0]||'';
+  }
+
+  function validDate(adY,m,d){adY=Number(adY);m=Number(m);d=Number(d);if(!Number.isFinite(adY)||!Number.isFinite(m)||!Number.isFinite(d)||adY<1912||m<1||m>12||d<1||d>31)return false;const dt=new Date(adY,m-1,d);return dt.getFullYear()===adY&&dt.getMonth()===m-1&&dt.getDate()===d;}
+  function formatDate(adY,m,d,mode){return mode==='ROC'?String(adY-1911).padStart(3,'0')+'/'+String(m).padStart(2,'0')+'/'+String(d).padStart(2,'0'):String(adY).padStart(4,'0')+'/'+String(m).padStart(2,'0')+'/'+String(d).padStart(2,'0');}
+  function normalizeDateInput(raw,mode='ROC'){
+    let s=toHalfWidthDigits(raw).trim();if(!s)return'';s=s.replace(/[年月.\-]/g,'/').replace(/日/g,'').replace(/\s+/g,'');
+    const today=new Date(),currentAd=today.getFullYear(),currentM=today.getMonth()+1;let y,m,d,adY;
+    const parts=s.includes('/')?s.split('/').filter(Boolean):null;
+    if(parts){
+      if(parts.length===2){adY=currentAd;m=parts[0];d=parts[1];}
+      else if(parts.length>=3){y=Number(parts[0]);m=parts[1];d=parts[2];adY=y>=1912?y:y+1911;}
+    }else if(/^\d+$/.test(s)){
+      if(s.length<=2){adY=currentAd;m=currentM;d=s;}
+      else if(s.length===3){adY=currentAd;m=s.slice(0,1);d=s.slice(1);}
+      else if(s.length===4){adY=currentAd;m=s.slice(0,2);d=s.slice(2);}
+      else if(s.length===6){return raw;}
+      else if(s.length===7){adY=Number(s.slice(0,3))+1911;m=s.slice(3,5);d=s.slice(5);}
+      else if(s.length===8){adY=Number(s.slice(0,4));m=s.slice(4,6);d=s.slice(6);}
+    }
+    return validDate(adY,m,d)?formatDate(Number(adY),Number(m),Number(d),mode):raw;
+  }
+  function convertAllDates(project,newMode){
+    project.headers.forEach(h=>{if(project.fieldConfig[h]?.type!=='date')return;project.rows.forEach(r=>{if(hasVal(r[h]))r[h]=normalizeDateInput(r[h],newMode);});if(hasVal(project.lastValues[h]))project.lastValues[h]=normalizeDateInput(project.lastValues[h],newMode);});
+  }
+
+  function parseDelimited(text){
+    const sample=text.split(/\r?\n/).slice(0,5).join('\n');const counts={',':(sample.match(/,/g)||[]).length,'\t':(sample.match(/\t/g)||[]).length,';':(sample.match(/;/g)||[]).length};const delimiter=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+    const rows=[];let row=[],cell='',quoted=false;
+    for(let i=0;i<text.length;i++){const ch=text[i],next=text[i+1];if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++;}else quoted=!quoted;}else if(ch===delimiter&&!quoted){row.push(cell);cell='';}else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&next==='\n')i++;row.push(cell);rows.push(row);row=[];cell='';}else cell+=ch;}
+    row.push(cell);rows.push(row);return rows;
+  }
+  function rowsFromAoA(aoa){
+    // 規則固定：每個來源檔的第 1 列就是表頭，第 2 列起才是資料。
+    // 不再猜測或跳過前置空白列，避免不同檔案被誤判成不同欄位結構。
+    if(!Array.isArray(aoa)||!aoa.length)return{headers:[],rows:[]};
+    const headerRow=aoa[0]||[];
+    if(!headerRow.some(hasVal))return{headers:[],rows:[]};
+    let headers=headerRow.map((h,i)=>hasVal(h)?String(h).trim():'未命名欄位'+(i+1));
+    const seen=new Map();
+    headers=headers.map(h=>{const n=(seen.get(h)||0)+1;seen.set(h,n);return n===1?h:h+'_'+n;});
+    const rows=[];
+    for(let i=1;i<aoa.length;i++){
+      const line=aoa[i]||[];if(!line.some(hasVal))continue;
+      const obj={};headers.forEach((h,j)=>obj[h]=line[j]??'');rows.push(obj);
+    }
+    return{headers,rows};
+  }
+  function isWorkbookFile(name){return /\.(xlsx|xls|xlsm|xlsb|ods)$/i.test(name);}
+  async function readTableFile(file){
+    const name=file.name.toLowerCase();
+    if(isWorkbookFile(name)&&window.XLSX){
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellDates:false,cellText:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      if(!ws)throw new Error('找不到第一張工作表。');
+      // raw:false 取顯示文字；cellDates:false 避免轉成 Date 物件。
+      return rowsFromAoA(XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false}));
+    }
+    if(isWorkbookFile(name))throw new Error('試算表解析套件未載入，請改用 CSV / TSV / TXT，或連網後重新整理。');
+    return rowsFromAoA(parseDelimited((await file.text()).replace(/^\ufeff/,'')));
+  }
+
+  function ensureFieldConfig(p,h,values=[]){
+    if(!p.fieldConfig[h])p.fieldConfig[h]={type:detectFieldType(h,values.slice(0,80)),required:false,quick:true};
+    p.usage[h]=p.usage[h]||{};
+    if(!(h in p.lastValues))p.lastValues[h]='';
+  }
+  function headerKey(h){return String(h??'').replace(/\u3000/g,' ').trim();}
+  function appendParsedToProject(p,parsed,sourceName){
+    // 只比較「第一列表頭」。既有欄名沿用；新欄名才依新檔中的順序追加。
+    const addedHeaders=[];
+    const canonicalByKey=new Map(p.headers.map(h=>[headerKey(h),h]));
+    const incomingToCanonical={};
+
+    parsed.headers.forEach(h=>{
+      const key=headerKey(h);
+      let canonical=canonicalByKey.get(key);
+      if(!canonical){
+        canonical=h;
+        p.headers.push(canonical);
+        canonicalByKey.set(key,canonical);
+        addedHeaders.push(canonical);
+        if(!Array.isArray(p.outputHeaders))p.outputHeaders=[];if(!p.outputHeaders.includes(canonical))p.outputHeaders.push(canonical);
+        // 新欄位出現時，既有資料補空字串，不動原資料內容。
+        p.rows.forEach(r=>{if(!(canonical in r))r[canonical]='';});
+      }
+      incomingToCanonical[h]=canonical;
+      ensureFieldConfig(p,canonical,parsed.rows.map(r=>r[h]));
+    });
+
+    p.headers.forEach(h=>ensureFieldConfig(p,h,p.rows.map(r=>r[h])));
+    const normalizedRows=parsed.rows.map(r=>{
+      const obj={};
+      p.headers.forEach(h=>obj[h]='');
+      parsed.headers.forEach(h=>{obj[incomingToCanonical[h]]=String(r[h]??'');});
+      return obj;
+    });
+    p.rows.push(...normalizedRows);
+    if(sourceName){p.sourceName=sourceName;if(!p.sourceNames.includes(sourceName))p.sourceNames.push(sourceName);}
+    seedUsageForRows(p,normalizedRows);
+    p.updatedAt=nowIso();
+    if(!p.keyField||!p.headers.includes(p.keyField))p.keyField=guessKeyField(p.headers,p.rows);
+    if(p.keyField&&p.fieldConfig[p.keyField])p.fieldConfig[p.keyField].required=true;
+    return{addedHeaders,addedRows:normalizedRows.length};
+  }
+  function seedUsageForRows(p,rows){p.headers.forEach(h=>{p.usage[h]=p.usage[h]||{};rows.forEach((r,i)=>{const v=String(r[h]??'').trim();if(v)touchUsage(p,h,v,Math.max(1,Math.min(5,rows.length-i)),false);});});}
+
+
+  function seedUsage(p){p.headers.forEach(h=>{p.usage[h]=p.usage[h]||{};p.rows.forEach((r,i)=>{const v=String(r[h]??'').trim();if(v)touchUsage(p,h,v,Math.max(1,Math.min(5,p.rows.length-i)),false);});});}
+  function touchUsage(p,h,v,inc=1,setLast=true){v=String(v??'').trim();if(!v)return;p.usage[h]=p.usage[h]||{};const old=p.usage[h][v]||{count:0,lastUsed:0};old.count+=inc;old.lastUsed=Date.now();p.usage[h][v]=old;if(setLast)p.lastValues[h]=v;}
+  function suggestions(p,h,term=''){
+    const cfg=p.fieldConfig[h]||{};if(cfg.quick===false||cfg.type==='textarea')return[];const map=new Map();Object.entries(p.usage[h]||{}).forEach(([v,s])=>map.set(v,{v,count:Number(s.count)||0,lastUsed:Number(s.lastUsed)||0}));
+    p.rows.forEach(r=>{const v=String(r[h]??'').trim();if(v&&!map.has(v))map.set(v,{v,count:1,lastUsed:0});});const t=norm(term);const now=Date.now();
+    return Array.from(map.values()).filter(x=>!t||norm(x.v).includes(t)).map(x=>({...x,score:x.count*10+Math.max(0,20-(now-x.lastUsed)/86400000)})).sort((a,b)=>b.score-a.score||String(a.v).localeCompare(String(b.v),'zh-Hant')).slice(0,8);
+  }
+  function smartDefault(p,h){
+    if(!p.smartPrefill||h===p.keyField)return'';if(p.pinned[h]&&hasVal(p.lastValues[h]))return p.lastValues[h];const list=suggestions(p,h);if(!list.length)return'';
+    const total=Object.values(p.usage[h]||{}).reduce((s,x)=>s+(Number(x.count)||0),0);return list[0].count>=3&&list[0].count/Math.max(1,total)>=.58?list[0].v:'';
+  }
+
+  function renderProjects(){
+    const list=qs('#projectList');if(!state.projects.length){list.innerHTML='<span class="muted smallText">尚無專案</span>';return;}
+    list.innerHTML=state.projects.map(p=>'<button class="projectBtn '+(p.id===state.activeProjectId?'active':'')+'" data-project="'+esc(p.id)+'" title="'+esc(p.name)+'">'+esc(p.name)+'</button>').join('');
+    qsa('[data-project]').forEach(b=>b.addEventListener('click',()=>{state.activeProjectId=b.dataset.project;saveLocal();resetForm(false);renderAll();log('已切換專案：'+activeProject().name);}));
+  }
+  function renderMeta(){const p=activeProject(),el=qs('#projectMeta');if(!p){el.innerHTML='';return;}el.innerHTML='<div class="metaBox"><strong>'+p.headers.length+'</strong><span>欄位</span></div><div class="metaBox"><strong>'+p.rows.length+'</strong><span>資料列</span></div><div class="metaBox"><strong>'+Object.keys(p.usage||{}).reduce((s,h)=>s+Object.keys(p.usage[h]||{}).length,0)+'</strong><span>已學習值</span></div><div class="metaBox"><strong>'+(p.keyField?esc(p.keyField):'-')+'</strong><span>主鍵</span></div>';}
+  function renderSideStatus(){const p=activeProject();qs('#sideStatus').innerHTML=[['專案',state.projects.length],['資料',p?p.rows.length:0],['欄位',p?p.headers.length:0],['日期',p?(p.dateMode==='ROC'?'民國':'西元'):'-']].map(([l,n])=>'<div class="statusBox"><strong>'+esc(n)+'</strong><span>'+l+'</span></div>').join('');qs('#xlsxWarn').classList.toggle('hidden',!!window.XLSX);}
+  function renderProjectLead(){const p=activeProject();qs('#activeProjectLead').textContent=p?'目前專案：'+p.name+(p.sourceNames?.length?'｜已銜接 '+p.sourceNames.length+' 個來源檔':''):'請先建立或載入專案。';}
+  function renderSmartControls(){
+    const p=activeProject();const key=qs('#keyFieldSelect');if(!p){key.innerHTML='';return;}key.innerHTML=p.headers.map(h=>'<option value="'+esc(h)+'" '+(h===p.keyField?'selected':'')+'>'+esc(h)+'</option>').join('');qs('#dateMode').value=p.dateMode;qs('#smartPrefill').value=p.smartPrefill?'on':'off';qs('#previewLimit').value=String(p.previewLimit||100);
+  }
+  function fieldInputHtml(p,h,val){
+    const cfg=p.fieldConfig[h]||{type:'text'};const type=cfg.type||'text';const isKey=h===p.keyField;const date=type==='date';const cls='fieldBox'+(isKey?' keyField':'')+(date?' dateField':'');const req=cfg.required?' <span class="pill bad">必填</span>':'';const badges=(isKey?' <span class="pill good">主鍵</span>':'')+(date?' <span class="pill purple">日期</span>':'');
+    const action='<div class="fieldActions"><button type="button" class="miniIcon '+(p.pinned[h]?'active':'')+'" data-pin="'+esc(h)+'" title="固定沿用上一筆">📌</button></div>';
+    let input='';if(type==='textarea')input='<textarea data-field="'+esc(h)+'" placeholder="'+esc(h)+'">'+esc(val)+'</textarea>';else input='<input data-field="'+esc(h)+'" type="'+(type==='number'?'text':'text')+'" '+(date?'inputmode="numeric"':'')+' value="'+esc(val)+'" placeholder="'+(date?'例如 0317、1150317、20260317':esc(h))+'" autocomplete="off" />';
+    return '<div class="'+cls+'"><div class="fieldLabel"><label>'+esc(h)+badges+req+'</label>'+action+'</div>'+input+'<div class="quickValues" data-quick-for="'+esc(h)+'"></div><div class="learnNote" data-learn-for="'+esc(h)+'"></div></div>';
+  }
+  function renderForm(){
+    const p=activeProject(),area=qs('#formArea'),empty=qs('#noProject');if(!p||!p.headers.length){area.innerHTML='';empty.classList.remove('hidden');qs('#entryTop').classList.toggle('hidden',!p);return;}empty.classList.add('hidden');qs('#entryTop').classList.remove('hidden');
+    area.innerHTML=p.headers.map(h=>fieldInputHtml(p,h,smartDefault(p,h))).join('');bindForm();renderDraftNotice();
+  }
+  function bindForm(){
+    const p=activeProject();if(!p)return;qsa('[data-field]').forEach(inp=>{
+      const h=inp.dataset.field;inp.addEventListener('input',()=>{renderQuickFor(h,inp.value);renderDraftNotice();});
+      inp.addEventListener('focus',()=>renderQuickFor(h,inp.value));
+      inp.addEventListener('blur',()=>{if(p.fieldConfig[h]?.type==='date'){inp.value=normalizeDateInput(inp.value,p.dateMode);renderDraftNotice();}});
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&p.fieldConfig[h]?.type==='date'){e.preventDefault();inp.value=normalizeDateInput(inp.value,p.dateMode);const all=qsa('[data-field]');const i=all.indexOf(inp);all[i+1]?.focus();}});
+      renderQuickFor(h,inp.value);
+    });
+    qsa('[data-pin]').forEach(b=>b.addEventListener('click',()=>{p.pinned[b.dataset.pin]=!p.pinned[b.dataset.pin];saveLocal();b.classList.toggle('active',!!p.pinned[b.dataset.pin]);toast(p.pinned[b.dataset.pin]?'此欄會沿用上一筆':'已取消固定沿用');}));
+  }
+  function renderQuickFor(h,term=''){
+    const p=activeProject();if(!p)return;const wrap=qsa('[data-quick-for]').find(x=>x.dataset.quickFor===h),note=qsa('[data-learn-for]').find(x=>x.dataset.learnFor===h);if(!wrap)return;const list=suggestions(p,h,term);wrap.innerHTML=list.map((x,i)=>'<button type="button" class="quickChip '+(i===0?'top':'')+'" data-qfield="'+esc(h)+'" data-qvalue="'+esc(x.v)+'" title="使用 '+x.count+' 次">'+esc(x.v)+'</button>').join('');if(note)note.textContent=list.length?'已依使用習慣排序；第一個是目前最可能值。':'輸入並儲存後，此欄會開始學習常用值。';
+    qsa('[data-qfield]').filter(b=>b.dataset.qfield===h).forEach(b=>b.addEventListener('click',()=>{const inp=qsa('[data-field]').find(x=>x.dataset.field===h);if(inp){inp.value=b.dataset.qvalue;inp.focus();renderDraftNotice();}}));
+  }
+  function getFormValues(){const p=activeProject(),obj={};if(!p)return obj;qsa('[data-field]').forEach(inp=>{const h=inp.dataset.field;let v=inp.value.trim();if(p.fieldConfig[h]?.type==='date'){v=normalizeDateInput(v,p.dateMode);inp.value=v;}obj[h]=v;});return obj;}
+  function setFormValues(row){const p=activeProject();if(!p)return;p.headers.forEach(h=>{const inp=qsa('[data-field]').find(x=>x.dataset.field===h);if(inp)inp.value=row?.[h]??'';renderQuickFor(h,row?.[h]??'');});renderDraftNotice();}
+  function resetForm(prefill=true){const p=activeProject();if(!p)return;qs('#recordSearch').value='';qs('#recordResults').innerHTML='';if(!qsa('[data-field]').length){renderForm();return;}p.headers.forEach(h=>{const inp=qsa('[data-field]').find(x=>x.dataset.field===h);if(inp)inp.value=prefill?smartDefault(p,h):'';renderQuickFor(h,'');});renderDraftNotice();qsa('[data-field]')[0]?.focus();}
+  function renderDraftNotice(){const p=activeProject(),el=qs('#draftNotice');if(!p){el.classList.add('hidden');return;}const vals=getFormValuesSilent(),filled=Object.values(vals).filter(hasVal).length;if(!filled){el.classList.add('hidden');return;}const key=String(vals[p.keyField]??'').trim();const idx=key?p.rows.findIndex(r=>norm(r[p.keyField])===norm(key)):-1;el.classList.remove('hidden');el.className='notice '+(idx>=0?'warn':'good')+' draftLine';el.innerHTML=idx>=0?'目前主鍵 <b>'+esc(key)+'</b> 已存在，儲存時會更新第 '+(idx+1)+' 列。':'目前是新資料草稿'+(key?'，主鍵：<b>'+esc(key)+'</b>':'')+'。';}
+  function getFormValuesSilent(){const obj={};qsa('[data-field]').forEach(inp=>obj[inp.dataset.field]=inp.value.trim());return obj;}
+
+  function renderRecordResults(){
+    const p=activeProject(),el=qs('#recordResults'),term=norm(qs('#recordSearch').value);if(!p||!term){el.innerHTML='';return;}const rows=p.rows.map((r,i)=>({r,i,text:p.headers.map(h=>String(r[h]??'')).join(' ')})).filter(x=>norm(x.text).includes(term)).slice(0,30);if(!rows.length){el.innerHTML='<div class="muted smallText">查無資料；可直接新增。</div>';return;}
+    el.innerHTML=rows.map(x=>{const key=x.r[p.keyField]||'第 '+(x.i+1)+' 列';const sub=p.headers.filter(h=>h!==p.keyField&&hasVal(x.r[h])).slice(0,3).map(h=>h+'：'+x.r[h]).join('　');return '<div class="recordItem"><div><div class="recordTitle">'+esc(key)+'</div><div class="recordSub">'+esc(sub)+'</div></div><button class="btn small" data-load-row="'+x.i+'">選取</button></div>';}).join('');
+    qsa('[data-load-row]').forEach(b=>b.addEventListener('click',()=>{setFormValues(p.rows[Number(b.dataset.loadRow)]);toast('已載入既有資料，可直接修改');}));
+  }
+  function saveRecord(){
+    const p=activeProject();if(!p||!p.headers.length){toast('請先建立或載入專案','bad');return;}const vals=getFormValues();const missing=p.headers.filter(h=>p.fieldConfig[h]?.required&&!hasVal(vals[h]));if(missing.length){toast('必填欄位未填：'+missing.join('、'),'bad');return;}const key=p.keyField;const keyVal=String(vals[key]??'').trim();if(!keyVal){toast('請填寫主鍵欄位「'+key+'」','bad');return;}
+    const idx=p.rows.findIndex(r=>norm(r[key])===norm(keyVal));state.lastUndo={projectId:p.id,rows:clone(p.rows),lastValues:clone(p.lastValues),usage:clone(p.usage)};
+    if(idx>=0){p.rows[idx]={...p.rows[idx],...vals};log('已更新「'+keyVal+'」所在資料列。');toast('已更新既有資料');}else{p.rows.push(vals);log('已新增「'+keyVal+'」。');toast('已新增一筆資料');}
+    p.headers.forEach(h=>{if(hasVal(vals[h]))touchUsage(p,h,vals[h]);});p.updatedAt=nowIso();saveLocal();renderAll(false);resetForm(true);
+  }
+  function undoSave(){const u=state.lastUndo,p=activeProject();if(!u||!p||u.projectId!==p.id){toast('目前沒有可復原的儲存','bad');return;}p.rows=u.rows;p.lastValues=u.lastValues;p.usage=u.usage;state.lastUndo=null;p.updatedAt=nowIso();saveLocal();renderAll();toast('已復原上次儲存');log('已復原上次儲存。');}
+  function useLastRecord(){const p=activeProject();if(!p)return;const vals={};p.headers.forEach(h=>vals[h]=h===p.keyField?'':(p.lastValues[h]??''));setFormValues(vals);qsa('[data-field]').find(x=>x.dataset.field===p.keyField)?.focus();toast('已沿用上一筆，主鍵已清空');}
+
+  function renderFieldSettings(){
+    const p=activeProject(),el=qs('#fieldSettings');if(!p){el.innerHTML='<div class="muted">尚無專案。</div>';return;}el.innerHTML=p.headers.map(h=>{const c=p.fieldConfig[h]||{};return '<div class="settingRow"><div class="settingName">'+esc(h)+'</div><select data-type="'+esc(h)+'"><option value="text" '+(c.type==='text'?'selected':'')+'>文字</option><option value="number" '+(c.type==='number'?'selected':'')+'>數字</option><option value="date" '+(c.type==='date'?'selected':'')+'>日期</option><option value="textarea" '+(c.type==='textarea'?'selected':'')+'>多行文字</option></select><label style="font-weight:700;margin:0"><input class="check" type="checkbox" data-required="'+esc(h)+'" '+(c.required?'checked':'')+'>必填</label><label style="font-weight:700;margin:0"><input class="check" type="checkbox" data-quick="'+esc(h)+'" '+(c.quick!==false?'checked':'')+'>快捷</label></div>';}).join('');
+    qsa('[data-type]').forEach(s=>s.addEventListener('change',()=>{p.fieldConfig[s.dataset.type].type=s.value;if(s.value==='date')p.rows.forEach(r=>{if(hasVal(r[s.dataset.type]))r[s.dataset.type]=normalizeDateInput(r[s.dataset.type],p.dateMode);});saveLocal();renderForm();renderTable();}));
+    qsa('[data-required]').forEach(c=>c.addEventListener('change',()=>{p.fieldConfig[c.dataset.required].required=c.checked;saveLocal();renderForm();}));
+    qsa('[data-quick]').forEach(c=>c.addEventListener('change',()=>{p.fieldConfig[c.dataset.quick].quick=c.checked;saveLocal();renderForm();}));
+  }
+
+  function getOutputHeaders(p){if(!p)return[];if(!Array.isArray(p.outputHeaders))p.outputHeaders=p.headers.slice();return p.headers.filter(h=>p.outputHeaders.includes(h));}
+  function valuesForSortField(p,field){const map=new Map();if(!p||!field)return[];p.rows.forEach(r=>{const v=String(r[field]??'').trim();if(!v)return;map.set(v,(map.get(v)||0)+1);});return Array.from(map,([value,count])=>({value,count}));}
+  function reconcileSortConfig(p,saveIfChanged=false){if(!p)return[];if(!p.sortConfig||typeof p.sortConfig!=='object')p.sortConfig={field:'',order:[]};const field=p.headers.includes(p.sortConfig.field)?p.sortConfig.field:'';if(!field){const changed=!!p.sortConfig.field||!Array.isArray(p.sortConfig.order)||p.sortConfig.order.length;p.sortConfig={field:'',order:[]};if(changed&&saveIfChanged)saveLocal();return[];}p.sortConfig.field=field;const items=valuesForSortField(p,field),current=new Set(items.map(x=>x.value)),old=Array.isArray(p.sortConfig.order)?p.sortConfig.order.map(v=>String(v)):[],next=old.filter(v=>current.has(v));items.forEach(x=>{if(!next.includes(x.value))next.push(x.value);});const changed=JSON.stringify(next)!==JSON.stringify(old);p.sortConfig.order=next;if(changed&&saveIfChanged)saveLocal();const counts=new Map(items.map(x=>[x.value,x.count]));return next.map(value=>({value,count:counts.get(value)||0}));}
+  function sortItemsByCustom(items,p,newestTie=false){const field=p?.sortConfig?.field;if(!p||!field||!p.headers.includes(field))return newestTie?items.slice().sort((a,b)=>b.i-a.i):items.slice();const order=reconcileSortConfig(p,false).map(x=>x.value),rank=new Map(order.map((v,i)=>[v,i]));return items.slice().sort((a,b)=>{const av=String(a.r[field]??'').trim(),bv=String(b.r[field]??'').trim(),ar=av?(rank.has(av)?rank.get(av):order.length):order.length+1,br=bv?(rank.has(bv)?rank.get(bv):order.length):order.length+1;if(ar!==br)return ar-br;if(av!==bv&&ar>=order.length)return av.localeCompare(bv,'zh-Hant',{numeric:true});return newestTie?b.i-a.i:a.i-b.i;});}
+  function filteredRows(){const p=activeProject();if(!p)return[];const term=norm(qs('#tableSearch').value);let rows=p.rows.map((r,i)=>({r,i}));if(term)rows=rows.filter(x=>norm(p.headers.map(h=>x.r[h]??'').join(' ')).includes(term));const custom=!!(p.sortConfig?.field&&p.headers.includes(p.sortConfig.field));if(custom)return sortItemsByCustom(rows,p,qs('#newestFirst').checked);if(qs('#newestFirst').checked)rows=rows.slice().reverse();return rows;}
+  function rowsForFileExport(p){let items=p.rows.map((r,i)=>({r,i}));if(p.sortConfig?.field&&p.headers.includes(p.sortConfig.field))items=sortItemsByCustom(items,p,false);return items.map(x=>x.r);}
+  function renderTableCustomize(){
+    const p=activeProject(),sortSel=qs('#customSortField'),sortList=qs('#sortValueList'),outList=qs('#outputFieldList'),outCount=qs('#outputCount');if(!p){sortSel.innerHTML='<option>尚無專案</option>';sortList.innerHTML='<div class="customEmpty">尚無專案。</div>';outList.innerHTML='<div class="customEmpty">尚無欄位。</div>';outCount.textContent='輸出 0 欄';return;}
+    sortSel.innerHTML='<option value="">不使用自訂排序</option>'+p.headers.map(h=>'<option value="'+esc(h)+'" '+(p.sortConfig?.field===h?'selected':'')+'>'+esc(h)+'</option>').join('');
+    const sortItems=reconcileSortConfig(p,true);if(!p.sortConfig?.field)sortList.innerHTML='<div class="customEmpty">請先選擇要排序的欄位。</div>';else if(!sortItems.length)sortList.innerHTML='<div class="customEmpty">這個欄位目前沒有非空白值。</div>';else sortList.innerHTML=sortItems.map((x,i)=>'<div class="sortItem" draggable="true" data-sort-index="'+i+'"><div class="dragHandle" title="拖曳排序">☰</div><div class="sortLabel" title="'+esc(x.value)+'">'+esc(x.value)+'</div><div class="sortCount">'+x.count+' 筆</div><div class="sortArrows"><button class="btn small" data-sort-up="'+i+'" title="往上">↑</button><button class="btn small" data-sort-down="'+i+'" title="往下">↓</button></div></div>').join('');
+    let dragIndex=null;qsa('[data-sort-index]').forEach(item=>{item.addEventListener('dragstart',e=>{dragIndex=Number(item.dataset.sortIndex);item.classList.add('dragging');if(e.dataTransfer)e.dataTransfer.effectAllowed='move';});item.addEventListener('dragend',()=>{item.classList.remove('dragging');dragIndex=null;});item.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move';});item.addEventListener('drop',e=>{e.preventDefault();const to=Number(item.dataset.sortIndex);if(dragIndex===null||dragIndex===to)return;const order=p.sortConfig.order;const [moved]=order.splice(dragIndex,1);order.splice(to,0,moved);p.updatedAt=nowIso();saveLocal();renderTableCustomize();renderTable();});});
+    const moveSort=(from,to)=>{const order=p.sortConfig.order;if(to<0||to>=order.length)return;const [moved]=order.splice(from,1);order.splice(to,0,moved);p.updatedAt=nowIso();saveLocal();renderTableCustomize();renderTable();};qsa('[data-sort-up]').forEach(b=>b.addEventListener('click',()=>moveSort(Number(b.dataset.sortUp),Number(b.dataset.sortUp)-1)));qsa('[data-sort-down]').forEach(b=>b.addEventListener('click',()=>moveSort(Number(b.dataset.sortDown),Number(b.dataset.sortDown)+1)));
+    const selected=new Set(getOutputHeaders(p));outList.innerHTML=p.headers.length?p.headers.map(h=>'<label class="outputItem"><input class="check" type="checkbox" data-output-field="'+esc(h)+'" '+(selected.has(h)?'checked':'')+'><span>'+esc(h)+'</span></label>').join(''):'<div class="customEmpty">目前沒有欄位。</div>';outCount.textContent='輸出 '+selected.size+' / '+p.headers.length+' 欄';
+    qsa('[data-output-field]').forEach(c=>c.addEventListener('change',()=>{const h=c.dataset.outputField;p.outputHeaders=Array.isArray(p.outputHeaders)?p.outputHeaders:[];if(c.checked){if(!p.outputHeaders.includes(h))p.outputHeaders.push(h);}else p.outputHeaders=p.outputHeaders.filter(x=>x!==h);p.updatedAt=nowIso();saveLocal();renderTable();renderTableCustomize();}));
+  }
+  function renderTable(){
+    const p=activeProject(),table=qs('#dataTable');if(!p||!p.headers.length){table.innerHTML='<tbody><tr><td class="empty">尚無資料表。</td></tr></tbody>';qs('#tableCount').textContent='0 筆';return;}const headers=getOutputHeaders(p),all=filteredRows(),limit=Number(p.previewLimit)||100,rows=all.slice(0,limit);qs('#tableCount').textContent='顯示 '+rows.length+' / '+all.length+' 筆';
+    table.innerHTML='<thead><tr><th>#</th>'+headers.map(h=>'<th>'+esc(h)+'</th>').join('')+'<th class="noPrint">操作</th></tr></thead><tbody>'+(rows.map(x=>'<tr><td>'+(x.i+1)+'</td>'+headers.map(h=>'<td>'+esc(x.r[h]??'')+'</td>').join('')+'<td class="noPrint"><div class="rowAction"><button class="btn small" data-edit-index="'+x.i+'">編輯</button><button class="btn small bad" data-delete-index="'+x.i+'">刪除</button></div></td></tr>').join('')||'<tr><td colspan="'+(headers.length+2)+'" class="empty">目前沒有資料。</td></tr>')+'</tbody>';
+    qsa('[data-edit-index]').forEach(b=>b.addEventListener('click',()=>{setFormValues(p.rows[Number(b.dataset.editIndex)]);window.scrollTo({top:0,behavior:'smooth'});toast('已載入第 '+(Number(b.dataset.editIndex)+1)+' 列');}));
+    qsa('[data-delete-index]').forEach(b=>b.addEventListener('click',()=>{const i=Number(b.dataset.deleteIndex);if(!confirm('確定刪除第 '+(i+1)+' 列？'))return;state.lastUndo={projectId:p.id,rows:clone(p.rows),lastValues:clone(p.lastValues),usage:clone(p.usage)};p.rows.splice(i,1);p.updatedAt=nowIso();saveLocal();renderAll(false);toast('已刪除一列，可按復原');}));
+  }
+
+  function csvEscape(v){const s=String(v??'');return /[",\n\r\t]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+  function toCsv(rows,headers){return'\ufeff'+headers.map(csvEscape).join(',')+'\n'+rows.map(r=>headers.map(h=>csvEscape(r[h])).join(',')).join('\n');}
+  function toTsv(rows,headers){return headers.join('\t')+'\n'+rows.map(r=>headers.map(h=>String(r[h]??'').replace(/\t/g,' ').replace(/\r?\n/g,' ')).join('\t')).join('\n');}
+  function downloadBlob(content,name,type){const blob=content instanceof Blob?content:new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);}
+  function safeName(s){return String(s||'專案').replace(/[\\/:*?"<>|]/g,'_').slice(0,70);}
+  function ymd(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
+  async function copyText(text){try{await navigator.clipboard.writeText(text);toast('已複製，可直接貼到試算表');}catch(e){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('已複製，可直接貼到試算表');}}
+
+  async function handleTableFiles(fileList){
+    const files=Array.from(fileList||[]);if(!files.length)return;
+    const mode=qs('input[name="loadMode"]:checked').value;let p=activeProject();let totalRows=0,totalNewCols=0,ok=0,errors=[],createdNew=false,replacePrepared=false;
+    try{
+      for(const file of files){
+        try{
+          const parsed=await readTableFile(file);if(!parsed.headers.length)throw new Error('找不到表頭。');
+          if(mode==='new'&&!createdNew){
+            p=defaultProject(file.name.replace(/\.[^.]+$/,''),[],[]);p.sourceNames=[];state.projects.push(p);state.activeProjectId=p.id;createdNew=true;
+          }else if(!p){
+            p=defaultProject(file.name.replace(/\.[^.]+$/,''),[],[]);p.sourceNames=[];state.projects.push(p);state.activeProjectId=p.id;
+          }
+          if(mode==='replace'&&!replacePrepared){
+            p.headers=[];p.rows=[];p.fieldConfig={};p.usage={};p.lastValues={};p.pinned={};p.sortConfig={field:'',order:[]};p.outputHeaders=[];p.sourceName='';p.sourceNames=[];p.keyField='';replacePrepared=true;
+          }
+          const result=appendParsedToProject(p,parsed,file.name);totalRows+=result.addedRows;totalNewCols+=result.addedHeaders.length;ok++;
+          log('已銜接：'+file.name+'｜+'+result.addedRows+' 列｜新增欄位 '+(result.addedHeaders.join('、')||'0')+'。');
+        }catch(e){errors.push(file.name+'：'+(e.message||e));log('讀檔失敗：'+file.name+'｜'+(e.message||e));}
+      }
+      if(!ok)throw new Error(errors.join('\n')||'沒有成功匯入任何檔案。');
+      saveLocal();resetForm(false);renderAll();
+      const msg='已銜接 '+ok+' 個檔案，共新增 '+totalRows+' 列、'+totalNewCols+' 個新欄位'+(errors.length?'；'+errors.length+' 個檔案失敗':'')+'。';
+      const box=qs('#importSummary');box.textContent=msg;box.classList.remove('hidden');toast(msg,errors.length?'warn':'');
+      if(errors.length)alert('部分檔案匯入失敗：\n'+errors.join('\n'));
+    }catch(err){alert(err.message||err);log('讀檔失敗：'+(err.message||err));}
+    finally{qs('#tableFile').value='';}
+  }
+  function exportJson(scope){const p=activeProject();const payload=scope==='project'?{app:'快速登打表格工具',version:APP_VERSION,exportedAt:nowIso(),projects:p?[p]:[],activeProjectId:p?.id||''}:{app:'快速登打表格工具',version:APP_VERSION,exportedAt:nowIso(),projects:state.projects,activeProjectId:state.activeProjectId};downloadBlob(JSON.stringify(payload,null,2),(scope==='project'?safeName(p?.name):'全部專案')+'_快速登打備份_'+ymd()+'.json','application/json;charset=utf-8');toast('JSON 備份已匯出');}
+  async function importJson(file){
+    try{const payload=JSON.parse(await file.text());const incoming=(payload.projects||(payload.state&&payload.state.projects)||[]).map(normalizeProject);if(!incoming.length)throw new Error('JSON 中沒有可匯入的專案。');const ids=new Set(state.projects.map(p=>p.id));incoming.forEach(p=>{if(ids.has(p.id)){p.id=uid();p.name=p.name+'（匯入副本）';}state.projects.push(p);ids.add(p.id);});state.activeProjectId=incoming[incoming.length-1].id;saveLocal();renderAll();toast('已匯入 '+incoming.length+' 個專案');log('已匯入 JSON：'+file.name+'。');}
+    catch(e){alert('JSON 匯入失敗：'+(e.message||e));}finally{qs('#importJson').value='';}
+  }
+
+  function openBlankModal(){qs('#blankProjectName').value='';qs('#blankProjectFields').value='';qs('#modalBackdrop').classList.remove('hidden');setTimeout(()=>qs('#blankProjectName').focus(),0);}
+  function createBlankProject(){const name=qs('#blankProjectName').value.trim()||'空白專案';const raw=qs('#blankProjectFields').value.trim();const fields=raw?raw.split(/[\n,，、\t]+/).map(s=>s.trim()).filter(Boolean):[];const headers=[...new Set(fields)];const p=defaultProject(name,headers,[]);state.projects.push(p);state.activeProjectId=p.id;saveLocal();qs('#modalBackdrop').classList.add('hidden');renderAll();toast(headers.length?'已建立空白專案，共 '+headers.length+' 個欄位':'已建立純空白專案');log('已建立空白專案：'+name+(headers.length?'（'+headers.length+' 欄）':'（0 欄）')+'。');}
+
+  function renderAll(rebuildForm=true){renderProjects();renderMeta();renderSideStatus();renderProjectLead();renderSmartControls();if(rebuildForm)renderForm();renderFieldSettings();renderTableCustomize();renderTable();}
+
+  qs('#tableFile').addEventListener('change',e=>{if(e.target.files.length)handleTableFiles(e.target.files);});
+  const dz=qs('#dropZone');['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('drag');}));['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('drag');}));dz.addEventListener('drop',e=>{const fs=e.dataTransfer.files;if(fs&&fs.length)handleTableFiles(fs);});
+  qs('#focusUpload').addEventListener('click',()=>{qs('#uploadCard').scrollIntoView({behavior:'smooth'});qs('#tableFile').click();});
+  ['#newBlankProject','#newBlankProjectTop'].forEach(s=>qs(s).addEventListener('click',openBlankModal));qs('#cancelBlankProject').addEventListener('click',()=>qs('#modalBackdrop').classList.add('hidden'));qs('#modalBackdrop').addEventListener('click',e=>{if(e.target===qs('#modalBackdrop'))qs('#modalBackdrop').classList.add('hidden');});qs('#confirmBlankProject').addEventListener('click',createBlankProject);
+  qs('#renameProject').addEventListener('click',()=>{const p=activeProject();if(!p){toast('尚無專案','bad');return;}const name=prompt('新的專案名稱：',p.name);if(name&&name.trim()){p.name=name.trim();p.updatedAt=nowIso();saveLocal();renderAll(false);}});
+  qs('#deleteProject').addEventListener('click',()=>{const p=activeProject();if(!p)return;if(!confirm('確定刪除專案「'+p.name+'」？此動作無法復原。'))return;state.projects=state.projects.filter(x=>x.id!==p.id);state.activeProjectId=state.projects[0]?.id||'';saveLocal();renderAll();toast('已刪除專案');});
+  qs('#keyFieldSelect').addEventListener('change',e=>{const p=activeProject();if(!p)return;p.keyField=e.target.value;if(p.fieldConfig[p.keyField])p.fieldConfig[p.keyField].required=true;saveLocal();renderForm();renderFieldSettings();renderMeta();toast('主鍵改為：'+p.keyField);});
+  qs('#dateMode').addEventListener('change',e=>{const p=activeProject();if(!p)return;p.dateMode=e.target.value;convertAllDates(p,p.dateMode);saveLocal();renderAll();toast('日期格式已轉為'+(p.dateMode==='ROC'?'民國年':'西元年'));});
+  qs('#smartPrefill').addEventListener('change',e=>{const p=activeProject();if(!p)return;p.smartPrefill=e.target.value==='on';saveLocal();resetForm(true);});
+  qs('#previewLimit').addEventListener('change',e=>{const p=activeProject();if(!p)return;p.previewLimit=Number(e.target.value);saveLocal();renderTable();});
+  qs('#recordSearch').addEventListener('input',renderRecordResults);qs('#tableSearch').addEventListener('input',renderTable);qs('#newestFirst').addEventListener('change',renderTable);
+  qs('#customSortField').addEventListener('change',e=>{const p=activeProject();if(!p)return;p.sortConfig={field:e.target.value,order:[]};reconcileSortConfig(p,false);p.updatedAt=nowIso();saveLocal();renderTableCustomize();renderTable();toast(p.sortConfig.field?'已改用「'+p.sortConfig.field+'」自訂排序':'已取消自訂排序');});
+  qs('#clearCustomSort').addEventListener('click',()=>{const p=activeProject();if(!p)return;p.sortConfig={field:'',order:[]};p.updatedAt=nowIso();saveLocal();renderTableCustomize();renderTable();toast('已清除自訂排序');});
+  qs('#selectAllOutput').addEventListener('click',()=>{const p=activeProject();if(!p)return;p.outputHeaders=p.headers.slice();p.updatedAt=nowIso();saveLocal();renderTableCustomize();renderTable();});
+  qs('#clearAllOutput').addEventListener('click',()=>{const p=activeProject();if(!p)return;p.outputHeaders=[];p.updatedAt=nowIso();saveLocal();renderTableCustomize();renderTable();});
+  qs('#saveRecord').addEventListener('click',saveRecord);qs('#newRecord').addEventListener('click',()=>resetForm(true));qs('#useLastRecord').addEventListener('click',useLastRecord);qs('#undoSave').addEventListener('click',undoSave);
+  qs('#copyTsv').addEventListener('click',()=>{const p=activeProject();if(!p)return;const headers=getOutputHeaders(p);if(!headers.length){toast('請至少選一個輸出欄位','bad');return;}copyText(toTsv(filteredRows().map(x=>x.r),headers));});
+  qs('#downloadCsv').addEventListener('click',()=>{const p=activeProject();if(!p)return;const headers=getOutputHeaders(p);if(!headers.length){toast('請至少選一個輸出欄位','bad');return;}downloadBlob(toCsv(rowsForFileExport(p),headers),safeName(p.name)+'_'+ymd()+'.csv','text/csv;charset=utf-8');});
+  qs('#downloadXlsx').addEventListener('click',()=>{const p=activeProject();if(!p)return;if(!window.XLSX){toast('Excel 套件未載入，請下載 CSV','bad');return;}const headers=getOutputHeaders(p);if(!headers.length){toast('請至少選一個輸出欄位','bad');return;}const exportRows=rowsForFileExport(p);const aoa=[headers.map(String),...exportRows.map(r=>headers.map(h=>String(r[h]??'')))];const ws=XLSX.utils.aoa_to_sheet(aoa);Object.keys(ws).forEach(a=>{if(a[0]!=='!')ws[a].t='s';});ws['!cols']=headers.map(h=>({wch:Math.min(30,Math.max(10,String(h).length*2+4))}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'資料');XLSX.writeFile(wb,safeName(p.name)+'_'+ymd()+'.xlsx');});
+  qs('#exportAllJson').addEventListener('click',()=>exportJson('all'));qs('#exportProjectJson').addEventListener('click',()=>exportJson('project'));qs('#importJson').addEventListener('change',e=>{if(e.target.files[0])importJson(e.target.files[0]);});
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();saveRecord();}if(e.altKey&&e.key.toLowerCase()==='n'){e.preventDefault();resetForm(true);}});
+
+  loadLocal();renderAll();if(!state.projects.length)openBlankModal();
+})();
+</script>
+</body>
+</html>

@@ -2,32 +2,18 @@
   "schemaVersion": 1,
   "apps": [
     {
-      "id": "pdf",
-      "name": "PDF 頁面工作台",
-      "description": "整理pdf",
+      "id": "app-jxb5hl",
+      "name": "快速登打表格工具",
+      "description": "複雜型登打與合拼表格工具",
       "category": "Office",
       "version": "1.0.0",
       "featured": false,
-      "entry": "PDF 頁面工作台.html",
-      "icon": "",
-      "publishedAt": "2026-09-02T07:12:42.137Z",
-      "updatedAt": "2026-09-02T07:12:42.137Z",
-      "launchPath": "apps/pdf/PDF 頁面工作台.html",
-      "iconPath": ""
-    },
-    {
-      "id": "pdf-pro",
-      "name": "PDF 頁面工作台pro",
-      "description": "加了放大功能和自訂檔名",
-      "category": "Office",
-      "version": "1.0.0",
-      "featured": false,
-      "entry": "PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "entry": "快速登打表格工具.html",
       "icon": "icon.png",
-      "publishedAt": "2026-09-02T07:22:15.303Z",
-      "updatedAt": "2026-09-02T07:22:15.303Z",
-      "launchPath": "apps/pdf-pro/PDF 頁面工作台_加放大鏡與自訂檔名.html",
-      "iconPath": "apps/pdf-pro/icon.png"
+      "publishedAt": "2026-09-02T08:08:23.299Z",
+      "updatedAt": "2026-09-02T08:08:23.299Z",
+      "launchPath": "apps/app-jxb5hl/快速登打表格工具.html",
+      "iconPath": "apps/app-jxb5hl/icon.png"
     },
     {
       "id": "app-d24uxt",
@@ -56,6 +42,34 @@
       "updatedAt": "2026-09-02T07:37:33.583Z",
       "launchPath": "apps/app-ira8ob/表格美化器.html",
       "iconPath": "apps/app-ira8ob/icon.png"
+    },
+    {
+      "id": "pdf",
+      "name": "PDF 頁面工作台",
+      "description": "整理pdf",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "PDF 頁面工作台.html",
+      "icon": "",
+      "publishedAt": "2026-09-02T07:12:42.137Z",
+      "updatedAt": "2026-09-02T07:12:42.137Z",
+      "launchPath": "apps/pdf/PDF 頁面工作台.html",
+      "iconPath": ""
+    },
+    {
+      "id": "pdf-pro",
+      "name": "PDF 頁面工作台pro",
+      "description": "加了放大功能和自訂檔名",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "icon": "icon.png",
+      "publishedAt": "2026-09-02T07:22:15.303Z",
+      "updatedAt": "2026-09-02T07:22:15.303Z",
+      "launchPath": "apps/pdf-pro/PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "iconPath": "apps/pdf-pro/icon.png"
     }
   ]
 }
