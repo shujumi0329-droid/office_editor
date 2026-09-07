@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>萬用資料點收表</title>
+<style>
+:root{
+  --bg:#f4f6f8;--surface:#fff;--ink:#17202a;--muted:#64717d;--line:#d8dee5;
+  --primary:#155eef;--primary-dark:#0f47b8;--ok:#147d49;--ok-bg:#e8f7ef;--miss:#9b2c2c;
+  --miss-bg:#fff1f0;--warn:#9a6700;--shadow:0 10px 30px rgba(23,32,42,.08);--r:18px;
+}
+*{box-sizing:border-box}
+html{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink)}
+body{margin:0;min-height:100vh;background:var(--bg)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:4px solid rgba(21,94,239,.22);outline-offset:2px}
+[hidden]{display:none!important}
+.app-shell{max-width:1540px;margin:0 auto;padding:18px 22px 110px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{width:44px;height:44px;border-radius:14px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:21px;font-weight:900;flex:0 0 auto}
+.brand-text{min-width:0}.brand-title{font-size:15px;color:var(--muted);font-weight:800;letter-spacing:.05em}.brand-project{font-size:24px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:760px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ghost-btn,.light-btn,.primary-btn,.danger-btn{border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-weight:800;background:#fff;color:var(--ink)}
+.ghost-btn:hover,.light-btn:hover{background:#f8fafc}.primary-btn{background:var(--primary);color:#fff;border-color:var(--primary)}.primary-btn:hover{background:var(--primary-dark)}
+.danger-btn{color:#a42525;border-color:#efc1c1;background:#fffafa}
+.hero{background:linear-gradient(135deg,#17202a 0%,#273748 100%);color:#fff;border-radius:22px;padding:20px 22px;display:grid;grid-template-columns:minmax(240px,1fr) auto auto;gap:18px;align-items:center;box-shadow:var(--shadow);margin-bottom:16px}
+.hero-org{font-size:14px;color:#cbd5df;font-weight:800}.hero-item{font-size:22px;font-weight:900;margin-top:4px}.metric{min-width:170px;padding:10px 18px;border-left:1px solid rgba(255,255,255,.18)}.metric-label{font-size:13px;color:#cbd5df;font-weight:800}.metric-value{font-size:36px;font-weight:950;line-height:1.1;margin-top:3px}.metric.received .metric-value{color:#8ff0bd}.metric.missing .metric-value{color:#ffb4ae}
+.progress-wrap{background:#dfe5eb;border-radius:999px;height:10px;overflow:hidden;margin:0 2px 18px}.progress-bar{height:100%;width:0;background:var(--ok);transition:width .18s ease}
+.board-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.major-group{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:0 4px 18px rgba(23,32,42,.035);min-width:0}.major-group.wide{grid-column:1/-1}.major-title{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:950;padding:2px 4px 11px;border-bottom:1px solid #edf0f3;margin-bottom:11px}.major-title:before{content:"";width:5px;height:20px;background:var(--primary);border-radius:99px}.sub-group{border:1px solid #e4e9ee;background:#fafbfc;border-radius:14px;padding:10px;margin-top:10px}.sub-title{font-weight:900;font-size:15px;color:#344150;margin:0 2px 8px}.sub-group .sub-group{background:#fff;margin-left:8px}
+.unit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.major-group.wide>.unit-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.sub-group>.unit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.unit-btn{position:relative;width:100%;min-height:82px;border:2px solid #d6dde4;border-radius:14px;background:#fff;color:var(--ink);text-align:left;padding:12px 13px 11px;transition:transform .08s ease,border-color .12s ease,background .12s ease,box-shadow .12s ease;overflow:hidden}
+.unit-btn:hover{border-color:#9eb1c4;box-shadow:0 4px 14px rgba(23,32,42,.08)}.unit-btn:active{transform:scale(.985)}
+.unit-btn.received{border-color:#58a77e;background:var(--ok-bg);box-shadow:inset 0 0 0 1px rgba(20,125,73,.08)}
+.unit-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.unit-code{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:24px;padding:0 8px;border-radius:999px;background:#eef2f6;color:#485665;font-weight:900;font-size:12px}.unit-btn.received .unit-code{background:#ccebd9;color:#0d643a}.unit-state{font-size:12px;font-weight:900;color:#7d8994}.unit-btn.received .unit-state{color:var(--ok)}.unit-name{font-size:17px;font-weight:950;line-height:1.25;padding-right:24px;display:block}.unit-check{position:absolute;right:10px;bottom:8px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:1000;color:transparent;background:#edf1f4}.unit-btn.received .unit-check{background:var(--ok);color:#fff}
+.empty-board{grid-column:1/-1;background:#fff;border:1px dashed #b8c3ce;border-radius:18px;padding:48px;text-align:center;color:var(--muted);font-weight:800}
+.bottom-action{position:fixed;left:0;right:0;bottom:0;background:rgba(244,246,248,.94);backdrop-filter:blur(10px);border-top:1px solid #dce2e8;padding:13px 18px;z-index:20}.bottom-action-inner{max-width:1496px;margin:0 auto;display:flex;align-items:center;gap:12px;justify-content:space-between}.autosave{font-size:13px;color:var(--muted);font-weight:700}.finish-btn{min-width:280px;border:0;border-radius:15px;background:var(--primary);color:#fff;padding:15px 24px;font-size:19px;font-weight:950;box-shadow:0 7px 18px rgba(21,94,239,.22)}.finish-btn:hover{background:var(--primary-dark)}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(12px);background:#17202a;color:#fff;border-radius:12px;padding:10px 16px;font-weight:800;opacity:0;pointer-events:none;transition:.18s ease;z-index:90;box-shadow:var(--shadow)}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Dialogs */
+dialog{border:0;padding:0;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.24);width:min(1120px,calc(100vw - 28px));max-height:calc(100vh - 28px);color:var(--ink)}dialog::backdrop{background:rgba(18,26,34,.52);backdrop-filter:blur(2px)}
+.dialog-shell{display:flex;flex-direction:column;max-height:calc(100vh - 28px);background:#fff}.dialog-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line);gap:12px}.dialog-title{font-size:21px;font-weight:950}.dialog-body{padding:18px 20px;overflow:auto}.dialog-foot{display:flex;justify-content:flex-end;gap:10px;padding:13px 20px;border-top:1px solid var(--line);background:#fafbfc}.close-x{border:0;background:#eef2f5;border-radius:10px;width:38px;height:38px;font-size:20px;font-weight:900}
+.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);padding:0 20px;background:#fafbfc;overflow:auto}.tab-btn{border:0;background:transparent;padding:13px 12px;font-weight:900;color:#62707e;border-bottom:3px solid transparent;white-space:nowrap}.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.field label{display:block;font-weight:900;font-size:13px;margin:0 0 6px;color:#475461}.field input,.field select,.field textarea{width:100%;border:1px solid #cbd4dd;border-radius:11px;padding:10px 11px;background:#fff;color:var(--ink)}.field textarea{min-height:170px;resize:vertical;line-height:1.5}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}.section-title{font-size:17px;font-weight:950;margin:0 0 10px}.section-sub{color:var(--muted);font-size:13px;margin:-4px 0 13px;line-height:1.6}
+.template-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.template-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}.template-card h4{margin:0 0 5px;font-size:17px}.template-card p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}.template-badge{font-size:11px;font-weight:900;padding:3px 7px;border-radius:999px;background:#eef3ff;color:#2850a7;display:inline-block;margin-bottom:8px}
+.editor-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.org-editor{border:1px solid var(--line);border-radius:14px;overflow:hidden}.editor-row{display:grid;grid-template-columns:86px 94px 90px minmax(180px,1fr) 92px 112px;gap:8px;align-items:center;padding:8px 9px;border-top:1px solid #edf0f3;background:#fff}.editor-row:first-child{border-top:0}.editor-row[data-level="1"]{padding-left:28px}.editor-row[data-level="2"]{padding-left:48px}.editor-row[data-level="3"]{padding-left:68px}.editor-row input,.editor-row select{min-width:0;width:100%;border:1px solid #ccd5de;border-radius:9px;padding:8px}.row-actions{display:flex;gap:4px;justify-content:flex-end}.icon-btn{border:1px solid #d6dde4;background:#fff;border-radius:8px;min-width:30px;height:34px;font-weight:900}.icon-btn:hover{background:#f3f6f8}.wide-wrap{font-size:12px;display:flex;align-items:center;gap:4px;color:var(--muted)}.wide-wrap input{width:auto}.batch-box{margin-top:14px;border:1px dashed #b7c2cc;border-radius:14px;padding:13px;background:#fafbfc}.batch-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.project-list{display:grid;gap:9px}.project-card{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff}.project-card.active{border-color:#7fa5f5;background:#f5f8ff}.project-info{min-width:0;flex:1}.project-name{font-weight:950}.project-meta{font-size:12px;color:var(--muted);margin-top:3px}.project-card-actions{display:flex;gap:6px}.new-project-box{margin-top:16px;border-top:1px solid var(--line);padding-top:16px}.inline-form{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end}.backup-row{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.history-list{display:grid;gap:9px}.history-card{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:13px;padding:12px}.history-time{font-weight:900;min-width:165px}.history-stats{flex:1;color:var(--muted);font-weight:700}.history-missing{color:var(--miss);font-weight:900}
+/* Report */
+.report-shell{max-width:1100px;margin:0 auto;padding:18px 22px 60px}.report-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.report-actions{display:flex;gap:8px;flex-wrap:wrap}.report-paper{background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:var(--shadow)}.report-kicker{font-size:13px;font-weight:900;color:var(--muted);letter-spacing:.08em}.report-title{font-size:30px;font-weight:1000;margin:5px 0}.report-meta{color:var(--muted);font-size:14px}.report-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:22px 0}.report-stat{border-radius:14px;padding:14px;background:#f4f6f8}.report-stat strong{font-size:30px;display:block}.report-stat.miss{background:var(--miss-bg);color:var(--miss)}.report-stat.ok{background:var(--ok-bg);color:var(--ok)}.report-section{margin-top:24px}.report-section h2{font-size:19px;margin:0 0 10px}.missing-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.missing-item{border:1px solid #efc2bf;background:var(--miss-bg);border-radius:12px;padding:11px 13px;font-weight:900}.all-complete{background:var(--ok-bg);color:var(--ok);border:1px solid #abd9bf;border-radius:13px;padding:16px;font-weight:950}.status-table{width:100%;border-collapse:collapse;font-size:14px}.status-table th,.status-table td{padding:10px 9px;border-bottom:1px solid #e9edf1;text-align:left}.status-table th{background:#f7f8fa;color:#52606d}.status-pill{display:inline-block;border-radius:999px;padding:4px 9px;font-weight:900;font-size:12px}.status-pill.ok{background:var(--ok-bg);color:var(--ok)}.status-pill.miss{background:var(--miss-bg);color:var(--miss)}
+@media(max-width:900px){.hero{grid-template-columns:1fr 1fr}.hero>div:first-child{grid-column:1/-1}.metric{border-left:0;border-top:1px solid rgba(255,255,255,.15);padding-left:0}.board-grid{grid-template-columns:1fr}.major-group.wide{grid-column:auto}.major-group.wide>.unit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.template-grid,.form-grid{grid-template-columns:1fr}.editor-row{grid-template-columns:80px 80px 72px minmax(140px,1fr);padding-left:9px!important}.editor-row .wide-wrap,.editor-row .row-actions{grid-column:auto}.inline-form{grid-template-columns:1fr}.report-summary{grid-template-columns:1fr 1fr}.report-summary .report-stat:first-child{grid-column:1/-1}}
+@media(max-width:620px){.app-shell{padding:12px 10px 108px}.topbar{align-items:flex-start}.brand-mark{display:none}.brand-project{font-size:19px;max-width:58vw}.top-actions .ghost-btn{padding:9px 10px}.hero{padding:16px;border-radius:16px}.hero-item{font-size:18px}.metric-value{font-size:29px}.unit-grid,.major-group.wide>.unit-grid,.sub-group>.unit-grid{grid-template-columns:1fr}.unit-btn{min-height:74px}.finish-btn{min-width:0;flex:1}.autosave{display:none}.dialog-body{padding:14px}.editor-row{display:grid;grid-template-columns:80px 74px 1fr;gap:6px}.editor-row .name-input{grid-column:1/-1}.editor-row .wide-wrap{grid-column:1/2}.editor-row .row-actions{grid-column:2/-1}.missing-list{grid-template-columns:1fr}.report-shell{padding:10px}.report-paper{padding:18px;border-radius:14px}.report-title{font-size:24px}.report-top{align-items:flex-start;flex-direction:column}.report-summary{grid-template-columns:1fr}.report-summary .report-stat:first-child{grid-column:auto}}
+@media print{body{background:#fff}.report-top{display:none}.report-shell{padding:0;max-width:none}.report-paper{box-shadow:none;border:0;border-radius:0;padding:0}.app-shell,.bottom-action,.toast,dialog{display:none!important}#reportView{display:block!important}.status-table tr{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="boardView" class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">✓</div>
+        <div class="brand-text">
+          <div class="brand-title">萬用資料點收表</div>
+          <div class="brand-project" id="projectTitle">資料點收</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="ghost-btn" id="projectPickerBtn" type="button">專案</button>
+        <button class="ghost-btn" id="historyBtn" type="button">紀錄</button>
+        <button class="ghost-btn" id="settingsBtn" type="button">設定</button>
+      </div>
+    </header>
+
+    <section class="hero" aria-label="點收摘要">
+      <div>
+        <div class="hero-org" id="orgTitle">組織名稱</div>
+        <div class="hero-item" id="itemTitle">應繳資料</div>
+      </div>
+      <div class="metric received">
+        <div class="metric-label">已收到</div>
+        <div class="metric-value" id="summaryReceived">0 / 0</div>
+      </div>
+      <div class="metric missing">
+        <div class="metric-label">尚未收到</div>
+        <div class="metric-value" id="summaryMissing">0 隊</div>
+      </div>
+    </section>
+    <div class="progress-wrap" aria-hidden="true"><div id="progressBar" class="progress-bar"></div></div>
+
+    <main id="board" class="board-grid" aria-label="組織點收板"></main>
+  </section>
+
+  <div class="bottom-action" id="boardBottomAction">
+    <div class="bottom-action-inner">
+      <div class="autosave" id="autosaveStatus">每次點選都會自動保存</div>
+      <button id="finishBtn" class="finish-btn" type="button">完成點收・產生目前繳交表</button>
+    </div>
+  </div>
+
+  <section id="reportView" class="report-shell" hidden>
+    <div class="report-top">
+      <button id="backToBoardBtn" class="light-btn" type="button">← 返回點收</button>
+      <div class="report-actions">
+        <button id="printReportBtn" class="light-btn" type="button">列印 / PDF</button>
+        <button id="downloadCsvBtn" class="light-btn" type="button">下載 CSV</button>
+        <button id="downloadHtmlBtn" class="primary-btn" type="button">下載 HTML 報表</button>
+      </div>
+    </div>
+    <div id="reportContent" class="report-paper"></div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="settingsDialog">
+    <div class="dialog-shell">
+      <div class="dialog-head"><div class="dialog-title">點收表設定</div><button class="close-x" type="button" data-close-dialog="settingsDialog">×</button></div>
+      <div class="tabs">
+        <button class="tab-btn active" type="button" data-settings-tab="basic">基本資料</button>
+        <button class="tab-btn" type="button" data-settings-tab="org">組織層級表</button>
+        <button class="tab-btn" type="button" data-settings-tab="templates">三個範例</button>
+      </div>
+      <div class="dialog-body">
+        <section data-settings-panel="basic">
+          <div class="form-grid">
+            <div class="field"><label for="projectNameInput">專案名稱</label><input id="projectNameInput" maxlength="80"></div>
+            <div class="field"><label for="orgNameInput">組織名稱</label><input id="orgNameInput" maxlength="80"></div>
+            <div class="field"><label for="itemNameInput">這次要收什麼</label><input id="itemNameInput" maxlength="80"></div>
+          </div>
+          <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--line)">
+            <div class="section-title">點收狀態</div>
+            <div class="section-sub">重設只會清空目前打勾，不會刪除組織與過去完成紀錄。</div>
+            <button id="resetReceiptBtn" class="danger-btn" type="button">清空目前點收狀態</button>
+          </div>
+        </section>
+
+        <section data-settings-panel="org" hidden>
+          <div class="section-title">組織層級表</div>
+          <div class="section-sub">「群組」是畫面上的分類標題；「點收單位」才會出現可按的大按鈕。層級 1 是最外層，層級 2、3 會顯示在上一層群組裡。</div>
+          <div class="editor-toolbar">
+            <button id="addGroupBtn" class="light-btn" type="button">＋ 新增群組</button>
+            <button id="addUnitBtn" class="light-btn" type="button">＋ 新增點收單位</button>
+          </div>
+          <div id="orgEditorRows" class="org-editor"></div>
+          <details class="batch-box">
+            <summary style="font-weight:950;cursor:pointer">大量資料：用文字一次貼上</summary>
+            <div class="section-sub" style="margin-top:9px">群組用 # 開頭；下一層群組用 ##。點收單位用「編號 空格 名稱」。</div>
+            <div class="field"><textarea id="batchText" spellcheck="false" placeholder="# 大隊級&#10;01 第一單位&#10;02 第二單位&#10;# 第一中隊&#10;## 大昌&#10;03 大昌救災分隊"></textarea></div>
+            <div class="batch-actions">
+              <button id="batchFromCurrentBtn" class="light-btn" type="button">把目前階層轉成文字</button>
+              <button id="applyBatchBtn" class="primary-btn" type="button">套用這段文字到編輯表</button>
+            </div>
+          </details>
+        </section>
+
+        <section data-settings-panel="templates" hidden>
+          <div class="section-title">三個內建範例</div>
+          <div class="section-sub">套用只會先放進設定畫面；按下最下方「儲存設定」後才會正式改變目前專案。</div>
+          <div id="templateCards" class="template-grid">
+            <article class="template-card" data-template-id="general-admin"><span class="template-badge">預設範例</span><h4>一般行政單位</h4><p>12 個點收單位，示範行政組、業務區與支援組。</p><button class="light-btn" type="button" data-apply-template="general-admin">套用範例</button></article>
+            <article class="template-card" data-template-id="second-rescue-brigade"><span class="template-badge">23 隊完整範例</span><h4>第二救災救護大隊</h4><p>依你提供的二大組織架構，含大隊級、兩個中隊系統與 23 個應繳單位。</p><button class="light-btn" type="button" data-apply-template="second-rescue-brigade">套用範例</button></article>
+            <article class="template-card" data-template-id="school-admin"><span class="template-badge">不同場景範例</span><h4>校園行政單位</h4><p>示範行政處室與多層年級分組，便於理解這份 HTML 可跨場景使用。</p><button class="light-btn" type="button" data-apply-template="school-admin">套用範例</button></article>
+          </div>
+        </section>
+      </div>
+      <div class="dialog-foot"><button class="light-btn" type="button" data-close-dialog="settingsDialog">取消</button><button id="saveSettingsBtn" class="primary-btn" type="button">儲存設定</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="projectDialog">
+    <div class="dialog-shell">
+      <div class="dialog-head"><div class="dialog-title">專案</div><button class="close-x" type="button" data-close-dialog="projectDialog">×</button></div>
+      <div class="dialog-body">
+        <div id="projectList" class="project-list"></div>
+        <div class="new-project-box">
+          <div class="section-title">新增專案</div>
+          <div class="inline-form">
+            <div class="field"><label for="newProjectName">專案名稱</label><input id="newProjectName" placeholder="例如：115年度資料點收"></div>
+            <div class="field"><label for="newProjectTemplate">從哪個範例開始</label><select id="newProjectTemplate"><option value="general-admin">一般行政單位</option><option value="second-rescue-brigade">第二救災救護大隊</option><option value="school-admin">校園行政單位</option><option value="blank">空白組織</option></select></div>
+            <button id="createProjectBtn" class="primary-btn" type="button">建立專案</button>
+          </div>
+        </div>
+        <div class="backup-row">
+          <button id="exportProjectBtn" class="light-btn" type="button">下載目前專案備份</button>
+          <label class="light-btn" for="importProjectInput" style="cursor:pointer">匯入專案備份</label>
+          <input id="importProjectInput" type="file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="historyDialog">
+    <div class="dialog-shell">
+      <div class="dialog-head"><div class="dialog-title">完成點收紀錄</div><button class="close-x" type="button" data-close-dialog="historyDialog">×</button></div>
+      <div class="dialog-body"><div id="historyList" class="history-list"></div></div>
+    </div>
+  </dialog>
+</div>
+
+<script id="core-script">
+(function(){
+  'use strict';
+  const templates = [
+    {
+      id:'general-admin', name:'一般行政單位', orgName:'示範行政中心', projectName:'一般行政資料點收', itemName:'本期應繳資料',
+      nodes:[
+        {id:'ga-g1',type:'group',level:0,name:'行政組'},
+        {id:'ga-u1',type:'unit',level:1,code:'01',name:'文書單位'},
+        {id:'ga-u2',type:'unit',level:1,code:'02',name:'人事單位'},
+        {id:'ga-u3',type:'unit',level:1,code:'03',name:'會計單位'},
+        {id:'ga-g2',type:'group',level:0,name:'業務組'},
+        {id:'ga-g21',type:'group',level:1,name:'第一區'},
+        {id:'ga-u4',type:'unit',level:2,code:'04',name:'第一業務單位'},
+        {id:'ga-u5',type:'unit',level:2,code:'05',name:'第二業務單位'},
+        {id:'ga-u6',type:'unit',level:2,code:'06',name:'第三業務單位'},
+        {id:'ga-g22',type:'group',level:1,name:'第二區'},
+        {id:'ga-u7',type:'unit',level:2,code:'07',name:'第四業務單位'},
+        {id:'ga-u8',type:'unit',level:2,code:'08',name:'第五業務單位'},
+        {id:'ga-u9',type:'unit',level:2,code:'09',name:'第六業務單位'},
+        {id:'ga-g3',type:'group',level:0,name:'支援組'},
+        {id:'ga-u10',type:'unit',level:1,code:'10',name:'資訊單位'},
+        {id:'ga-u11',type:'unit',level:1,code:'11',name:'總務單位'},
+        {id:'ga-u12',type:'unit',level:1,code:'12',name:'採購單位'}
+      ]
+    },
+    {
+      id:'second-rescue-brigade', name:'第二救災救護大隊', orgName:'第二救災救護大隊', projectName:'第二救災救護大隊 資料點收', itemName:'應繳資料',
+      nodes:[
+        {id:'sr-g0',type:'group',level:0,name:'大隊級',wide:true},
+        {id:'sr-u01',type:'unit',level:1,code:'01',name:'第二救災義消大隊'},
+        {id:'sr-u02',type:'unit',level:1,code:'02',name:'第一救護義消大隊'},
+        {id:'sr-g1',type:'group',level:0,name:'第一中隊系統'},
+        {id:'sr-u03',type:'unit',level:1,code:'03',name:'大昌義消中隊（二大一中）'},
+        {id:'sr-g11',type:'group',level:1,name:'大昌'},
+        {id:'sr-u04',type:'unit',level:2,code:'04',name:'大昌救災分隊'},
+        {id:'sr-u05',type:'unit',level:2,code:'05',name:'大昌救護分隊'},
+        {id:'sr-u06',type:'unit',level:2,code:'06',name:'大昌宣導分隊'},
+        {id:'sr-g12',type:'group',level:1,name:'十全'},
+        {id:'sr-u07',type:'unit',level:2,code:'07',name:'十全救災分隊'},
+        {id:'sr-u08',type:'unit',level:2,code:'08',name:'十全救護分隊'},
+        {id:'sr-u09',type:'unit',level:2,code:'09',name:'十全宣導分隊'},
+        {id:'sr-g13',type:'group',level:1,name:'鼎金'},
+        {id:'sr-u10',type:'unit',level:2,code:'10',name:'鼎金救災分隊'},
+        {id:'sr-u11',type:'unit',level:2,code:'11',name:'鼎金救護分隊'},
+        {id:'sr-u12',type:'unit',level:2,code:'12',name:'鼎金宣導分隊'},
+        {id:'sr-g2',type:'group',level:0,name:'第二中隊系統'},
+        {id:'sr-u13',type:'unit',level:1,code:'13',name:'中華義消中隊（二大二中）'},
+        {id:'sr-g21',type:'group',level:1,name:'中華'},
+        {id:'sr-u14',type:'unit',level:2,code:'14',name:'中華救災分隊'},
+        {id:'sr-u15',type:'unit',level:2,code:'15',name:'中華救護分隊'},
+        {id:'sr-u16',type:'unit',level:2,code:'16',name:'中華宣導分隊'},
+        {id:'sr-g22',type:'group',level:1,name:'新莊'},
+        {id:'sr-u17',type:'unit',level:2,code:'17',name:'新莊救災分隊'},
+        {id:'sr-u18',type:'unit',level:2,code:'18',name:'新莊救護分隊'},
+        {id:'sr-u19',type:'unit',level:2,code:'19',name:'新莊宣導分隊'},
+        {id:'sr-g23',type:'group',level:1,name:'鼓山'},
+        {id:'sr-u20',type:'unit',level:2,code:'20',name:'鼓山救災分隊'},
+        {id:'sr-u21',type:'unit',level:2,code:'21',name:'鼓山宣導分隊'},
+        {id:'sr-g24',type:'group',level:1,name:'左營'},
+        {id:'sr-u22',type:'unit',level:2,code:'22',name:'左營救災分隊'},
+        {id:'sr-u23',type:'unit',level:2,code:'23',name:'左營宣導分隊'}
+      ]
+    },
+    {
+      id:'school-admin', name:'校園行政單位', orgName:'示範校園', projectName:'校園資料點收', itemName:'本期應繳資料',
+      nodes:[
+        {id:'sc-g1',type:'group',level:0,name:'行政處室'},
+        {id:'sc-u1',type:'unit',level:1,code:'01',name:'教務處'},
+        {id:'sc-u2',type:'unit',level:1,code:'02',name:'學務處'},
+        {id:'sc-u3',type:'unit',level:1,code:'03',name:'總務處'},
+        {id:'sc-u4',type:'unit',level:1,code:'04',name:'輔導室'},
+        {id:'sc-g2',type:'group',level:0,name:'年級系統'},
+        {id:'sc-g21',type:'group',level:1,name:'低年級'},
+        {id:'sc-u5',type:'unit',level:2,code:'05',name:'一年級'},
+        {id:'sc-u6',type:'unit',level:2,code:'06',name:'二年級'},
+        {id:'sc-g22',type:'group',level:1,name:'中年級'},
+        {id:'sc-u7',type:'unit',level:2,code:'07',name:'三年級'},
+        {id:'sc-u8',type:'unit',level:2,code:'08',name:'四年級'},
+        {id:'sc-g23',type:'group',level:1,name:'高年級'},
+        {id:'sc-u9',type:'unit',level:2,code:'09',name:'五年級'},
+        {id:'sc-u10',type:'unit',level:2,code:'10',name:'六年級'}
+      ]
+    }
+  ];
+  const defaultTemplateId = 'general-admin';
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  function countUnits(nodes){ return (nodes || []).filter(n => n.type === 'unit').length; }
+  function toggleReceived(received, unitId){ const set = new Set(received || []); if(set.has(unitId)) set.delete(unitId); else set.add(unitId); return Array.from(set); }
+  function buildSnapshot(project, iso){
+    const units = (project.nodes || []).filter(n => n.type === 'unit').map(n => ({id:n.id,code:n.code || '',name:n.name}));
+    const receivedSet = new Set(project.received || []);
+    const receivedUnits = units.filter(u => receivedSet.has(u.id));
+    const missing = units.filter(u => !receivedSet.has(u.id));
+    return {id:'snap-'+String(Date.now())+'-'+Math.random().toString(36).slice(2,8),createdAt:iso||new Date().toISOString(),projectId:project.id,projectName:project.name,orgName:project.orgName,itemName:project.itemName,total:units.length,receivedCount:receivedUnits.length,missingCount:missing.length,receivedUnits,missing,allUnits:units.map(u=>({...u,received:receivedSet.has(u.id)}))};
+  }
+  function parseBatch(text){
+    const lines=String(text||'').split(/\r?\n/); const nodes=[]; let lastGroupLevel=-1; let seq=0;
+    for(const raw of lines){ const line=raw.trim(); if(!line) continue; const group=line.match(/^(#{1,4})\s*(.+)$/); if(group){ lastGroupLevel=group[1].length-1; nodes.push({id:'n-'+Date.now().toString(36)+'-'+(++seq),type:'group',level:lastGroupLevel,name:group[2].trim()}); continue; }
+      const unit=line.match(/^([^\s]+)\s+(.+)$/); if(unit){ nodes.push({id:'n-'+Date.now().toString(36)+'-'+(++seq),type:'unit',level:Math.min(3,Math.max(0,lastGroupLevel+1)),code:unit[1].trim(),name:unit[2].trim()}); }
+    } return nodes;
+  }
+  function nodesToBatch(nodes){ return (nodes||[]).map(n=>n.type==='group' ? '#'.repeat(Math.min(4,(Number(n.level)||0)+1))+' '+n.name : (n.code ? n.code+' ' : '')+n.name).join('\n'); }
+  function makeProjectFromTemplate(templateId, projectName){
+    const tpl=templates.find(t=>t.id===templateId)||templates.find(t=>t.id===defaultTemplateId); const now=new Date().toISOString();
+    return {id:'p-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),name:(projectName||tpl.projectName).trim(),orgName:tpl.orgName,itemName:tpl.itemName,templateId:tpl.id,nodes:clone(tpl.nodes),received:[],history:[],createdAt:now,updatedAt:now};
+  }
+  function csvCell(v){ const s=String(v==null?'':v); return /[",\r\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+  function makeCsv(snapshot){ const rows=[['編號','單位','狀態'],...(snapshot.allUnits||[]).map(u=>[u.code,u.name,u.received?'已繳交':'未繳交'])]; return rows.map(r=>r.map(csvCell).join(',')).join('\r\n'); }
+  function makeReportHtml(snapshot){
+    const missing=(snapshot.missing||[]).map(u=>`<div class="miss"><b>${escapeHtml(u.code)}</b> ${escapeHtml(u.name)}</div>`).join('') || '<div class="complete">✓ 全部單位均已繳交</div>';
+    const rows=(snapshot.allUnits||[]).map(u=>`<tr><td>${escapeHtml(u.code)}</td><td>${escapeHtml(u.name)}</td><td class="${u.received?'ok':'bad'}">${u.received?'已繳交':'未繳交'}</td></tr>`).join('');
+    const when=new Date(snapshot.createdAt).toLocaleString('zh-TW',{hour12:false});
+    return `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(snapshot.projectName)}－目前繳交表</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;color:#17202a;max-width:980px;margin:30px auto;padding:0 20px}h1{margin-bottom:4px}.meta{color:#687582}.sum{display:flex;gap:12px;margin:22px 0}.box{flex:1;background:#f3f5f7;padding:14px;border-radius:12px}.box b{font-size:28px;display:block}.red{background:#fff0ef;color:#962929}.green{background:#e9f7ef;color:#176b43}.miss{padding:10px 12px;border:1px solid #ecc2bf;background:#fff2f1;border-radius:10px;margin:6px 0;font-weight:700}.complete{padding:14px;background:#e9f7ef;color:#176b43;border-radius:10px;font-weight:800}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{border-bottom:1px solid #e5e9ed;padding:10px;text-align:left}th{background:#f5f6f8}.ok{color:#176b43;font-weight:800}.bad{color:#962929;font-weight:800}@media print{body{margin:0;max-width:none}}</style></head><body><div class="meta">目前繳交表</div><h1>${escapeHtml(snapshot.projectName)}</h1><div>${escapeHtml(snapshot.orgName)}｜${escapeHtml(snapshot.itemName)}</div><div class="meta">產生時間：${escapeHtml(when)}</div><div class="sum"><div class="box"><span>總單位</span><b>${snapshot.total}</b></div><div class="box green"><span>已繳交</span><b>${snapshot.receivedCount}</b></div><div class="box red"><span>未繳交</span><b>${snapshot.missingCount}</b></div></div><h2>未繳交名單</h2>${missing}<h2 style="margin-top:28px">完整繳交狀態</h2><p><b>已繳交 ${snapshot.receivedCount} / ${snapshot.total}</b></p><table><thead><tr><th>編號</th><th>單位</th><th>狀態</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  }
+  window.AcceptanceCore={templates,defaultTemplateId,clone,escapeHtml,countUnits,toggleReceived,buildSnapshot,parseBatch,nodesToBatch,makeProjectFromTemplate,makeCsv,makeReportHtml};
+})();
+</script>
+
+<script>
+(function(){
+  'use strict';
+  const C=window.AcceptanceCore;
+  const STORAGE_KEY='universal_receipt_check_v1';
+  const $=id=>document.getElementById(id);
+  const nowIso=()=>new Date().toISOString();
+  let store=loadStore();
+  let editorNodes=[];
+  let currentReportSnapshot=null;
+  let toastTimer=null;
+
+  function loadStore(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(raw){ const parsed=JSON.parse(raw); if(parsed && Array.isArray(parsed.projects) && parsed.projects.length){ return parsed; } }
+    }catch(e){}
+    const first=C.makeProjectFromTemplate(C.defaultTemplateId);
+    const initial={version:1,activeId:first.id,projects:[first]};
+    try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(initial)); }catch(e){}
+    return initial;
+  }
+  function saveStore(){
+    try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(store)); $('autosaveStatus').textContent='已自動保存・'+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',hour12:false}); }
+    catch(e){ $('autosaveStatus').textContent='瀏覽器無法保存，請下載專案備份'; }
+  }
+  function activeProject(){ return store.projects.find(p=>p.id===store.activeId) || store.projects[0]; }
+  function uid(prefix){ return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7); }
+  function fmtDate(iso){ try{return new Date(iso).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});}catch(e){return iso||'';} }
+  function safeFilename(s){ return String(s||'report').replace(/[\\/:*?"<>|]/g,'_').trim() || 'report'; }
+  function toast(text){ const el=$('toast'); el.textContent=text; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1200); }
+
+  function renderAll(){
+    const p=activeProject(); if(!p) return;
+    $('projectTitle').textContent=p.name || '未命名專案'; $('orgTitle').textContent=p.orgName || '未命名組織'; $('itemTitle').textContent=p.itemName || '應繳資料';
+    renderSummary(); renderBoard(); renderProjects(); renderHistory();
+  }
+  function renderSummary(){
+    const p=activeProject(); const total=C.countUnits(p.nodes); const got=(p.received||[]).filter(id=>p.nodes.some(n=>n.type==='unit'&&n.id===id)).length; const missing=Math.max(0,total-got);
+    $('summaryReceived').textContent=got+' / '+total; $('summaryMissing').textContent=missing+' 個單位'; $('progressBar').style.width=(total?Math.round(got/total*100):0)+'%';
+  }
+  function treeFromNodes(nodes){
+    const root={type:'root',level:-1,children:[]}; const stack=[root];
+    for(const raw of nodes||[]){ const n={...raw,level:Math.max(0,Math.min(3,Number(raw.level)||0)),children:[]}; while(stack.length>1 && stack[stack.length-1].level>=n.level) stack.pop(); const parent=stack[stack.length-1]; parent.children.push(n); if(n.type==='group') stack.push(n); }
+    return root.children;
+  }
+  function unitButton(n,received){
+    const state=received?'已收到':'尚未收到';
+    return `<button class="unit-btn ${received?'received':''}" type="button" data-unit-id="${C.escapeHtml(n.id)}" aria-pressed="${received?'true':'false'}"><span class="unit-top"><span class="unit-code">${C.escapeHtml(n.code||'—')}</span><span class="unit-state">${state}</span></span><span class="unit-name">${C.escapeHtml(n.name)}</span><span class="unit-check" aria-hidden="true">✓</span></button>`;
+  }
+  function renderChildren(children,receivedSet,depth){
+    const units=children.filter(c=>c.type==='unit'); const groups=children.filter(c=>c.type==='group'); let out='';
+    if(units.length) out+=`<div class="unit-grid">${units.map(u=>unitButton(u,receivedSet.has(u.id))).join('')}</div>`;
+    for(const g of groups){ out+=`<div class="sub-group"><div class="sub-title">${C.escapeHtml(g.name)}</div>${renderChildren(g.children,receivedSet,depth+1)}</div>`; }
+    return out;
+  }
+  function renderBoard(){
+    const p=activeProject(); const board=$('board'); const receivedSet=new Set(p.received||[]); const roots=treeFromNodes(p.nodes);
+    if(!roots.length){ board.innerHTML='<div class="empty-board">目前沒有點收單位。請到「設定 → 組織層級表」新增。</div>'; return; }
+    let loose=[]; let html='';
+    for(const n of roots){
+      if(n.type==='unit'){ loose.push(n); continue; }
+      if(loose.length){ html+=`<section class="major-group wide"><div class="major-title">未分組</div><div class="unit-grid">${loose.map(u=>unitButton(u,receivedSet.has(u.id))).join('')}</div></section>`; loose=[]; }
+      html+=`<section class="major-group ${n.wide?'wide':''}"><div class="major-title">${C.escapeHtml(n.name)}</div>${renderChildren(n.children,receivedSet,1)}</section>`;
+    }
+    if(loose.length) html+=`<section class="major-group wide"><div class="major-title">點收單位</div><div class="unit-grid">${loose.map(u=>unitButton(u,receivedSet.has(u.id))).join('')}</div></section>`;
+    board.innerHTML=html || '<div class="empty-board">目前沒有點收單位。</div>';
+  }
+  $('board').addEventListener('click',e=>{
+    const btn=e.target.closest('[data-unit-id]'); if(!btn) return; const p=activeProject(); const id=btn.dataset.unitId; p.received=C.toggleReceived(p.received,id); p.updatedAt=nowIso(); saveStore(); renderSummary(); renderBoard(); const node=p.nodes.find(n=>n.id===id); toast((node?.code?node.code+' ':'')+(node?.name||'')+'：'+(p.received.includes(id)?'已收到':'已取消'));
+  });
+
+  function openDialog(id){ const d=$(id); if(typeof d.showModal==='function') d.showModal(); else d.setAttribute('open',''); }
+  function closeDialog(id){ const d=$(id); if(typeof d.close==='function') d.close(); else d.removeAttribute('open'); }
+  document.addEventListener('click',e=>{ const b=e.target.closest('[data-close-dialog]'); if(b) closeDialog(b.dataset.closeDialog); });
+
+  $('settingsBtn').addEventListener('click',()=>{ loadSettingsEditor(); setSettingsTab('basic'); openDialog('settingsDialog'); });
+  $('projectPickerBtn').addEventListener('click',()=>{ renderProjects(); openDialog('projectDialog'); });
+  $('historyBtn').addEventListener('click',()=>{ renderHistory(); openDialog('historyDialog'); });
+
+  function setSettingsTab(name){
+    document.querySelectorAll('[data-settings-tab]').forEach(b=>b.classList.toggle('active',b.dataset.settingsTab===name));
+    document.querySelectorAll('[data-settings-panel]').forEach(p=>p.hidden=p.dataset.settingsPanel!==name);
+  }
+  document.querySelectorAll('[data-settings-tab]').forEach(b=>b.addEventListener('click',()=>setSettingsTab(b.dataset.settingsTab)));
+
+  function loadSettingsEditor(){ const p=activeProject(); $('projectNameInput').value=p.name||''; $('orgNameInput').value=p.orgName||''; $('itemNameInput').value=p.itemName||''; editorNodes=C.clone(p.nodes||[]); renderEditorRows(); $('batchText').value=''; }
+  function renderEditorRows(){
+    const box=$('orgEditorRows'); if(!editorNodes.length){ box.innerHTML='<div style="padding:18px;text-align:center;color:var(--muted);font-weight:800">尚未建立組織。可新增群組或點收單位。</div>'; return; }
+    box.innerHTML=editorNodes.map((n,i)=>`<div class="editor-row" data-index="${i}" data-level="${n.level||0}" data-id="${C.escapeHtml(n.id)}" data-wide="${n.wide?'1':'0'}"><select class="type-input" aria-label="類型"><option value="group" ${n.type==='group'?'selected':''}>群組</option><option value="unit" ${n.type==='unit'?'selected':''}>點收單位</option></select><select class="level-input" aria-label="層級"><option value="0" ${(n.level||0)===0?'selected':''}>層級 1</option><option value="1" ${n.level===1?'selected':''}>層級 2</option><option value="2" ${n.level===2?'selected':''}>層級 3</option><option value="3" ${n.level===3?'selected':''}>層級 4</option></select><input class="code-input" aria-label="編號" value="${C.escapeHtml(n.code||'')}" placeholder="編號" ${n.type==='group'?'disabled':''}><input class="name-input" aria-label="名稱" value="${C.escapeHtml(n.name||'')}" placeholder="名稱"><label class="wide-wrap"><input class="wide-input" type="checkbox" ${n.wide?'checked':''} ${n.type==='unit'?'disabled':''}>跨整排</label><div class="row-actions"><button class="icon-btn" type="button" data-row-action="up" title="上移">↑</button><button class="icon-btn" type="button" data-row-action="down" title="下移">↓</button><button class="icon-btn" type="button" data-row-action="delete" title="刪除">×</button></div></div>`).join('');
+  }
+  function syncEditorFromDom(){
+    const rows=[...$('orgEditorRows').querySelectorAll('.editor-row')];
+    editorNodes=rows.map((r,i)=>{ const type=r.querySelector('.type-input').value; return {id:r.dataset.id||uid('n'),type,level:Number(r.querySelector('.level-input').value),code:type==='unit'?r.querySelector('.code-input').value.trim():'',name:r.querySelector('.name-input').value.trim(),wide:type==='group'&&r.querySelector('.wide-input').checked}; });
+  }
+  $('orgEditorRows').addEventListener('change',e=>{ if(e.target.matches('.type-input,.level-input')){ syncEditorFromDom(); renderEditorRows(); } });
+  $('orgEditorRows').addEventListener('click',e=>{
+    const action=e.target.closest('[data-row-action]'); if(!action) return; syncEditorFromDom(); const row=action.closest('.editor-row'); const i=Number(row.dataset.index); if(action.dataset.rowAction==='delete') editorNodes.splice(i,1); if(action.dataset.rowAction==='up'&&i>0) [editorNodes[i-1],editorNodes[i]]=[editorNodes[i],editorNodes[i-1]]; if(action.dataset.rowAction==='down'&&i<editorNodes.length-1) [editorNodes[i+1],editorNodes[i]]=[editorNodes[i],editorNodes[i+1]]; renderEditorRows();
+  });
+  function addEditorNode(type){ syncEditorFromDom(); const last=editorNodes[editorNodes.length-1]; editorNodes.push({id:uid('n'),type,level:last?last.level:0,code:type==='unit'?String(editorNodes.filter(n=>n.type==='unit').length+1).padStart(2,'0'):'',name:type==='group'?'新群組':'新點收單位',wide:false}); renderEditorRows(); $('orgEditorRows').lastElementChild?.scrollIntoView({block:'nearest'}); }
+  $('addGroupBtn').addEventListener('click',()=>addEditorNode('group')); $('addUnitBtn').addEventListener('click',()=>addEditorNode('unit'));
+  $('batchFromCurrentBtn').addEventListener('click',()=>{ syncEditorFromDom(); $('batchText').value=C.nodesToBatch(editorNodes); });
+  $('applyBatchBtn').addEventListener('click',()=>{ const parsed=C.parseBatch($('batchText').value); if(!parsed.length){ alert('沒有讀到可用內容。請確認格式。'); return; } editorNodes=parsed; renderEditorRows(); toast('已套用到編輯表，尚未儲存'); });
+
+  document.querySelectorAll('[data-apply-template]').forEach(btn=>btn.addEventListener('click',()=>{
+    const tpl=C.templates.find(t=>t.id===btn.dataset.applyTemplate); if(!tpl) return; $('orgNameInput').value=tpl.orgName; $('itemNameInput').value=tpl.itemName; editorNodes=C.clone(tpl.nodes); renderEditorRows(); setSettingsTab('org'); toast('已載入「'+tpl.name+'」，按儲存設定後生效');
+  }));
+
+  $('saveSettingsBtn').addEventListener('click',()=>{
+    syncEditorFromDom(); const name=$('projectNameInput').value.trim(); const org=$('orgNameInput').value.trim(); const item=$('itemNameInput').value.trim();
+    if(!name||!org||!item){ alert('請填寫專案名稱、組織名稱、這次要收什麼。'); return; }
+    const clean=editorNodes.filter(n=>n.name.trim()).map((n,i)=>({...n,id:n.id||uid('n'),level:Math.max(0,Math.min(3,Number(n.level)||0)),code:n.type==='unit'?(n.code.trim()||String(i+1).padStart(2,'0')):''}));
+    const units=clean.filter(n=>n.type==='unit'); if(!units.length){ alert('至少需要 1 個點收單位。'); return; }
+    const codes=units.map(u=>u.code); if(new Set(codes).size!==codes.length){ alert('點收單位的編號不能重複。'); return; }
+    const p=activeProject(); const validIds=new Set(units.map(u=>u.id)); p.name=name; p.orgName=org; p.itemName=item; p.nodes=clean; p.received=(p.received||[]).filter(id=>validIds.has(id)); p.updatedAt=nowIso(); saveStore(); closeDialog('settingsDialog'); renderAll(); toast('設定已儲存');
+  });
+  $('resetReceiptBtn').addEventListener('click',()=>{ if(!confirm('確定清空目前所有打勾？過去完成紀錄不會刪除。')) return; const p=activeProject(); p.received=[]; p.updatedAt=nowIso(); saveStore(); renderAll(); closeDialog('settingsDialog'); toast('目前點收狀態已清空'); });
+
+  function renderProjects(){
+    const list=$('projectList'); list.innerHTML=store.projects.map(p=>`<div class="project-card ${p.id===store.activeId?'active':''}" data-project-id="${C.escapeHtml(p.id)}"><div class="project-info"><div class="project-name">${C.escapeHtml(p.name)}</div><div class="project-meta">${C.escapeHtml(p.orgName)}・${C.countUnits(p.nodes)} 個點收單位${p.id===store.activeId?'・目前使用中':''}</div></div><div class="project-card-actions"><button class="light-btn" type="button" data-project-action="open">開啟</button><button class="icon-btn" type="button" data-project-action="duplicate" title="複製">⧉</button><button class="icon-btn" type="button" data-project-action="delete" title="刪除">×</button></div></div>`).join('');
+  }
+  $('projectList').addEventListener('click',e=>{
+    const b=e.target.closest('[data-project-action]'); if(!b) return; const card=b.closest('[data-project-id]'); const id=card.dataset.projectId; const p=store.projects.find(x=>x.id===id); if(!p) return;
+    if(b.dataset.projectAction==='open'){ store.activeId=id; saveStore(); closeDialog('projectDialog'); renderAll(); showBoard(); }
+    if(b.dataset.projectAction==='duplicate'){ const copy=C.clone(p); copy.id=uid('p'); copy.name=p.name+'（副本）'; copy.received=[]; copy.history=[]; copy.createdAt=copy.updatedAt=nowIso(); store.projects.push(copy); store.activeId=copy.id; saveStore(); renderAll(); }
+    if(b.dataset.projectAction==='delete'){ if(store.projects.length<=1){ alert('至少要保留一個專案。'); return; } if(!confirm('確定刪除專案「'+p.name+'」？此專案的完成紀錄也會一起刪除。')) return; store.projects=store.projects.filter(x=>x.id!==id); if(store.activeId===id) store.activeId=store.projects[0].id; saveStore(); renderAll(); }
+  });
+  $('createProjectBtn').addEventListener('click',()=>{
+    const name=$('newProjectName').value.trim(); const t=$('newProjectTemplate').value; let p;
+    if(t==='blank'){ const now=nowIso(); p={id:uid('p'),name:name||'新點收專案',orgName:'新組織',itemName:'應繳資料',templateId:'blank',nodes:[],received:[],history:[],createdAt:now,updatedAt:now}; }
+    else p=C.makeProjectFromTemplate(t,name||undefined);
+    store.projects.push(p); store.activeId=p.id; saveStore(); $('newProjectName').value=''; closeDialog('projectDialog'); renderAll(); if(t==='blank'){ loadSettingsEditor(); setSettingsTab('org'); openDialog('settingsDialog'); } else toast('新專案已建立');
+  });
+
+  function downloadBlob(content,type,filename){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1200); }
+  $('exportProjectBtn').addEventListener('click',()=>{ const p=activeProject(); downloadBlob(JSON.stringify({format:'universal-receipt-check-project',version:1,project:p},null,2),'application/json;charset=utf-8',safeFilename(p.name)+'_專案備份.json'); });
+  $('importProjectInput').addEventListener('change',async e=>{
+    const file=e.target.files?.[0]; if(!file) return; try{ const data=JSON.parse(await file.text()); const src=data.project||data; if(!src||!Array.isArray(src.nodes)||!src.name) throw new Error('invalid'); const p=C.clone(src); p.id=uid('p'); p.name=p.name+'（匯入）'; p.received=Array.isArray(p.received)?p.received:[]; p.history=Array.isArray(p.history)?p.history:[]; p.createdAt=p.createdAt||nowIso(); p.updatedAt=nowIso(); store.projects.push(p); store.activeId=p.id; saveStore(); closeDialog('projectDialog'); renderAll(); toast('專案已匯入'); }catch(err){ alert('無法匯入：這不是有效的點收專案備份。'); } finally { e.target.value=''; }
+  });
+
+  function renderHistory(){
+    const p=activeProject(); const h=p.history||[]; const box=$('historyList'); if(!h.length){ box.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted);font-weight:800">這個專案還沒有完成點收紀錄。</div>'; return; }
+    box.innerHTML=h.map(s=>`<div class="history-card" data-snapshot-id="${C.escapeHtml(s.id)}"><div class="history-time">${C.escapeHtml(fmtDate(s.createdAt))}</div><div class="history-stats">已繳交 ${s.receivedCount} / ${s.total}</div><div class="history-missing">未繳交 ${s.missingCount}</div><button class="light-btn" type="button" data-view-snapshot="${C.escapeHtml(s.id)}">查看</button></div>`).join('');
+  }
+  $('historyList').addEventListener('click',e=>{ const b=e.target.closest('[data-view-snapshot]'); if(!b) return; const s=(activeProject().history||[]).find(x=>x.id===b.dataset.viewSnapshot); if(s){ closeDialog('historyDialog'); showReport(s); } });
+
+  function reportMarkup(s){
+    const missing=s.missingCount===0?'<div class="all-complete">✓ 全部單位均已繳交</div>':`<div class="missing-list">${s.missing.map(u=>`<div class="missing-item">${C.escapeHtml(u.code)}　${C.escapeHtml(u.name)}</div>`).join('')}</div>`;
+    const rows=s.allUnits.map(u=>`<tr><td>${C.escapeHtml(u.code)}</td><td>${C.escapeHtml(u.name)}</td><td><span class="status-pill ${u.received?'ok':'miss'}">${u.received?'已繳交':'未繳交'}</span></td></tr>`).join('');
+    return `<div class="report-kicker">目前繳交表</div><div class="report-title">${C.escapeHtml(s.projectName)}</div><div class="report-meta">${C.escapeHtml(s.orgName)}　｜　${C.escapeHtml(s.itemName)}　｜　${C.escapeHtml(fmtDate(s.createdAt))}</div><div class="report-summary"><div class="report-stat"><span>應繳單位</span><strong>${s.total}</strong></div><div class="report-stat ok"><span>已繳交</span><strong>${s.receivedCount} / ${s.total}</strong></div><div class="report-stat miss"><span>未繳交</span><strong>${s.missingCount}</strong></div></div><section class="report-section"><h2>未繳交名單</h2>${missing}</section><section class="report-section"><h2>完整繳交狀態</h2><table class="status-table"><thead><tr><th style="width:90px">編號</th><th>單位</th><th style="width:110px">狀態</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+  }
+  function showReport(s){ currentReportSnapshot=s; $('reportContent').innerHTML=reportMarkup(s); $('boardView').hidden=true; $('boardBottomAction').hidden=true; $('reportView').hidden=false; window.scrollTo({top:0,behavior:'auto'}); }
+  function showBoard(){ $('reportView').hidden=true; $('boardView').hidden=false; $('boardBottomAction').hidden=false; currentReportSnapshot=null; window.scrollTo({top:0,behavior:'auto'}); }
+  $('finishBtn').addEventListener('click',()=>{ const p=activeProject(); const s=C.buildSnapshot(p,nowIso()); p.history=Array.isArray(p.history)?p.history:[]; p.history.unshift(s); if(p.history.length>100) p.history.length=100; p.updatedAt=nowIso(); saveStore(); renderHistory(); showReport(s); });
+  $('backToBoardBtn').addEventListener('click',showBoard); $('printReportBtn').addEventListener('click',()=>window.print());
+  $('downloadHtmlBtn').addEventListener('click',()=>{ if(!currentReportSnapshot) return; const s=currentReportSnapshot; downloadBlob(C.makeReportHtml(s),'text/html;charset=utf-8',safeFilename(s.projectName)+'_'+new Date(s.createdAt).toISOString().slice(0,16).replace(/[:T]/g,'-')+'_目前繳交表.html'); });
+  $('downloadCsvBtn').addEventListener('click',()=>{ if(!currentReportSnapshot) return; const s=currentReportSnapshot; downloadBlob('\ufeff'+C.makeCsv(s),'text/csv;charset=utf-8',safeFilename(s.projectName)+'_'+new Date(s.createdAt).toISOString().slice(0,10)+'_繳交狀態.csv'); });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
