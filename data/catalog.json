@@ -2,6 +2,34 @@
   "schemaVersion": 1,
   "apps": [
     {
+      "id": "pdf",
+      "name": "PDF 頁面工作台",
+      "description": "整理pdf",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "PDF 頁面工作台.html",
+      "icon": "",
+      "publishedAt": "2026-09-02T07:12:42.137Z",
+      "updatedAt": "2026-09-02T07:12:42.137Z",
+      "launchPath": "apps/pdf/PDF 頁面工作台.html",
+      "iconPath": ""
+    },
+    {
+      "id": "pdf-pro",
+      "name": "PDF 頁面工作台pro",
+      "description": "加了放大功能和自訂檔名",
+      "category": "Office",
+      "version": "1.0.0",
+      "featured": false,
+      "entry": "PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "icon": "icon.png",
+      "publishedAt": "2026-09-02T07:22:15.303Z",
+      "updatedAt": "2026-09-02T07:22:15.303Z",
+      "launchPath": "apps/pdf-pro/PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "iconPath": "apps/pdf-pro/icon.png"
+    },
+    {
       "id": "app-jxb5hl",
       "name": "快速登打表格工具",
       "description": "複雜型登打與合拼表格工具",
@@ -30,20 +58,6 @@
       "iconPath": "apps/app-d24uxt/icon.png"
     },
     {
-      "id": "app-ira8ob",
-      "name": "表格美化器",
-      "description": "",
-      "category": "Office",
-      "version": "1.0.0",
-      "featured": false,
-      "entry": "表格美化器.html",
-      "icon": "icon.png",
-      "publishedAt": "2026-09-02T07:37:33.583Z",
-      "updatedAt": "2026-09-02T07:37:33.583Z",
-      "launchPath": "apps/app-ira8ob/表格美化器.html",
-      "iconPath": "apps/app-ira8ob/icon.png"
-    },
-    {
       "id": "app-cwzdf7",
       "name": "萬用資料點收表",
       "description": "",
@@ -58,32 +72,18 @@
       "iconPath": "apps/app-cwzdf7/icon.png"
     },
     {
-      "id": "pdf",
-      "name": "PDF 頁面工作台",
-      "description": "整理pdf",
+      "id": "app-ira8ob",
+      "name": "表格美化器",
+      "description": "",
       "category": "Office",
       "version": "1.0.0",
       "featured": false,
-      "entry": "PDF 頁面工作台.html",
-      "icon": "",
-      "publishedAt": "2026-09-02T07:12:42.137Z",
-      "updatedAt": "2026-09-02T07:12:42.137Z",
-      "launchPath": "apps/pdf/PDF 頁面工作台.html",
-      "iconPath": ""
-    },
-    {
-      "id": "pdf-pro",
-      "name": "PDF 頁面工作台pro",
-      "description": "加了放大功能和自訂檔名",
-      "category": "Office",
-      "version": "1.0.0",
-      "featured": false,
-      "entry": "PDF 頁面工作台_加放大鏡與自訂檔名.html",
+      "entry": "表格美化器.html",
       "icon": "icon.png",
-      "publishedAt": "2026-09-02T07:22:15.303Z",
-      "updatedAt": "2026-09-02T07:22:15.303Z",
-      "launchPath": "apps/pdf-pro/PDF 頁面工作台_加放大鏡與自訂檔名.html",
-      "iconPath": "apps/pdf-pro/icon.png"
+      "publishedAt": "2026-09-02T07:37:33.583Z",
+      "updatedAt": "2026-09-02T07:37:33.583Z",
+      "launchPath": "apps/app-ira8ob/表格美化器.html",
+      "iconPath": "apps/app-ira8ob/icon.png"
     }
   ]
 }
