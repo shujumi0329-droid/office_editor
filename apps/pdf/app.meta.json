@@ -1,12 +1,12 @@
 {
   "id": "pdf",
   "name": "PDF 頁面進階工作台",
-  "description": "",
+  "description": "進階模式，含上傳圖片、浮水印",
   "category": "Office",
-  "entry": "PDF_頁面工作台_進階編輯版.html",
+  "entry": "PDF 頁面工作台_進階編輯版.html",
   "icon": "icon.png",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "featured": false,
   "publishedAt": "2026-09-29T09:08:19.774Z",
-  "updatedAt": "2026-09-29T09:08:19.774Z"
+  "updatedAt": "2026-09-29T09:27:37.222Z"
 }
