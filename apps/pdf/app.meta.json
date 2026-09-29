@@ -1,12 +1,12 @@
 {
   "id": "pdf",
-  "name": "PDF 頁面工作台",
-  "description": "整理pdf",
+  "name": "PDF 頁面進階工作台",
+  "description": "",
   "category": "Office",
-  "entry": "PDF 頁面工作台.html",
-  "icon": "",
+  "entry": "PDF_頁面工作台_進階編輯版.html",
+  "icon": "icon.png",
   "version": "1.0.0",
   "featured": false,
-  "publishedAt": "2026-09-02T07:12:42.137Z",
-  "updatedAt": "2026-09-02T07:12:42.137Z"
+  "publishedAt": "2026-09-29T09:08:19.774Z",
+  "updatedAt": "2026-09-29T09:08:19.774Z"
 }

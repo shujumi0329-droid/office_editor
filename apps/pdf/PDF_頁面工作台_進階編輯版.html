@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF 頁面工作台</title>
+  <style>
+    @font-face { font-family: "WorkbenchKai"; src: local("DFKai-SB"), local("BiauKai"), local("標楷體"); }
+    @font-face { font-family: "WorkbenchTimes"; src: local("Times New Roman"), local("TimesNewRomanPSMT"); }
+
+    :root {
+      color-scheme: light;
+      --bg: #eef1f5;
+      --panel: rgba(255,255,255,.92);
+      --panel-solid: #ffffff;
+      --panel-2: #f7f8fa;
+      --panel-3: #eef2f7;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #d9dee7;
+      --line-strong: #c9d0db;
+      --accent: #243e73;
+      --accent-2: #172a52;
+      --accent-soft: #e9eef8;
+      --danger: #b42318;
+      --danger-soft: #fff0ee;
+      --shadow: 0 20px 55px rgba(27, 39, 63, .12);
+      --shadow-soft: 0 7px 22px rgba(27, 39, 63, .08);
+      --radius: 18px;
+      --radius-sm: 11px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0f1218;
+        --panel: rgba(24,29,39,.94);
+        --panel-solid: #181d27;
+        --panel-2: #202633;
+        --panel-3: #2a3140;
+        --text: #eef2f8;
+        --muted: #a5afbf;
+        --line: #343c49;
+        --line-strong: #465061;
+        --accent: #91adf5;
+        --accent-2: #b6c9f7;
+        --accent-soft: #24334f;
+        --danger: #ff9a90;
+        --danger-soft: #3d2324;
+        --shadow: 0 22px 58px rgba(0,0,0,.34);
+        --shadow-soft: 0 8px 24px rgba(0,0,0,.26);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% -12%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    input[type="checkbox"] { accent-color: var(--accent); }
+
+    .app { width: min(1580px, 100%); margin: 0 auto; padding: 18px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: clamp(1.42rem, 2vw, 1.92rem); letter-spacing: .025em; font-weight: 760; }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+
+    .button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 11px;
+      background: var(--panel-solid);
+      color: var(--text);
+      line-height: 1.15;
+      transition: border-color .14s ease, background .14s ease, transform .08s ease, box-shadow .14s ease;
+    }
+    .button:hover:not(:disabled) { border-color: var(--line-strong); background: var(--panel-2); box-shadow: 0 3px 10px rgba(0,0,0,.04); }
+    .button:active:not(:disabled) { transform: translateY(1px); }
+    .button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .button.primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); }
+    .button.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 32%, var(--line)); }
+    .button.danger:hover:not(:disabled) { background: var(--danger-soft); }
+    .button.small { padding: 6px 8px; font-size: .82rem; }
+    .button.icon { width: 36px; height: 36px; display: grid; place-items: center; padding: 0; }
+    .button.active { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 48%, var(--line)); color: var(--accent); }
+
+    .drop-zone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 98px;
+      padding: 16px;
+      border: 1.5px dashed var(--line-strong);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-soft);
+      text-align: center;
+      transition: border-color .15s ease, background .15s ease, transform .15s ease;
+    }
+    .drop-zone.dragover { border-color: var(--accent); background: color-mix(in srgb, var(--panel-solid) 89%, var(--accent) 11%); transform: translateY(-1px); }
+    .drop-zone strong { display: block; margin-bottom: 10px; font-size: .97rem; }
+
+    .tabs {
+      display: inline-flex;
+      gap: 4px;
+      margin: 16px 0 12px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: color-mix(in srgb, var(--panel-solid) 88%, transparent);
+      box-shadow: var(--shadow-soft);
+    }
+    .tab-button { border: 0; border-radius: 9px; padding: 9px 15px; background: transparent; color: var(--muted); font-weight: 680; }
+    .tab-button.active { background: var(--panel-solid); color: var(--text); box-shadow: 0 2px 10px rgba(18,30,52,.09); }
+    .tab-panel[hidden] { display: none !important; }
+
+    .controls {
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+    .control-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .control-row + .control-row { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .range-box { display: flex; flex: 1 1 320px; min-width: 250px; gap: 7px; }
+    .field-inline { display: flex; align-items: center; gap: 7px; min-height: 36px; }
+    .field-inline > span { color: var(--muted); font-size: .84rem; white-space: nowrap; }
+    .divider { width: 1px; height: 28px; background: var(--line); margin: 0 2px; }
+
+    .text-input, .select-input, .number-input, .textarea {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 8px 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      outline: none;
+    }
+    .text-input:focus, .select-input:focus, .number-input:focus, .textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+    }
+    .number-input { width: 82px; }
+    .color-input { width: 40px; height: 34px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+    .textarea { width: 100%; min-height: 86px; resize: vertical; line-height: 1.55; }
+
+    .summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 10px 3px 12px; color: var(--muted); font-size: .86rem; }
+    .summary strong { color: var(--text); }
+
+    .pages-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; align-items: start; }
+    .empty-state { grid-column: 1 / -1; padding: 46px 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--muted); text-align: center; }
+
+    .page-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-solid);
+      box-shadow: var(--shadow-soft);
+      transition: border-color .12s ease, transform .12s ease, opacity .12s ease, box-shadow .12s ease;
+    }
+    .page-card:hover { transform: translateY(-2px); box-shadow: 0 11px 25px rgba(23,36,58,.12); }
+    .page-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent), var(--shadow-soft); }
+    .page-card.dragging { opacity: .34; transform: scale(.985); }
+    .page-card.drag-target { outline: 2px solid color-mix(in srgb, var(--accent) 78%, transparent); outline-offset: 2px; }
+    .thumb-wrap { position: relative; display: grid; place-items: center; min-height: 230px; padding: 12px; background: var(--panel-3); }
+    .thumb { display: block; max-width: 100%; max-height: 260px; object-fit: contain; background: white; box-shadow: 0 5px 18px rgba(0,0,0,.17); }
+    .thumb-loading { color: var(--muted); font-size: .84rem; }
+    .page-select { position: absolute; top: 10px; left: 10px; z-index: 3; width: 20px; height: 20px; }
+    .drag-handle { position: absolute; top: 8px; right: 8px; z-index: 3; display: grid; place-items: center; width: 32px; height: 28px; border: 1px solid rgba(0,0,0,.13); border-radius: 8px; background: rgba(255,255,255,.94); color: #344054; cursor: grab; user-select: none; font-size: 1rem; box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+    .drag-handle:active { cursor: grabbing; }
+    .card-info { padding: 10px; border-top: 1px solid var(--line); }
+    .page-title { display: flex; justify-content: space-between; gap: 8px; font-weight: 720; }
+    .source-name { margin-top: 4px; color: var(--muted); font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rotation-label { color: var(--muted); font-size: .74rem; font-weight: 520; }
+    .edit-dot { display: inline-block; width: 7px; height: 7px; margin-left: 5px; border-radius: 999px; background: var(--accent); vertical-align: middle; }
+    .card-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 9px; }
+    .card-actions .button { padding: 6px 4px; }
+
+    .advanced-layout {
+      display: grid;
+      grid-template-columns: 188px minmax(0,1fr) 318px;
+      min-height: calc(100vh - 190px);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-solid);
+      box-shadow: var(--shadow);
+    }
+    .adv-sidebar, .adv-inspector { background: var(--panel-2); }
+    .adv-sidebar { border-right: 1px solid var(--line); overflow: auto; padding: 10px; }
+    .adv-inspector { border-left: 1px solid var(--line); overflow: auto; padding: 12px; }
+    .adv-reader { min-width: 0; display: flex; flex-direction: column; background: color-mix(in srgb, var(--panel-3) 80%, var(--bg)); }
+    .adv-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--panel-solid) 92%, transparent); backdrop-filter: blur(12px); }
+    .adv-toolbar-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .adv-zoom-label { min-width: 50px; text-align: center; color: var(--muted); font-size: .82rem; }
+    .adv-reader-scroll { flex: 1 1 auto; overflow: auto; padding: 28px; text-align: center; }
+    .adv-stage { position: relative; display: inline-block; vertical-align: top; background: white; box-shadow: 0 16px 42px rgba(0,0,0,.19); user-select: none; }
+    .adv-canvas { display: block; max-width: none; background: white; }
+    .adv-overlay { position: absolute; inset: 0; overflow: hidden; text-align: left; }
+    .adv-loading { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255,255,255,.7); color: #666; z-index: 30; }
+    .adv-page-placeholder { display: grid; place-items: center; min-height: 420px; color: var(--muted); }
+
+    .adv-thumb { width: 100%; margin: 0 0 9px; padding: 7px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text); text-align: left; }
+    .adv-thumb:hover { background: var(--panel-solid); border-color: var(--line); }
+    .adv-thumb.active { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+    .adv-thumb img { display: block; width: 100%; max-height: 150px; object-fit: contain; margin-bottom: 5px; background: white; box-shadow: 0 3px 10px rgba(0,0,0,.12); }
+    .adv-thumb-label { display: flex; justify-content: space-between; gap: 6px; font-size: .77rem; color: var(--muted); }
+
+    .edit-item { position: absolute; cursor: move; touch-action: none; }
+    .edit-item.selected { outline: 2px solid #4b74d8; outline-offset: 3px; }
+    .annotation-item { min-height: 1.2em; white-space: pre-wrap; line-height: 1.38; color: #111; overflow-wrap: anywhere; }
+    .annotation-item .kai, .hf-item .kai { font-family: "WorkbenchKai", "DFKai-SB", "BiauKai", "標楷體", serif; }
+    .annotation-item .times, .hf-item .times { font-family: "WorkbenchTimes", "Times New Roman", Times, serif; }
+    .patch-item { background: #fff; border: 1px solid rgba(0,0,0,.12); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .hf-item, .numbering-preview { position: absolute; pointer-events: none; color: #111; line-height: 1; white-space: pre; }
+    .numbering-preview { font-family: "WorkbenchTimes", "Times New Roman", Times, serif; }
+
+    .inspector-section { padding: 11px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel-solid); }
+    .inspector-section + .inspector-section { margin-top: 10px; }
+    .inspector-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; font-size: .88rem; font-weight: 740; }
+    .stack { display: grid; gap: 8px; }
+    .stack label { display: grid; gap: 5px; color: var(--muted); font-size: .79rem; }
+    .stack .row { display: flex; align-items: center; gap: 7px; }
+    .stack .row > * { min-width: 0; }
+    .stack .row .grow { flex: 1 1 auto; }
+    .mini-note { color: var(--muted); font-size: .75rem; line-height: 1.45; }
+
+    .preview-overlay, .modal-overlay, .busy-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 100;
+      background: rgba(15, 20, 30, .58);
+      backdrop-filter: blur(5px);
+    }
+    .preview-overlay.show, .modal-overlay.show, .busy-overlay.show { display: grid; }
+    .preview-overlay, .modal-overlay, .busy-overlay { place-items: center; padding: 18px; }
+    .preview-panel { width: min(1120px, 96vw); height: min(90vh, 920px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--panel-solid); box-shadow: var(--shadow); }
+    .preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .preview-toolbar-actions { display: flex; align-items: center; gap: 7px; }
+    .preview-zoom-label { min-width: 52px; color: var(--muted); text-align: center; font-size: .84rem; }
+    .preview-canvas-wrap { position: relative; flex: 1 1 auto; overflow: auto; padding: 22px; background: var(--panel-2); text-align: center; }
+    .preview-canvas { display: inline-block; max-width: none; background: white; box-shadow: 0 8px 26px rgba(0,0,0,.22); vertical-align: top; }
+    .preview-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
+
+    .help-card { width: min(720px, 95vw); max-height: min(82vh, 760px); overflow: auto; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel-solid); box-shadow: var(--shadow); }
+    .help-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .help-card h2 { margin: 0; font-size: 1.05rem; }
+    .help-card p, .help-card li { color: var(--muted); font-size: .88rem; line-height: 1.72; }
+    .help-card ul { margin: 8px 0 0; padding-left: 1.2rem; }
+    .help-card code { padding: 1px 5px; border-radius: 5px; background: var(--panel-2); color: var(--text); }
+
+    .busy-card { min-width: min(360px, calc(100vw - 32px)); padding: 22px; border-radius: 16px; background: var(--panel-solid); box-shadow: var(--shadow); text-align: center; }
+    .spinner { width: 35px; height: 35px; margin: 0 auto 12px; border: 4px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 120; max-width: min(440px, calc(100vw - 36px)); padding: 11px 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel-solid); box-shadow: var(--shadow); color: var(--text); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .18s ease, transform .18s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { border-color: var(--danger); color: var(--danger); }
+
+    @media (max-width: 1100px) {
+      .advanced-layout { grid-template-columns: 150px minmax(0,1fr); }
+      .adv-inspector { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+      .inspector-section + .inspector-section { margin-top: 0; }
+    }
+    @media (max-width: 760px) {
+      .app { padding: 12px; }
+      .controls { position: static; }
+      .pages-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
+      .thumb-wrap { min-height: 190px; padding: 9px; }
+      .range-box { flex-basis: 100%; }
+      .advanced-layout { grid-template-columns: 1fr; }
+      .adv-sidebar { display: none; }
+      .adv-inspector { grid-column: auto; grid-template-columns: 1fr; border-top: 1px solid var(--line); }
+      .adv-reader-scroll { padding: 16px 10px; }
+      .divider { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>PDF 頁面工作台</h1>
+      <div class="top-actions">
+        <button id="helpButton" class="button" type="button">說明</button>
+      </div>
+    </header>
+
+    <section id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="選擇或拖曳 PDF 檔案">
+      <div>
+        <strong>拖曳 PDF 到這裡，或直接選檔</strong>
+        <button id="openButton" class="button primary" type="button">開啟 / 加入 PDF</button>
+        <input id="fileInput" type="file" accept="application/pdf,.pdf" multiple hidden />
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="編輯模式">
+      <button id="basicTabButton" class="tab-button active" type="button" data-tab="basic">頁面編輯</button>
+      <button id="advancedTabButton" class="tab-button" type="button" data-tab="advanced">進階編輯模式</button>
+    </nav>
+
+    <section id="basicPanel" class="tab-panel">
+      <section class="controls" aria-label="PDF 操作工具列">
+        <div class="control-row">
+          <button id="selectAllButton" class="button" type="button">全選</button>
+          <button id="clearSelectionButton" class="button" type="button">取消選取</button>
+          <button id="invertSelectionButton" class="button" type="button">反向選取</button>
+          <span class="divider"></span>
+          <button id="moveLeftButton" class="button" type="button">所選前移</button>
+          <button id="moveRightButton" class="button" type="button">所選後移</button>
+          <button id="rotateLeftButton" class="button" type="button">左轉 90°</button>
+          <button id="rotateRightButton" class="button" type="button">右轉 90°</button>
+          <button id="deleteButton" class="button danger" type="button">刪除所選</button>
+        </div>
+
+        <div class="control-row">
+          <div class="range-box">
+            <input id="selectionRange" class="text-input" type="text" placeholder="選取頁碼：1-3, 6, 9-" aria-label="頁碼範圍" />
+            <button id="selectRangeButton" class="button" type="button">套用</button>
+          </div>
+          <label class="field-inline">
+            <input id="numberingEnabled" type="checkbox" />
+            <span>編入頁碼</span>
+          </label>
+          <label class="field-inline">
+            <span>位置</span>
+            <select id="numberingPosition" class="select-input">
+              <option value="top-left">頁首左</option>
+              <option value="top-center">頁首置中</option>
+              <option value="top-right">頁首右</option>
+              <option value="bottom-left">頁尾左</option>
+              <option value="bottom-center" selected>頁尾置中</option>
+              <option value="bottom-right">頁尾右</option>
+            </select>
+          </label>
+          <label class="field-inline"><span>起始</span><input id="numberingStart" class="number-input" type="number" min="0" step="1" value="1" /></label>
+          <label class="field-inline"><span>大小</span><input id="numberingSize" class="number-input" type="number" min="6" max="40" step="1" value="10" /></label>
+        </div>
+
+        <div class="control-row">
+          <div class="range-box">
+            <input id="splitRange" class="text-input" type="text" placeholder="拆分：1-3 | 4-6 | 7-；留白則逐頁" aria-label="拆分範圍" />
+            <button id="splitButton" class="button" type="button">拆分 ZIP</button>
+          </div>
+          <input id="outputFilename" class="text-input" type="text" placeholder="輸出檔名" aria-label="輸出檔名" style="flex:0 1 260px" />
+          <button id="exportAllButton" class="button primary" type="button">匯出完整 PDF</button>
+          <button id="exportSelectedButton" class="button" type="button">匯出所選 PDF</button>
+          <button id="resetButton" class="button danger" type="button">清空</button>
+        </div>
+      </section>
+
+      <div class="summary" aria-live="polite">
+        <span>檔案 <strong id="sourceCount">0</strong></span>
+        <span>頁數 <strong id="pageCount">0</strong></span>
+        <span>已選 <strong id="selectedCount">0</strong></span>
+        <span id="statusText">尚未載入 PDF</span>
+      </div>
+
+      <section id="pagesGrid" class="pages-grid" aria-label="PDF 頁面縮圖">
+        <div class="empty-state">尚未載入 PDF</div>
+      </section>
+    </section>
+
+    <section id="advancedPanel" class="tab-panel" hidden>
+      <div class="advanced-layout">
+        <aside id="advSidebar" class="adv-sidebar" aria-label="頁面清單"></aside>
+
+        <section class="adv-reader">
+          <div class="adv-toolbar">
+            <div class="adv-toolbar-group">
+              <button id="advPrevButton" class="button small" type="button">上一頁</button>
+              <select id="advPageSelect" class="select-input" aria-label="進階編輯頁面"></select>
+              <button id="advNextButton" class="button small" type="button">下一頁</button>
+            </div>
+            <div class="adv-toolbar-group">
+              <button id="advSelectTool" class="button small active" type="button">選取</button>
+              <button id="advTextTool" class="button small" type="button">註解</button>
+              <button id="advPatchTool" class="button small" type="button">空白補丁</button>
+              <span class="divider"></span>
+              <button id="advZoomOut" class="button small" type="button">－</button>
+              <span id="advZoomLabel" class="adv-zoom-label">100%</span>
+              <button id="advZoomIn" class="button small" type="button">＋</button>
+              <span class="divider"></span>
+              <button id="advExportButton" class="button small primary" type="button">匯出 PDF</button>
+            </div>
+          </div>
+          <div id="advReaderScroll" class="adv-reader-scroll">
+            <div id="advPlaceholder" class="adv-page-placeholder">尚未載入 PDF</div>
+            <div id="advStage" class="adv-stage" hidden>
+              <canvas id="advCanvas" class="adv-canvas"></canvas>
+              <div id="advOverlay" class="adv-overlay"></div>
+              <div id="advLoading" class="adv-loading">載入中…</div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="adv-inspector">
+          <section class="inspector-section">
+            <div class="inspector-title"><span>選取物件</span><button id="deleteEditButton" class="button small danger" type="button">刪除</button></div>
+            <div id="noEditSelected" class="mini-note">尚未選取註解或補丁</div>
+            <div id="annotationInspector" class="stack" hidden>
+              <label>註解文字<textarea id="annotationText" class="textarea"></textarea></label>
+              <div class="row">
+                <label class="grow">字級<input id="annotationSize" class="number-input" type="number" min="6" max="72" value="14" /></label>
+                <label>顏色<input id="annotationColor" class="color-input" type="color" value="#111111" /></label>
+              </div>
+              <label>文字框寬度 <input id="annotationWidth" type="range" min="10" max="90" value="36" /></label>
+            </div>
+            <div id="patchInspector" class="stack" hidden>
+              <label>寬度 <input id="patchWidth" type="range" min="3" max="95" value="22" /></label>
+              <label>高度 <input id="patchHeight" type="range" min="2" max="80" value="8" /></label>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="inspector-title"><span>頁首</span><label class="field-inline"><input id="headerEnabled" type="checkbox" /></label></div>
+            <div class="stack">
+              <input id="headerText" class="text-input" type="text" placeholder="頁首文字" />
+              <div class="row">
+                <select id="headerAlign" class="select-input grow"><option value="left">靠左</option><option value="center" selected>置中</option><option value="right">靠右</option></select>
+                <input id="headerSize" class="number-input" type="number" min="6" max="36" value="10" />
+                <input id="headerColor" class="color-input" type="color" value="#111111" />
+              </div>
+            </div>
+          </section>
+
+          <section class="inspector-section">
+            <div class="inspector-title"><span>頁尾</span><label class="field-inline"><input id="footerEnabled" type="checkbox" /></label></div>
+            <div class="stack">
+              <input id="footerText" class="text-input" type="text" placeholder="頁尾文字" />
+              <div class="row">
+                <select id="footerAlign" class="select-input grow"><option value="left">靠左</option><option value="center" selected>置中</option><option value="right">靠右</option></select>
+                <input id="footerSize" class="number-input" type="number" min="6" max="36" value="10" />
+                <input id="footerColor" class="color-input" type="color" value="#111111" />
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="previewOverlay" class="preview-overlay" aria-hidden="true">
+    <div class="preview-panel" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+      <div class="preview-toolbar">
+        <strong id="previewTitle">頁面預覽</strong>
+        <div class="preview-toolbar-actions">
+          <button id="previewZoomOutButton" class="button small" type="button">－</button>
+          <span id="previewZoomLabel" class="preview-zoom-label">100%</span>
+          <button id="previewZoomInButton" class="button small" type="button">＋</button>
+          <button id="previewCloseButton" class="button small" type="button">關閉</button>
+        </div>
+      </div>
+      <div id="previewCanvasWrap" class="preview-canvas-wrap">
+        <canvas id="previewCanvas" class="preview-canvas"></canvas>
+        <div id="previewLoading" class="preview-loading">載入中…</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="helpOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="help-head">
+        <h2 id="helpTitle">說明</h2>
+        <button id="helpCloseButton" class="button small" type="button">關閉</button>
+      </div>
+      <ul>
+        <li>「頁面編輯」保留排序、旋轉、刪頁、選取、拆分與匯出；勾選「編入頁碼」後可選頁首／頁尾及左、中、右位置。</li>
+        <li>縮圖右上角拖曳把手會直接調整畫面中的順序，放開後才同步資料，避免拖曳途中反覆重繪。</li>
+        <li>「進階編輯模式」可在大頁面上加入註解與空白補丁。註解中的中文字元使用本機標楷體，英文字母、數字與符號使用 Times New Roman；顏色與字級可調整。</li>
+        <li>頁首／頁尾支援 <code>{page}</code> 與 <code>{pages}</code>；前者為目前頁碼，後者為目前總頁數。</li>
+        <li>含頁碼、註解、空白補丁或頁首頁尾的頁面會以高解析度合成後寫入 PDF，以維持畫面位置與混合字型結果；未套用這些內容的頁面仍沿用原 PDF 頁面。</li>
+        <li>所有處理在目前瀏覽器分頁完成；若系統未安裝標楷體或 Times New Roman，瀏覽器會採用可用的替代字型。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="busyOverlay" class="busy-overlay" aria-hidden="true">
+    <div class="busy-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="busyText">處理中…</div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <script>
+    "use strict";
+
+    const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    const { PDFDocument, degrees } = PDFLib;
+
+    const state = {
+      sources: new Map(),
+      pages: [],
+      selected: new Set(),
+      thumbnailCache: new Map(),
+      draggedUid: null,
+      renderGeneration: 0,
+      previewUid: null,
+      previewScale: 1,
+      previewGeneration: 0,
+      busy: false,
+      activeTab: "basic",
+      numbering: { enabled: false, position: "bottom-center", start: 1, fontSize: 10, color: "#111111" },
+      header: { enabled: false, text: "", align: "center", fontSize: 10, color: "#111111" },
+      footer: { enabled: false, text: "", align: "center", fontSize: 10, color: "#111111" },
+      advancedPageUid: null,
+      advancedScale: 1.08,
+      advancedGeneration: 0,
+      advancedTool: "select",
+      advancedSelectedEditId: null,
+    };
+
+    const els = Object.fromEntries([
+      "dropZone","openButton","fileInput","pagesGrid","sourceCount","pageCount","selectedCount","statusText","selectionRange","splitRange","outputFilename",
+      "previewOverlay","previewCanvas","previewCanvasWrap","previewLoading","previewTitle","previewZoomLabel","previewZoomOutButton","previewZoomInButton","previewCloseButton",
+      "busyOverlay","busyText","toast","selectAllButton","clearSelectionButton","invertSelectionButton","moveLeftButton","moveRightButton","rotateLeftButton","rotateRightButton","deleteButton",
+      "selectRangeButton","exportAllButton","exportSelectedButton","splitButton","resetButton","basicTabButton","advancedTabButton","basicPanel","advancedPanel","helpButton","helpOverlay","helpCloseButton",
+      "numberingEnabled","numberingPosition","numberingStart","numberingSize","advSidebar","advPrevButton","advNextButton","advPageSelect","advSelectTool","advTextTool","advPatchTool","advZoomOut","advZoomIn","advZoomLabel",
+      "advReaderScroll","advPlaceholder","advStage","advCanvas","advOverlay","advLoading","advExportButton","deleteEditButton","noEditSelected","annotationInspector","annotationText","annotationSize","annotationColor","annotationWidth",
+      "patchInspector","patchWidth","patchHeight","headerEnabled","headerText","headerAlign","headerSize","headerColor","footerEnabled","footerText","footerAlign","footerSize","footerColor"
+    ].map((id) => [id, document.getElementById(id)]));
+
+    let toastTimer = null;
+    let advDrag = null;
+
+    function uid(prefix = "id") {
+      if (globalThis.crypto?.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    function normalizeRotation(angle) { return ((Number(angle) % 360) + 360) % 360; }
+    function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+    function ensurePageEdits(item) {
+      if (!item.annotations) item.annotations = [];
+      if (!item.patches) item.patches = [];
+      return item;
+    }
+
+    function sanitizeFilename(name) {
+      return String(name || "pdf").replace(/\.pdf$/i, "").replace(/[\\/:*?"<>|\x00-\x1F]/g, "_").replace(/\s+/g, " ").trim().slice(0, 90) || "pdf";
+    }
+
+    function setBusy(isBusy, message = "處理中…") {
+      state.busy = isBusy;
+      els.busyText.textContent = message;
+      els.busyOverlay.classList.toggle("show", isBusy);
+      els.busyOverlay.setAttribute("aria-hidden", String(!isBusy));
+      updateButtons();
+    }
+
+    function showToast(message, isError = false) {
+      clearTimeout(toastTimer);
+      els.toast.textContent = message;
+      els.toast.classList.toggle("error", isError);
+      els.toast.classList.add("show");
+      toastTimer = setTimeout(() => els.toast.classList.remove("show"), 3000);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function mixedHtml(text) {
+      return escapeHtml(text).split(/(\r?\n)/).map((part) => {
+        if (/^\r?\n$/.test(part)) return "<br>";
+        let out = "";
+        let type = null;
+        let buf = "";
+        for (const ch of part) {
+          const nextType = /[\u3400-\u9FFF\uF900-\uFAFF]/.test(ch) ? "kai" : "times";
+          if (type && type !== nextType) { out += `<span class="${type}">${buf}</span>`; buf = ""; }
+          type = nextType;
+          buf += ch;
+        }
+        if (buf) out += `<span class="${type || "times"}">${buf}</span>`;
+        return out;
+      }).join("");
+    }
+
+    function updateSummary() {
+      els.sourceCount.textContent = String(state.sources.size);
+      els.pageCount.textContent = String(state.pages.length);
+      els.selectedCount.textContent = String(state.selected.size);
+      els.statusText.textContent = state.pages.length ? "已載入" : "尚未載入 PDF";
+      updateButtons();
+    }
+
+    function updateButtons() {
+      const hasPages = state.pages.length > 0;
+      const hasSelected = state.selected.size > 0;
+      const disabledAll = state.busy;
+      [els.selectAllButton, els.clearSelectionButton, els.invertSelectionButton, els.selectRangeButton, els.exportAllButton, els.splitButton, els.resetButton]
+        .forEach((button) => { button.disabled = disabledAll || !hasPages; });
+      [els.moveLeftButton, els.moveRightButton, els.rotateLeftButton, els.rotateRightButton, els.deleteButton, els.exportSelectedButton]
+        .forEach((button) => { button.disabled = disabledAll || !hasSelected; });
+      els.openButton.disabled = disabledAll;
+      els.advPrevButton.disabled = disabledAll || !hasPages || advancedIndex() <= 0;
+      els.advNextButton.disabled = disabledAll || !hasPages || advancedIndex() >= state.pages.length - 1;
+      [els.advSelectTool, els.advTextTool, els.advPatchTool, els.advZoomOut, els.advZoomIn].forEach((button) => { button.disabled = disabledAll || !hasPages; });
+      els.deleteEditButton.disabled = disabledAll || !state.advancedSelectedEditId;
+    }
+
+    function hasPageEdits(item) {
+      ensurePageEdits(item);
+      return item.annotations.length > 0 || item.patches.length > 0;
+    }
+
+    function renderGrid() {
+      state.renderGeneration += 1;
+      const generation = state.renderGeneration;
+      if (!state.pages.length) {
+        els.pagesGrid.innerHTML = '<div class="empty-state">尚未載入 PDF</div>';
+        updateSummary();
+        return;
+      }
+
+      els.pagesGrid.innerHTML = state.pages.map((item, index) => {
+        ensurePageEdits(item);
+        const selected = state.selected.has(item.uid);
+        const source = state.sources.get(item.sourceId);
+        const sourceName = source?.name || "未知檔案";
+        const cacheKey = thumbnailCacheKey(item);
+        const cached = state.thumbnailCache.get(cacheKey);
+        return `<article class="page-card${selected ? " selected" : ""}" data-uid="${item.uid}" aria-label="目前第 ${index + 1} 頁">
+          <div class="thumb-wrap">
+            <input class="page-select" type="checkbox" ${selected ? "checked" : ""} aria-label="選取目前第 ${index + 1} 頁" />
+            <span class="drag-handle" draggable="true" title="拖曳排序">⋮⋮</span>
+            <span class="thumb-loading" ${cached ? "hidden" : ""}>縮圖載入中…</span>
+            <img class="thumb" alt="目前第 ${index + 1} 頁預覽" ${cached ? `src="${cached}"` : "hidden"} />
+          </div>
+          <div class="card-info">
+            <div class="page-title"><span class="page-index-label">第 ${index + 1} 頁${hasPageEdits(item) ? '<span class="edit-dot" title="含進階編輯"></span>' : ""}</span><span class="rotation-label">旋轉 ${normalizeRotation(item.rotationDelta)}°</span></div>
+            <div class="source-name" title="${escapeHtml(sourceName)}">來源：${escapeHtml(sourceName)} / 原第 ${item.sourcePageIndex + 1} 頁</div>
+            <div class="card-actions">
+              <button class="button small" data-action="left" type="button" title="向前移一頁">←</button>
+              <button class="button small" data-action="right" type="button" title="向後移一頁">→</button>
+              <button class="button small" data-action="rotate" type="button" title="右轉 90 度">↻</button>
+              <button class="button small" data-action="preview" type="button" title="放大預覽">🔍</button>
+              <button class="button small danger" data-action="delete" type="button" title="刪除此頁">刪</button>
+            </div>
+          </div>
+        </article>`;
+      }).join("");
+
+      bindCardEvents();
+      updateSummary();
+      void renderThumbnails(generation);
+      if (state.activeTab === "advanced") renderAdvancedSidebar();
+    }
+
+    function bindCardEvents() {
+      els.pagesGrid.querySelectorAll(".page-card").forEach((card) => {
+        const itemUid = card.dataset.uid;
+        const checkbox = card.querySelector(".page-select");
+        const handle = card.querySelector(".drag-handle");
+
+        checkbox.addEventListener("change", () => setPageSelected(itemUid, checkbox.checked));
+        card.querySelectorAll("button[data-action]").forEach((button) => {
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const action = button.dataset.action;
+            if (action === "left") moveSingle(itemUid, -1);
+            if (action === "right") moveSingle(itemUid, 1);
+            if (action === "rotate") rotateSingle(itemUid, 90);
+            if (action === "preview") void openPreview(itemUid);
+            if (action === "delete") deleteSingle(itemUid);
+          });
+        });
+
+        card.addEventListener("click", (event) => {
+          if (event.target.closest("button, input, .drag-handle")) return;
+          setPageSelected(itemUid, !state.selected.has(itemUid));
+        });
+
+        handle.addEventListener("dragstart", (event) => {
+          state.draggedUid = itemUid;
+          card.classList.add("dragging");
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", itemUid);
+          requestAnimationFrame(() => card.classList.add("dragging"));
+        });
+
+        card.addEventListener("dragover", (event) => {
+          if (!state.draggedUid || state.draggedUid === itemUid) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          const dragged = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(state.draggedUid)}"]`);
+          if (!dragged || dragged === card) return;
+          const rect = card.getBoundingClientRect();
+          const before = (event.clientY < rect.top + rect.height / 2) ||
+            (Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height * .25 && event.clientX < rect.left + rect.width / 2);
+          const reference = before ? card : card.nextElementSibling;
+          if (reference !== dragged) els.pagesGrid.insertBefore(dragged, reference);
+          els.pagesGrid.querySelectorAll(".page-card").forEach((el) => el.classList.toggle("drag-target", el === card));
+          syncStateOrderFromDom(false);
+          refreshGridMeta();
+        });
+
+        handle.addEventListener("dragend", () => finishGridDrag());
+        card.addEventListener("drop", (event) => { event.preventDefault(); finishGridDrag(); });
+      });
+    }
+
+    function finishGridDrag() {
+      if (!state.draggedUid) return;
+      syncStateOrderFromDom(true);
+      state.draggedUid = null;
+      els.pagesGrid.querySelectorAll(".page-card").forEach((el) => el.classList.remove("dragging", "drag-target"));
+      refreshGridMeta();
+      syncAdvancedPageControls();
+    }
+
+    function syncStateOrderFromDom(finalize = false) {
+      const uids = [...els.pagesGrid.querySelectorAll(".page-card")].map((card) => card.dataset.uid);
+      if (uids.length !== state.pages.length) return;
+      const map = new Map(state.pages.map((item) => [item.uid, item]));
+      const next = uids.map((id) => map.get(id)).filter(Boolean);
+      if (next.length === state.pages.length) state.pages = next;
+      if (finalize) updateSummary();
+    }
+
+    function refreshGridMeta() {
+      [...els.pagesGrid.querySelectorAll(".page-card")].forEach((card, index) => {
+        card.setAttribute("aria-label", `目前第 ${index + 1} 頁`);
+        const item = state.pages[index];
+        const label = card.querySelector(".page-index-label");
+        if (label && item) label.innerHTML = `第 ${index + 1} 頁${hasPageEdits(item) ? '<span class="edit-dot" title="含進階編輯"></span>' : ""}`;
+      });
+    }
+
+    function thumbnailCacheKey(item) { return `${item.sourceId}:${item.sourcePageIndex}:${normalizeRotation(item.rotationDelta)}`; }
+
+    async function renderThumbnails(generation) {
+      const queue = state.pages.filter((item) => !state.thumbnailCache.has(thumbnailCacheKey(item)));
+      const workers = Array.from({ length: Math.min(4, queue.length) }, async () => {
+        while (queue.length && generation === state.renderGeneration) {
+          const item = queue.shift();
+          try {
+            const dataUrl = await getThumbnail(item);
+            if (generation !== state.renderGeneration) return;
+            const card = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(item.uid)}"]`);
+            if (!card) continue;
+            const img = card.querySelector(".thumb");
+            const loading = card.querySelector(".thumb-loading");
+            img.src = dataUrl;
+            img.hidden = false;
+            loading.hidden = true;
+          } catch (error) {
+            console.error(error);
+            const card = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(item.uid)}"]`);
+            if (card) card.querySelector(".thumb-loading").textContent = "無法產生縮圖";
+          }
+        }
+      });
+      await Promise.all(workers);
+    }
+
+    async function getThumbnail(item) {
+      const cacheKey = thumbnailCacheKey(item);
+      if (state.thumbnailCache.has(cacheKey)) return state.thumbnailCache.get(cacheKey);
+      const source = state.sources.get(item.sourceId);
+      if (!source) throw new Error("找不到來源 PDF");
+      const page = await source.pdfjsDoc.getPage(item.sourcePageIndex + 1);
+      const rotation = normalizeRotation((page.rotate || 0) + item.rotationDelta);
+      const baseViewport = page.getViewport({ scale: 1, rotation });
+      const desiredWidth = 175;
+      const scale = desiredWidth / baseViewport.width;
+      const viewport = page.getViewport({ scale, rotation });
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d", { alpha: false });
+      canvas.width = Math.max(1, Math.floor(viewport.width * pixelRatio));
+      canvas.height = Math.max(1, Math.floor(viewport.height * pixelRatio));
+      await page.render({ canvasContext: context, viewport, transform: pixelRatio === 1 ? null : [pixelRatio,0,0,pixelRatio,0,0], background: "rgb(255,255,255)" }).promise;
+      const dataUrl = canvas.toDataURL("image/jpeg", .86);
+      state.thumbnailCache.set(cacheKey, dataUrl);
+      return dataUrl;
+    }
+
+    async function openPreview(itemUid) {
+      const item = state.pages.find((page) => page.uid === itemUid);
+      if (!item) return;
+      const source = state.sources.get(item.sourceId);
+      if (!source) return;
+      const page = await source.pdfjsDoc.getPage(item.sourcePageIndex + 1);
+      const rotation = normalizeRotation((page.rotate || 0) + item.rotationDelta);
+      const baseViewport = page.getViewport({ scale: 1, rotation });
+      const targetWidth = Math.min(900, Math.max(520, window.innerWidth * .72));
+      state.previewUid = itemUid;
+      state.previewScale = clamp(targetWidth / baseViewport.width, .5, 2.5);
+      state.previewGeneration += 1;
+      els.previewTitle.textContent = `第 ${state.pages.findIndex((p) => p.uid === itemUid) + 1} 頁預覽`;
+      els.previewOverlay.classList.add("show");
+      els.previewOverlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      await renderPreview();
+    }
+
+    async function renderPreview() {
+      const item = state.pages.find((page) => page.uid === state.previewUid);
+      if (!item) return;
+      const source = state.sources.get(item.sourceId);
+      if (!source) return;
+      const generation = ++state.previewGeneration;
+      els.previewLoading.hidden = false;
+      els.previewCanvas.hidden = true;
+      try {
+        const page = await source.pdfjsDoc.getPage(item.sourcePageIndex + 1);
+        if (generation !== state.previewGeneration) return;
+        const rotation = normalizeRotation((page.rotate || 0) + item.rotationDelta);
+        const viewport = page.getViewport({ scale: state.previewScale, rotation });
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const canvas = els.previewCanvas;
+        const context = canvas.getContext("2d", { alpha: false });
+        canvas.width = Math.max(1, Math.floor(viewport.width * pixelRatio));
+        canvas.height = Math.max(1, Math.floor(viewport.height * pixelRatio));
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+        await page.render({ canvasContext: context, viewport, transform: pixelRatio === 1 ? null : [pixelRatio,0,0,pixelRatio,0,0], background: "rgb(255,255,255)" }).promise;
+        if (generation !== state.previewGeneration) return;
+        els.previewZoomLabel.textContent = `${Math.round(state.previewScale * 100)}%`;
+        els.previewCanvas.hidden = false;
+      } catch (error) {
+        console.error(error);
+        if (generation === state.previewGeneration) els.previewLoading.textContent = "無法載入此頁";
+      } finally {
+        if (generation === state.previewGeneration) els.previewLoading.hidden = true;
+      }
+    }
+
+    function changePreviewZoom(multiplier) {
+      if (!state.previewUid) return;
+      state.previewScale = clamp(state.previewScale * multiplier, .35, 4);
+      void renderPreview();
+    }
+
+    function closePreview() {
+      state.previewGeneration += 1;
+      state.previewUid = null;
+      els.previewOverlay.classList.remove("show");
+      els.previewOverlay.setAttribute("aria-hidden", "true");
+      els.previewLoading.textContent = "載入中…";
+      document.body.style.overflow = "";
+    }
+
+    function setPageSelected(itemUid, selected) {
+      if (selected) state.selected.add(itemUid); else state.selected.delete(itemUid);
+      const card = els.pagesGrid.querySelector(`[data-uid="${CSS.escape(itemUid)}"]`);
+      if (card) { card.classList.toggle("selected", selected); card.querySelector(".page-select").checked = selected; }
+      updateSummary();
+    }
+
+    function selectAll() { state.pages.forEach((item) => state.selected.add(item.uid)); renderGrid(); }
+    function clearSelection() { state.selected.clear(); renderGrid(); }
+    function invertSelection() {
+      const next = new Set();
+      state.pages.forEach((item) => { if (!state.selected.has(item.uid)) next.add(item.uid); });
+      state.selected = next;
+      renderGrid();
+    }
+
+    function moveSingle(itemUid, direction) {
+      const index = state.pages.findIndex((item) => item.uid === itemUid);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= state.pages.length) return;
+      [state.pages[index], state.pages[target]] = [state.pages[target], state.pages[index]];
+      renderGrid();
+      syncAdvancedPageControls();
+    }
+
+    function moveSelected(direction) {
+      if (!state.selected.size) return;
+      if (direction < 0) {
+        for (let i = 1; i < state.pages.length; i += 1) if (state.selected.has(state.pages[i].uid) && !state.selected.has(state.pages[i - 1].uid)) [state.pages[i - 1], state.pages[i]] = [state.pages[i], state.pages[i - 1]];
+      } else {
+        for (let i = state.pages.length - 2; i >= 0; i -= 1) if (state.selected.has(state.pages[i].uid) && !state.selected.has(state.pages[i + 1].uid)) [state.pages[i], state.pages[i + 1]] = [state.pages[i + 1], state.pages[i]];
+      }
+      renderGrid();
+      syncAdvancedPageControls();
+    }
+
+    function rotateSingle(itemUid, amount) {
+      const item = state.pages.find((page) => page.uid === itemUid);
+      if (!item) return;
+      item.rotationDelta = normalizeRotation(item.rotationDelta + amount);
+      state.thumbnailCache.delete(thumbnailCacheKey({ ...item, rotationDelta: normalizeRotation(item.rotationDelta - amount) }));
+      renderGrid();
+      if (state.advancedPageUid === itemUid) void renderAdvancedPage();
+    }
+
+    function rotateSelected(amount) {
+      state.pages.forEach((item) => {
+        if (!state.selected.has(item.uid)) return;
+        const oldKey = thumbnailCacheKey(item);
+        item.rotationDelta = normalizeRotation(item.rotationDelta + amount);
+        state.thumbnailCache.delete(oldKey);
+      });
+      renderGrid();
+      if (state.selected.has(state.advancedPageUid)) void renderAdvancedPage();
+    }
+
+    function deleteSingle(itemUid) {
+      state.pages = state.pages.filter((item) => item.uid !== itemUid);
+      state.selected.delete(itemUid);
+      if (state.advancedPageUid === itemUid) state.advancedPageUid = state.pages[0]?.uid || null;
+      cleanupUnusedSources();
+      renderGrid();
+      syncAdvancedPageControls();
+      if (state.activeTab === "advanced") void renderAdvancedPage();
+    }
+
+    function deleteSelected() {
+      if (!state.selected.size) return;
+      const deletingActive = state.advancedPageUid && state.selected.has(state.advancedPageUid);
+      state.pages = state.pages.filter((item) => !state.selected.has(item.uid));
+      state.selected.clear();
+      if (deletingActive) state.advancedPageUid = state.pages[0]?.uid || null;
+      cleanupUnusedSources();
+      renderGrid();
+      syncAdvancedPageControls();
+      if (state.activeTab === "advanced") void renderAdvancedPage();
+      showToast("已刪除所選頁面");
+    }
+
+    function cleanupUnusedSources() {
+      const used = new Set(state.pages.map((item) => item.sourceId));
+      for (const id of state.sources.keys()) if (!used.has(id)) state.sources.delete(id);
+    }
+
+    function parsePageSpec(spec, totalPages) {
+      const text = String(spec || "").trim();
+      if (!text) return [];
+      const result = [];
+      const seen = new Set();
+      const tokens = text.split(/[，,]+/).map((part) => part.trim()).filter(Boolean);
+      for (const token of tokens) {
+        const rangeMatch = token.match(/^(\d*)\s*[-–—~～]\s*(\d*)$/);
+        if (rangeMatch) {
+          if (!rangeMatch[1] && !rangeMatch[2]) throw new Error(`無效範圍：${token}`);
+          let start = rangeMatch[1] ? Number(rangeMatch[1]) : 1;
+          let end = rangeMatch[2] ? Number(rangeMatch[2]) : totalPages;
+          if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < 1 || start > end) throw new Error(`無效範圍：${token}`);
+          start = Math.max(1, start); end = Math.min(totalPages, end);
+          for (let page = start; page <= end; page += 1) if (!seen.has(page - 1)) { seen.add(page - 1); result.push(page - 1); }
+          continue;
+        }
+        if (!/^\d+$/.test(token)) throw new Error(`無效頁碼：${token}`);
+        const page = Number(token);
+        if (page < 1 || page > totalPages) throw new Error(`頁碼超出範圍：${page}`);
+        if (!seen.has(page - 1)) { seen.add(page - 1); result.push(page - 1); }
+      }
+      return result;
+    }
+
+    function applyRangeSelection() {
+      try {
+        const indices = parsePageSpec(els.selectionRange.value, state.pages.length);
+        if (!indices.length) throw new Error("請輸入頁碼範圍");
+        state.selected.clear();
+        indices.forEach((index) => state.selected.add(state.pages[index].uid));
+        renderGrid();
+        showToast(`已選取 ${indices.length} 頁`);
+      } catch (error) { showToast(error.message, true); }
+    }
+
+    function parseSplitGroups(spec, totalPages) {
+      const text = String(spec || "").trim();
+      if (!text) return Array.from({ length: totalPages }, (_, index) => [index]);
+      const chunks = text.split(/[|｜\n]+/).map((part) => part.trim()).filter(Boolean);
+      if (!chunks.length) throw new Error("請輸入有效拆分區段");
+      return chunks.map((chunk) => {
+        const group = parsePageSpec(chunk, totalPages);
+        if (!group.length) throw new Error(`空白拆分區段：${chunk}`);
+        return group;
+      });
+    }
+
+    async function addFiles(fileList) {
+      const files = Array.from(fileList || []).filter((file) => file.type === "application/pdf" || /\.pdf$/i.test(file.name));
+      if (!files.length) { showToast("請選擇 PDF 檔案", true); return; }
+      setBusy(true, `正在載入 ${files.length} 個 PDF…`);
+      let addedPages = 0;
+      let failed = 0;
+      try {
+        for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+          const file = files[fileIndex];
+          setBusy(true, `載入 ${file.name}（${fileIndex + 1}/${files.length}）…`);
+          try {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const loadingTask = pdfjsLib.getDocument({ data: bytes.slice() });
+            const pdfjsDoc = await loadingTask.promise;
+            const sourceId = uid("source");
+            state.sources.set(sourceId, { id: sourceId, name: file.name, bytes, pdfjsDoc, pageCount: pdfjsDoc.numPages });
+            for (let pageIndex = 0; pageIndex < pdfjsDoc.numPages; pageIndex += 1) {
+              state.pages.push({ uid: uid("page"), sourceId, sourcePageIndex: pageIndex, rotationDelta: 0, annotations: [], patches: [] });
+              addedPages += 1;
+            }
+          } catch (error) { failed += 1; console.error(`無法載入 ${file.name}`, error); }
+        }
+      } finally {
+        setBusy(false);
+        els.fileInput.value = "";
+        if (!state.advancedPageUid) state.advancedPageUid = state.pages[0]?.uid || null;
+        renderGrid();
+        syncAdvancedPageControls();
+        if (state.activeTab === "advanced") void renderAdvancedPage();
+      }
+      if (addedPages) showToast(`已加入 ${addedPages} 頁${failed ? `；${failed} 個檔案失敗` : ""}`); else showToast("PDF 載入失敗", true);
+    }
+
+    function syncNumberingFromControls() {
+      state.numbering.enabled = els.numberingEnabled.checked;
+      state.numbering.position = els.numberingPosition.value;
+      state.numbering.start = Number.isFinite(Number(els.numberingStart.value)) ? Number(els.numberingStart.value) : 1;
+      state.numbering.fontSize = clamp(Number(els.numberingSize.value) || 10, 6, 40);
+      if (state.activeTab === "advanced") renderAdvancedOverlay();
+    }
+
+    function syncHeaderFooterFromControls() {
+      state.header.enabled = els.headerEnabled.checked;
+      state.header.text = els.headerText.value;
+      state.header.align = els.headerAlign.value;
+      state.header.fontSize = clamp(Number(els.headerSize.value) || 10, 6, 36);
+      state.header.color = els.headerColor.value;
+      state.footer.enabled = els.footerEnabled.checked;
+      state.footer.text = els.footerText.value;
+      state.footer.align = els.footerAlign.value;
+      state.footer.fontSize = clamp(Number(els.footerSize.value) || 10, 6, 36);
+      state.footer.color = els.footerColor.value;
+      if (state.activeTab === "advanced") renderAdvancedOverlay();
+    }
+
+    function visualFeaturesActiveFor(item) {
+      return hasPageEdits(item) || state.numbering.enabled || state.header.enabled || state.footer.enabled;
+    }
+
+    function replacePageTokens(text, docIndex, totalPages) {
+      return String(text || "").replace(/\{page\}/gi, String(docIndex + 1)).replace(/\{pages\}/gi, String(totalPages));
+    }
+
+    function fontForChar(ch, px) {
+      return /[\u3400-\u9FFF\uF900-\uFAFF]/.test(ch)
+        ? `${px}px "WorkbenchKai", "DFKai-SB", "BiauKai", "標楷體", serif`
+        : `${px}px "WorkbenchTimes", "Times New Roman", Times, serif`;
+    }
+
+    function mixedTextWidth(ctx, text, fontSizePx) {
+      let width = 0;
+      for (const ch of String(text)) { ctx.font = fontForChar(ch, fontSizePx); width += ctx.measureText(ch).width; }
+      return width;
+    }
+
+    function drawMixedLine(ctx, text, x, y, fontSizePx, color, align = "left") {
+      const total = mixedTextWidth(ctx, text, fontSizePx);
+      let cursor = align === "center" ? x - total / 2 : align === "right" ? x - total : x;
+      ctx.fillStyle = color;
+      ctx.textBaseline = "top";
+      for (const ch of String(text)) {
+        ctx.font = fontForChar(ch, fontSizePx);
+        ctx.fillText(ch, cursor, y);
+        cursor += ctx.measureText(ch).width;
+      }
+      return total;
+    }
+
+    function drawMixedWrapped(ctx, text, x, y, maxWidth, fontSizePx, color, lineHeightPx) {
+      let cursorY = y;
+      const paragraphs = String(text || "").split(/\r?\n/);
+      for (const paragraph of paragraphs) {
+        let line = "";
+        let lineWidth = 0;
+        for (const ch of paragraph) {
+          ctx.font = fontForChar(ch, fontSizePx);
+          const w = ctx.measureText(ch).width;
+          if (line && lineWidth + w > maxWidth) {
+            drawMixedLine(ctx, line, x, cursorY, fontSizePx, color, "left");
+            cursorY += lineHeightPx;
+            line = ch;
+            lineWidth = w;
+          } else { line += ch; lineWidth += w; }
+        }
+        drawMixedLine(ctx, line, x, cursorY, fontSizePx, color, "left");
+        cursorY += lineHeightPx;
+      }
+    }
+
+    function positionTextX(align, width, margin) {
+      if (align === "left") return margin;
+      if (align === "right") return width - margin;
+      return width / 2;
+    }
+
+    function drawHeaderFooterCanvas(ctx, width, height, pixelScale, docIndex, totalPages) {
+      const marginX = 20 * pixelScale;
+      const marginY = 16 * pixelScale;
+      const draw = (cfg, top) => {
+        if (!cfg.enabled || !cfg.text) return;
+        const text = replacePageTokens(cfg.text, docIndex, totalPages);
+        const size = cfg.fontSize * pixelScale;
+        const y = top ? marginY : height - marginY - size * 1.1;
+        drawMixedLine(ctx, text, positionTextX(cfg.align, width, marginX), y, size, cfg.color, cfg.align);
+      };
+      draw(state.header, true);
+      draw(state.footer, false);
+    }
+
+    function drawPageNumberCanvas(ctx, width, height, pixelScale, docIndex) {
+      if (!state.numbering.enabled) return;
+      const [vertical, horizontal] = state.numbering.position.split("-");
+      const size = state.numbering.fontSize * pixelScale;
+      const marginX = 20 * pixelScale;
+      const marginY = 16 * pixelScale;
+      const x = horizontal === "left" ? marginX : horizontal === "right" ? width - marginX : width / 2;
+      const y = vertical === "top" ? marginY : height - marginY - size * 1.1;
+      const text = String(state.numbering.start + docIndex);
+      ctx.font = `${size}px "WorkbenchTimes", "Times New Roman", Times, serif`;
+      ctx.fillStyle = state.numbering.color;
+      ctx.textBaseline = "top";
+      ctx.textAlign = horizontal;
+      ctx.fillText(text, x, y);
+      ctx.textAlign = "left";
+    }
+
+    async function renderFlattenedPage(item, docIndex, totalPages, pixelScale = 2) {
+      await document.fonts?.ready;
+      const source = state.sources.get(item.sourceId);
+      if (!source) throw new Error("找不到來源 PDF");
+      const page = await source.pdfjsDoc.getPage(item.sourcePageIndex + 1);
+      const rotation = normalizeRotation((page.rotate || 0) + item.rotationDelta);
+      const viewport = page.getViewport({ scale: pixelScale, rotation });
+      const baseViewport = page.getViewport({ scale: 1, rotation });
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.floor(viewport.width));
+      canvas.height = Math.max(1, Math.floor(viewport.height));
+      const ctx = canvas.getContext("2d", { alpha: false });
+      await page.render({ canvasContext: ctx, viewport, background: "rgb(255,255,255)" }).promise;
+      ensurePageEdits(item);
+      for (const patch of item.patches) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(patch.x * canvas.width, patch.y * canvas.height, patch.w * canvas.width, patch.h * canvas.height);
+      }
+      for (const ann of item.annotations) {
+        const x = ann.x * canvas.width;
+        const y = ann.y * canvas.height;
+        const maxWidth = ann.w * canvas.width;
+        const size = ann.fontSize * pixelScale;
+        drawMixedWrapped(ctx, ann.text, x, y, maxWidth, size, ann.color, size * 1.38);
+      }
+      drawHeaderFooterCanvas(ctx, canvas.width, canvas.height, pixelScale, docIndex, totalPages);
+      drawPageNumberCanvas(ctx, canvas.width, canvas.height, pixelScale, docIndex);
+      return { dataUrl: canvas.toDataURL("image/jpeg", .94), width: baseViewport.width, height: baseViewport.height };
+    }
+
+    async function buildPdf(items) {
+      if (!items.length) throw new Error("沒有可匯出的頁面");
+      const out = await PDFDocument.create();
+      const loadedSources = new Map();
+      const totalPages = state.pages.length;
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        const docIndex = state.pages.findIndex((p) => p.uid === item.uid);
+        setBusy(true, `建立 PDF（${i + 1}/${items.length}）…`);
+        if (visualFeaturesActiveFor(item)) {
+          const flat = await renderFlattenedPage(item, docIndex < 0 ? i : docIndex, totalPages, 2);
+          const jpg = await out.embedJpg(flat.dataUrl);
+          const page = out.addPage([flat.width, flat.height]);
+          page.drawImage(jpg, { x: 0, y: 0, width: flat.width, height: flat.height });
+          continue;
+        }
+        const source = state.sources.get(item.sourceId);
+        if (!source) throw new Error("來源 PDF 已不存在");
+        let sourceDoc = loadedSources.get(item.sourceId);
+        if (!sourceDoc) { sourceDoc = await PDFDocument.load(source.bytes, { updateMetadata: false }); loadedSources.set(item.sourceId, sourceDoc); }
+        const [copiedPage] = await out.copyPages(sourceDoc, [item.sourcePageIndex]);
+        const originalRotation = copiedPage.getRotation().angle || 0;
+        copiedPage.setRotation(degrees(normalizeRotation(originalRotation + item.rotationDelta)));
+        out.addPage(copiedPage);
+      }
+      out.setProducer("PDF 頁面工作台");
+      out.setModificationDate(new Date());
+      return out.save({ useObjectStreams: true });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url; anchor.download = filename;
+      document.body.appendChild(anchor); anchor.click(); anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function defaultOutputName(suffix = "已編輯") {
+      const firstSource = state.sources.values().next().value;
+      return `${sanitizeFilename(firstSource?.name || "PDF")}_${suffix}.pdf`;
+    }
+    function customOutputBase() { const raw = String(els.outputFilename.value || "").trim(); return raw ? sanitizeFilename(raw) : ""; }
+    function outputPdfName(defaultSuffix) { const custom = customOutputBase(); return custom ? `${custom}.pdf` : defaultOutputName(defaultSuffix); }
+
+    async function exportItems(items, filename) {
+      syncNumberingFromControls(); syncHeaderFooterFromControls();
+      setBusy(true, `正在建立 ${filename}…`);
+      try {
+        const bytes = await buildPdf(items);
+        downloadBlob(new Blob([bytes], { type: "application/pdf" }), filename);
+        showToast(`已匯出 ${items.length} 頁`);
+      } catch (error) {
+        console.error(error);
+        const hint = /encrypted|password/i.test(String(error)) ? "（加密 PDF 暫不支援）" : "";
+        showToast(`匯出失敗${hint}：${error.message}`, true);
+      } finally { setBusy(false); }
+    }
+
+    async function splitToZip() {
+      syncNumberingFromControls(); syncHeaderFooterFromControls();
+      setBusy(true, "正在準備拆分…");
+      try {
+        const groups = parseSplitGroups(els.splitRange.value, state.pages.length);
+        const zip = new JSZip();
+        const base = customOutputBase() || sanitizeFilename(state.sources.values().next().value?.name || "PDF");
+        const pad = String(groups.length).length;
+        for (let i = 0; i < groups.length; i += 1) {
+          const indices = groups[i];
+          const items = indices.map((index) => state.pages[index]);
+          setBusy(true, `建立拆分檔 ${i + 1}/${groups.length}…`);
+          const bytes = await buildPdf(items);
+          const label = String(i + 1).padStart(pad, "0");
+          const pageLabel = indices.length === 1 ? `p${indices[0] + 1}` : `pages_${indices.map((index) => index + 1).join("-")}`;
+          zip.file(`${base}_${label}_${pageLabel}.pdf`, bytes);
+        }
+        setBusy(true, "正在壓縮 ZIP…");
+        const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+        downloadBlob(zipBlob, `${base}_拆分.zip`);
+        showToast(`已拆分為 ${groups.length} 個 PDF`);
+      } catch (error) { console.error(error); showToast(`拆分失敗：${error.message}`, true); } finally { setBusy(false); }
+    }
+
+    function resetAll() {
+      state.renderGeneration += 1; state.advancedGeneration += 1;
+      for (const source of state.sources.values()) { try { source.pdfjsDoc?.destroy?.(); } catch (_) {} }
+      state.sources.clear(); state.pages = []; state.selected.clear(); state.thumbnailCache.clear();
+      state.advancedPageUid = null; state.advancedSelectedEditId = null;
+      els.selectionRange.value = ""; els.splitRange.value = ""; els.outputFilename.value = "";
+      closePreview(); renderGrid(); syncAdvancedPageControls(); renderAdvancedSidebar(); void renderAdvancedPage(); showToast("已清空");
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      const advanced = tab === "advanced";
+      els.basicTabButton.classList.toggle("active", !advanced);
+      els.advancedTabButton.classList.toggle("active", advanced);
+      els.basicPanel.hidden = advanced;
+      els.advancedPanel.hidden = !advanced;
+      if (advanced) {
+        if (!state.advancedPageUid && state.pages.length) state.advancedPageUid = state.pages[0].uid;
+        syncAdvancedPageControls(); renderAdvancedSidebar(); void renderAdvancedPage();
+      }
+    }
+
+    function advancedIndex() { return state.pages.findIndex((p) => p.uid === state.advancedPageUid); }
+    function currentAdvancedPage() { const item = state.pages.find((p) => p.uid === state.advancedPageUid); return item ? ensurePageEdits(item) : null; }
+
+    function syncAdvancedPageControls() {
+      const current = state.advancedPageUid;
+      els.advPageSelect.innerHTML = state.pages.map((item, index) => `<option value="${item.uid}" ${item.uid === current ? "selected" : ""}>第 ${index + 1} 頁</option>`).join("");
+      if (current && !state.pages.some((p) => p.uid === current)) state.advancedPageUid = state.pages[0]?.uid || null;
+      updateButtons();
+    }
+
+    async function renderAdvancedSidebar() {
+      if (!state.pages.length) { els.advSidebar.innerHTML = ""; return; }
+      els.advSidebar.innerHTML = state.pages.map((item, index) => {
+        const cached = state.thumbnailCache.get(thumbnailCacheKey(item));
+        return `<button class="adv-thumb${item.uid === state.advancedPageUid ? " active" : ""}" type="button" data-uid="${item.uid}">
+          ${cached ? `<img src="${cached}" alt="第 ${index + 1} 頁">` : '<div class="mini-note">載入縮圖…</div>'}
+          <span class="adv-thumb-label"><span>第 ${index + 1} 頁</span><span>${hasPageEdits(item) ? "●" : ""}</span></span>
+        </button>`;
+      }).join("");
+      els.advSidebar.querySelectorAll(".adv-thumb").forEach((button) => button.addEventListener("click", () => selectAdvancedPage(button.dataset.uid)));
+      const missing = state.pages.filter((item) => !state.thumbnailCache.has(thumbnailCacheKey(item)));
+      if (missing.length) {
+        Promise.all(missing.slice(0, 6).map((item) => getThumbnail(item).catch(() => null))).then(() => { if (state.activeTab === "advanced") renderAdvancedSidebar(); });
+      }
+    }
+
+    function selectAdvancedPage(uidValue) {
+      if (!state.pages.some((p) => p.uid === uidValue)) return;
+      state.advancedPageUid = uidValue;
+      state.advancedSelectedEditId = null;
+      syncAdvancedPageControls(); renderAdvancedSidebar(); updateInspector(); void renderAdvancedPage();
+    }
+
+    function setAdvancedTool(tool) {
+      state.advancedTool = tool;
+      els.advSelectTool.classList.toggle("active", tool === "select");
+      els.advTextTool.classList.toggle("active", tool === "text");
+      els.advPatchTool.classList.toggle("active", tool === "patch");
+      els.advOverlay.style.cursor = tool === "select" ? "default" : "crosshair";
+    }
+
+    async function renderAdvancedPage() {
+      const item = currentAdvancedPage();
+      if (!item) {
+        els.advStage.hidden = true; els.advPlaceholder.hidden = false; els.advPlaceholder.textContent = "尚未載入 PDF"; els.advZoomLabel.textContent = `${Math.round(state.advancedScale * 100)}%`;
+        renderAdvancedOverlay(); return;
+      }
+      const source = state.sources.get(item.sourceId);
+      if (!source) return;
+      const generation = ++state.advancedGeneration;
+      els.advPlaceholder.hidden = true; els.advStage.hidden = false; els.advLoading.hidden = false;
+      try {
+        const page = await source.pdfjsDoc.getPage(item.sourcePageIndex + 1);
+        if (generation !== state.advancedGeneration) return;
+        const rotation = normalizeRotation((page.rotate || 0) + item.rotationDelta);
+        const viewport = page.getViewport({ scale: state.advancedScale, rotation });
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const canvas = els.advCanvas;
+        const ctx = canvas.getContext("2d", { alpha: false });
+        canvas.width = Math.max(1, Math.floor(viewport.width * pixelRatio));
+        canvas.height = Math.max(1, Math.floor(viewport.height * pixelRatio));
+        canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
+        els.advStage.style.width = `${Math.floor(viewport.width)}px`; els.advStage.style.height = `${Math.floor(viewport.height)}px`;
+        await page.render({ canvasContext: ctx, viewport, transform: pixelRatio === 1 ? null : [pixelRatio,0,0,pixelRatio,0,0], background: "rgb(255,255,255)" }).promise;
+        if (generation !== state.advancedGeneration) return;
+        els.advZoomLabel.textContent = `${Math.round(state.advancedScale * 100)}%`;
+        renderAdvancedOverlay();
+      } catch (error) { console.error(error); els.advPlaceholder.hidden = false; els.advStage.hidden = true; els.advPlaceholder.textContent = "無法載入此頁"; }
+      finally { if (generation === state.advancedGeneration) els.advLoading.hidden = true; }
+    }
+
+    function renderAdvancedOverlay() {
+      const item = currentAdvancedPage();
+      els.advOverlay.innerHTML = "";
+      if (!item || els.advStage.hidden) { updateInspector(); return; }
+      const scale = state.advancedScale;
+      for (const patch of item.patches) {
+        const el = document.createElement("div");
+        el.className = `edit-item patch-item${patch.id === state.advancedSelectedEditId ? " selected" : ""}`;
+        el.dataset.editId = patch.id; el.dataset.editType = "patch";
+        Object.assign(el.style, { left: `${patch.x * 100}%`, top: `${patch.y * 100}%`, width: `${patch.w * 100}%`, height: `${patch.h * 100}%` });
+        els.advOverlay.appendChild(el);
+      }
+      for (const ann of item.annotations) {
+        const el = document.createElement("div");
+        el.className = `edit-item annotation-item${ann.id === state.advancedSelectedEditId ? " selected" : ""}`;
+        el.dataset.editId = ann.id; el.dataset.editType = "annotation";
+        el.innerHTML = mixedHtml(ann.text || "註解");
+        Object.assign(el.style, { left: `${ann.x * 100}%`, top: `${ann.y * 100}%`, width: `${ann.w * 100}%`, fontSize: `${ann.fontSize * scale}px`, color: ann.color });
+        els.advOverlay.appendChild(el);
+      }
+      renderHeaderFooterPreview();
+      renderNumberingPreview();
+      bindAdvancedEditEvents();
+      updateInspector();
+    }
+
+    function renderHeaderFooterPreview() {
+      const item = currentAdvancedPage();
+      if (!item) return;
+      const docIndex = advancedIndex();
+      const totalPages = state.pages.length;
+      const add = (cfg, top) => {
+        if (!cfg.enabled || !cfg.text) return;
+        const el = document.createElement("div");
+        el.className = "hf-item";
+        el.innerHTML = mixedHtml(replacePageTokens(cfg.text, docIndex, totalPages));
+        el.style.fontSize = `${cfg.fontSize * state.advancedScale}px`; el.style.color = cfg.color;
+        el.style[top ? "top" : "bottom"] = `${16 * state.advancedScale}px`;
+        if (cfg.align === "left") { el.style.left = `${20 * state.advancedScale}px`; }
+        else if (cfg.align === "right") { el.style.right = `${20 * state.advancedScale}px`; }
+        else { el.style.left = "50%"; el.style.transform = "translateX(-50%)"; }
+        els.advOverlay.appendChild(el);
+      };
+      add(state.header, true); add(state.footer, false);
+    }
+
+    function renderNumberingPreview() {
+      if (!state.numbering.enabled) return;
+      const docIndex = advancedIndex();
+      if (docIndex < 0) return;
+      const [vertical, horizontal] = state.numbering.position.split("-");
+      const el = document.createElement("div");
+      el.className = "numbering-preview"; el.textContent = String(state.numbering.start + docIndex);
+      el.style.fontSize = `${state.numbering.fontSize * state.advancedScale}px`; el.style.color = state.numbering.color;
+      el.style[vertical === "top" ? "top" : "bottom"] = `${16 * state.advancedScale}px`;
+      if (horizontal === "left") el.style.left = `${20 * state.advancedScale}px`;
+      else if (horizontal === "right") el.style.right = `${20 * state.advancedScale}px`;
+      else { el.style.left = "50%"; el.style.transform = "translateX(-50%)"; }
+      els.advOverlay.appendChild(el);
+    }
+
+    function findSelectedEdit() {
+      const item = currentAdvancedPage(); if (!item || !state.advancedSelectedEditId) return null;
+      const ann = item.annotations.find((x) => x.id === state.advancedSelectedEditId); if (ann) return { type: "annotation", edit: ann };
+      const patch = item.patches.find((x) => x.id === state.advancedSelectedEditId); if (patch) return { type: "patch", edit: patch };
+      return null;
+    }
+
+    function updateInspector() {
+      const selected = findSelectedEdit();
+      els.noEditSelected.hidden = !!selected;
+      els.annotationInspector.hidden = selected?.type !== "annotation";
+      els.patchInspector.hidden = selected?.type !== "patch";
+      if (selected?.type === "annotation") {
+        const ann = selected.edit;
+        els.annotationText.value = ann.text; els.annotationSize.value = String(ann.fontSize); els.annotationColor.value = ann.color; els.annotationWidth.value = String(Math.round(ann.w * 100));
+      }
+      if (selected?.type === "patch") {
+        const patch = selected.edit;
+        els.patchWidth.value = String(Math.round(patch.w * 100)); els.patchHeight.value = String(Math.round(patch.h * 100));
+      }
+      updateButtons();
+    }
+
+    function bindAdvancedEditEvents() {
+      els.advOverlay.querySelectorAll(".edit-item").forEach((el) => {
+        el.addEventListener("pointerdown", (event) => {
+          event.preventDefault(); event.stopPropagation();
+          state.advancedSelectedEditId = el.dataset.editId;
+          const selected = findSelectedEdit(); if (!selected) return;
+          const rect = els.advOverlay.getBoundingClientRect();
+          advDrag = { id: el.dataset.editId, type: selected.type, startX: event.clientX, startY: event.clientY, origX: selected.edit.x, origY: selected.edit.y, rect };
+          el.setPointerCapture?.(event.pointerId); renderAdvancedOverlay();
+        });
+      });
+    }
+
+    function onAdvancedPointerMove(event) {
+      if (!advDrag) return;
+      const selected = findSelectedEdit(); if (!selected || selected.edit.id !== advDrag.id) return;
+      const dx = (event.clientX - advDrag.startX) / advDrag.rect.width;
+      const dy = (event.clientY - advDrag.startY) / advDrag.rect.height;
+      const maxX = 1 - (selected.edit.w || .05);
+      const maxY = 1 - (selected.edit.h || .035);
+      selected.edit.x = clamp(advDrag.origX + dx, 0, Math.max(0, maxX));
+      selected.edit.y = clamp(advDrag.origY + dy, 0, Math.max(0, maxY));
+      const el = els.advOverlay.querySelector(`[data-edit-id="${CSS.escape(selected.edit.id)}"]`);
+      if (el) { el.style.left = `${selected.edit.x * 100}%`; el.style.top = `${selected.edit.y * 100}%`; }
+    }
+
+    function onAdvancedPointerUp() { if (advDrag) { advDrag = null; renderGrid(); renderAdvancedSidebar(); } }
+
+    function addAdvancedEditAt(event) {
+      if (state.advancedTool === "select") {
+        if (!event.target.closest(".edit-item")) { state.advancedSelectedEditId = null; renderAdvancedOverlay(); }
+        return;
+      }
+      const item = currentAdvancedPage(); if (!item) return;
+      const rect = els.advOverlay.getBoundingClientRect();
+      const x = clamp((event.clientX - rect.left) / rect.width, 0, .95);
+      const y = clamp((event.clientY - rect.top) / rect.height, 0, .95);
+      if (state.advancedTool === "text") {
+        const ann = { id: uid("ann"), text: "註解", x, y, w: .36, fontSize: 14, color: "#111111" };
+        item.annotations.push(ann); state.advancedSelectedEditId = ann.id;
+      } else if (state.advancedTool === "patch") {
+        const patch = { id: uid("patch"), x, y, w: .22, h: .08 };
+        patch.x = clamp(patch.x, 0, 1 - patch.w); patch.y = clamp(patch.y, 0, 1 - patch.h);
+        item.patches.push(patch); state.advancedSelectedEditId = patch.id;
+      }
+      renderAdvancedOverlay(); renderGrid(); renderAdvancedSidebar();
+      if (state.advancedTool === "text") setTimeout(() => { els.annotationText.focus(); els.annotationText.select(); }, 0);
+    }
+
+    function deleteSelectedEdit() {
+      const item = currentAdvancedPage(); if (!item || !state.advancedSelectedEditId) return;
+      item.annotations = item.annotations.filter((x) => x.id !== state.advancedSelectedEditId);
+      item.patches = item.patches.filter((x) => x.id !== state.advancedSelectedEditId);
+      state.advancedSelectedEditId = null; renderAdvancedOverlay(); renderGrid(); renderAdvancedSidebar();
+    }
+
+    function changeAdvancedZoom(multiplier) {
+      if (!currentAdvancedPage()) return;
+      state.advancedScale = clamp(state.advancedScale * multiplier, .45, 2.8);
+      void renderAdvancedPage();
+    }
+
+    function openHelp() { els.helpOverlay.classList.add("show"); els.helpOverlay.setAttribute("aria-hidden", "false"); }
+    function closeHelp() { els.helpOverlay.classList.remove("show"); els.helpOverlay.setAttribute("aria-hidden", "true"); }
+
+    els.openButton.addEventListener("click", (event) => { event.stopPropagation(); els.fileInput.click(); });
+    els.dropZone.addEventListener("click", (event) => { if (event.target === els.openButton) return; els.fileInput.click(); });
+    els.dropZone.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); els.fileInput.click(); } });
+    els.fileInput.addEventListener("change", () => void addFiles(els.fileInput.files));
+
+    ["dragenter", "dragover"].forEach((eventName) => els.dropZone.addEventListener(eventName, (event) => { event.preventDefault(); if (!state.draggedUid) els.dropZone.classList.add("dragover"); }));
+    ["dragleave", "drop"].forEach((eventName) => els.dropZone.addEventListener(eventName, (event) => { event.preventDefault(); els.dropZone.classList.remove("dragover"); }));
+    els.dropZone.addEventListener("drop", (event) => { if (state.draggedUid) return; void addFiles(event.dataTransfer.files); });
+    document.addEventListener("dragover", (event) => { if (!state.draggedUid && event.dataTransfer?.types?.includes("Files")) event.preventDefault(); });
+    document.addEventListener("drop", (event) => { if (!state.draggedUid && event.dataTransfer?.files?.length && !els.dropZone.contains(event.target)) { event.preventDefault(); void addFiles(event.dataTransfer.files); } });
+
+    els.selectAllButton.addEventListener("click", selectAll);
+    els.clearSelectionButton.addEventListener("click", clearSelection);
+    els.invertSelectionButton.addEventListener("click", invertSelection);
+    els.moveLeftButton.addEventListener("click", () => moveSelected(-1));
+    els.moveRightButton.addEventListener("click", () => moveSelected(1));
+    els.rotateLeftButton.addEventListener("click", () => rotateSelected(-90));
+    els.rotateRightButton.addEventListener("click", () => rotateSelected(90));
+    els.deleteButton.addEventListener("click", deleteSelected);
+    els.selectRangeButton.addEventListener("click", applyRangeSelection);
+    els.selectionRange.addEventListener("keydown", (event) => { if (event.key === "Enter") applyRangeSelection(); });
+    els.previewZoomOutButton.addEventListener("click", () => changePreviewZoom(.8));
+    els.previewZoomInButton.addEventListener("click", () => changePreviewZoom(1.25));
+    els.previewCloseButton.addEventListener("click", closePreview);
+    els.previewOverlay.addEventListener("click", (event) => { if (event.target === els.previewOverlay) closePreview(); });
+
+    els.exportAllButton.addEventListener("click", () => void exportItems(state.pages, outputPdfName("已編輯")));
+    els.exportSelectedButton.addEventListener("click", () => void exportItems(state.pages.filter((item) => state.selected.has(item.uid)), outputPdfName("所選頁面")));
+    els.splitButton.addEventListener("click", () => void splitToZip());
+    els.resetButton.addEventListener("click", resetAll);
+
+    [els.numberingEnabled, els.numberingPosition, els.numberingStart, els.numberingSize].forEach((el) => el.addEventListener("input", syncNumberingFromControls));
+    els.basicTabButton.addEventListener("click", () => switchTab("basic"));
+    els.advancedTabButton.addEventListener("click", () => switchTab("advanced"));
+    els.helpButton.addEventListener("click", openHelp);
+    els.helpCloseButton.addEventListener("click", closeHelp);
+    els.helpOverlay.addEventListener("click", (event) => { if (event.target === els.helpOverlay) closeHelp(); });
+
+    els.advPrevButton.addEventListener("click", () => { const i = advancedIndex(); if (i > 0) selectAdvancedPage(state.pages[i - 1].uid); });
+    els.advNextButton.addEventListener("click", () => { const i = advancedIndex(); if (i >= 0 && i < state.pages.length - 1) selectAdvancedPage(state.pages[i + 1].uid); });
+    els.advPageSelect.addEventListener("change", () => selectAdvancedPage(els.advPageSelect.value));
+    els.advSelectTool.addEventListener("click", () => setAdvancedTool("select"));
+    els.advTextTool.addEventListener("click", () => setAdvancedTool("text"));
+    els.advPatchTool.addEventListener("click", () => setAdvancedTool("patch"));
+    els.advZoomOut.addEventListener("click", () => changeAdvancedZoom(.82));
+    els.advZoomIn.addEventListener("click", () => changeAdvancedZoom(1.22));
+    els.advExportButton.addEventListener("click", () => void exportItems(state.pages, outputPdfName("已編輯")));
+    els.advOverlay.addEventListener("click", (event) => { if (!event.target.closest(".edit-item")) addAdvancedEditAt(event); });
+    window.addEventListener("pointermove", onAdvancedPointerMove);
+    window.addEventListener("pointerup", onAdvancedPointerUp);
+    els.deleteEditButton.addEventListener("click", deleteSelectedEdit);
+
+    els.annotationText.addEventListener("input", () => { const s = findSelectedEdit(); if (s?.type === "annotation") { s.edit.text = els.annotationText.value; renderAdvancedOverlay(); } });
+    els.annotationSize.addEventListener("input", () => { const s = findSelectedEdit(); if (s?.type === "annotation") { s.edit.fontSize = clamp(Number(els.annotationSize.value) || 14, 6, 72); renderAdvancedOverlay(); } });
+    els.annotationColor.addEventListener("input", () => { const s = findSelectedEdit(); if (s?.type === "annotation") { s.edit.color = els.annotationColor.value; renderAdvancedOverlay(); } });
+    els.annotationWidth.addEventListener("input", () => { const s = findSelectedEdit(); if (s?.type === "annotation") { s.edit.w = clamp(Number(els.annotationWidth.value) / 100, .1, .9); s.edit.x = clamp(s.edit.x, 0, 1 - s.edit.w); renderAdvancedOverlay(); } });
+    els.patchWidth.addEventListener("input", () => { const s = findSelectedEdit(); if (s?.type === "patch") { s.edit.w = clamp(Number(els.patchWidth.value) / 100, .03, .95); s.edit.x = clamp(s.edit.x, 0, 1 - s.edit.w); renderAdvancedOverlay(); } });
+    els.patchHeight.addEventListener("input", () => { const s = findSelectedEdit(); if (s?.type === "patch") { s.edit.h = clamp(Number(els.patchHeight.value) / 100, .02, .8); s.edit.y = clamp(s.edit.y, 0, 1 - s.edit.h); renderAdvancedOverlay(); } });
+
+    [els.headerEnabled, els.headerText, els.headerAlign, els.headerSize, els.headerColor, els.footerEnabled, els.footerText, els.footerAlign, els.footerSize, els.footerColor]
+      .forEach((el) => el.addEventListener("input", syncHeaderFooterFromControls));
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        if (state.previewUid) closePreview();
+        else if (els.helpOverlay.classList.contains("show")) closeHelp();
+        else if (state.advancedSelectedEditId) { state.advancedSelectedEditId = null; renderAdvancedOverlay(); }
+      }
+      if ((event.key === "Delete" || event.key === "Backspace") && state.activeTab === "advanced" && state.advancedSelectedEditId && !event.target.matches("input, textarea")) deleteSelectedEdit();
+    });
+
+    syncNumberingFromControls(); syncHeaderFooterFromControls(); setAdvancedTool("select"); renderGrid(); syncAdvancedPageControls(); renderAdvancedSidebar(); updateInspector();
+  </script>
+</body>
+</html>
