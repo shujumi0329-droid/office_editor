@@ -1,0 +1,12 @@
+{
+  "id": "app-jf9lr3",
+  "name": "加密夾",
+  "description": "",
+  "category": "Office",
+  "entry": "vault_dashboard_professional.html",
+  "icon": "icon.png",
+  "version": "1.0.0",
+  "featured": false,
+  "publishedAt": "2026-10-08T07:54:11.154Z",
+  "updatedAt": "2026-10-08T07:54:11.154Z"
+}
