@@ -1,0 +1,12 @@
+{
+  "id": "app-51mwm6",
+  "name": "文件加密器",
+  "description": "",
+  "category": "Office",
+  "entry": "文件加密器.html",
+  "icon": "icon.png",
+  "version": "1.0.0",
+  "featured": false,
+  "publishedAt": "2026-10-08T07:50:05.876Z",
+  "updatedAt": "2026-10-08T07:50:05.876Z"
+}

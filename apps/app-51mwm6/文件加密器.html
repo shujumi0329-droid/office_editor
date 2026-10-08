@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Vault 加密器</title>
+  <style>
+    :root{
+      color-scheme: light;
+      --bg:#f4f7fb;
+      --panel:#ffffff;
+      --panel2:#f8fafc;
+      --text:#1f2937;
+      --muted:#7b8798;
+      --line:#dfe6ef;
+      --accent:#4263eb;
+      --accent2:#edf1ff;
+      --ok:#16794b;
+      --bad:#c53b4e;
+      --shadow:0 20px 60px rgba(35,51,80,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(circle at 15% 5%, rgba(93,135,255,.12), transparent 32%),
+        radial-gradient(circle at 88% 12%, rgba(96,210,185,.11), transparent 28%),
+        var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    }
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .shell{width:min(960px,calc(100% - 32px));margin:34px auto 56px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:800;letter-spacing:.02em}
+    .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#4263eb,#7690ff);box-shadow:0 9px 22px rgba(66,99,235,.24);position:relative}
+    .mark:before{content:"";position:absolute;left:10px;right:10px;top:9px;height:9px;border:2px solid #fff;border-bottom:0;border-radius:8px 8px 0 0}
+    .mark:after{content:"";position:absolute;left:8px;right:8px;bottom:7px;height:12px;border-radius:4px;background:#fff}
+    .help-btn,.ghost{
+      border:1px solid var(--line);background:rgba(255,255,255,.82);color:#526070;
+      border-radius:11px;padding:9px 13px;font-weight:700;
+    }
+    .card{background:rgba(255,255,255,.94);border:1px solid rgba(218,226,237,.95);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line);background:#fbfcfe}
+    .tab{
+      border:0;background:transparent;padding:18px 16px;color:#8290a3;font-weight:800;font-size:15px;
+      position:relative;
+    }
+    .tab.active{color:var(--accent);background:#fff}
+    .tab.active:after{content:"";position:absolute;left:25%;right:25%;bottom:-1px;height:3px;background:var(--accent);border-radius:3px 3px 0 0}
+    .page{display:none;padding:30px}
+    .page.active{display:block}
+    .section-title{font-size:26px;font-weight:850;margin:0 0 24px;letter-spacing:-.02em}
+    .drop{
+      border:2px dashed #cbd6e5;border-radius:18px;background:#f9fbfe;min-height:220px;
+      display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;transition:.16s ease;
+    }
+    .drop.drag{border-color:var(--accent);background:var(--accent2);transform:translateY(-1px)}
+    .drop-icon{width:58px;height:58px;border-radius:16px;background:#edf2ff;margin:0 auto 14px;display:grid;place-items:center;color:var(--accent);font-size:27px;font-weight:900}
+    .drop strong{display:block;font-size:17px;margin-bottom:7px}
+    .drop small{color:var(--muted)}
+    .select-btn{margin-top:16px;border:0;background:var(--accent);color:white;border-radius:11px;padding:10px 16px;font-weight:800;box-shadow:0 8px 18px rgba(66,99,235,.18)}
+    .filebox{display:none;margin-top:15px;padding:14px 15px;border:1px solid var(--line);border-radius:14px;background:#fff;align-items:center;gap:13px}
+    .filebox.show{display:flex}
+    .filebadge{width:42px;height:42px;border-radius:11px;background:#fff0f1;color:#ce4257;display:grid;place-items:center;font-size:12px;font-weight:900;flex:0 0 auto}
+    .filemeta{min-width:0;flex:1}
+    .filename{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .filesize{font-size:13px;color:var(--muted);margin-top:3px}
+    .remove{border:0;background:transparent;color:#9aa5b3;padding:8px;font-weight:800}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+    .field label{display:block;font-size:13px;color:#657386;font-weight:800;margin:0 0 8px}
+    input,textarea{
+      width:100%;border:1px solid var(--line);background:white;color:var(--text);border-radius:12px;padding:12px 13px;outline:none;
+      transition:border .15s, box-shadow .15s;
+    }
+    input:focus,textarea:focus{border-color:#91a6ff;box-shadow:0 0 0 4px rgba(66,99,235,.09)}
+    textarea{min-height:350px;resize:vertical;line-height:1.65}
+    .pwrow{display:grid;grid-template-columns:1fr auto;gap:8px}
+    .eye{border:1px solid var(--line);background:#f8fafc;color:#647286;border-radius:11px;padding:0 14px;font-weight:750}
+    .actions{display:flex;align-items:center;gap:12px;margin-top:24px}
+    .primary{border:0;background:var(--accent);color:white;border-radius:12px;padding:12px 18px;font-weight:850;box-shadow:0 9px 22px rgba(66,99,235,.20)}
+    .primary:disabled{opacity:.6;cursor:default}
+    .status{font-size:13px;color:var(--muted);min-height:20px}
+    .status.ok{color:var(--ok)}.status.bad{color:var(--bad)}
+    .note-head{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(24,32,45,.32);display:none;align-items:center;justify-content:center;padding:22px;z-index:50;backdrop-filter:blur(5px)}
+    .modal-backdrop.show{display:flex}
+    .modal{width:min(620px,100%);max-height:min(720px,90vh);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 25px 80px rgba(27,38,56,.24);padding:24px}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .modal h2{margin:0;font-size:21px}
+    .close{border:0;background:#f3f5f8;border-radius:10px;width:36px;height:36px;color:#697789;font-weight:900}
+    .help-section{padding:15px 0;border-top:1px solid #edf0f4}
+    .help-section:first-of-type{border-top:0}
+    .help-section h3{margin:0 0 7px;font-size:15px}
+    .help-section p,.help-section li{color:#697789;line-height:1.65;font-size:14px}
+    .help-section p{margin:0}
+    .help-section ul{margin:7px 0 0;padding-left:20px}
+    code{background:#f3f5f8;border:1px solid #e5e9ef;border-radius:6px;padding:1px 5px}
+    @media(max-width:680px){
+      .shell{width:min(100% - 18px,960px);margin-top:18px}.page{padding:20px}.form-grid,.note-head{grid-template-columns:1fr}.section-title{font-size:23px}.drop{min-height:190px}.tabs .tab{padding:15px 8px}
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="mark" aria-hidden="true"></span><span>Vault 加密器</span></div>
+      <button class="help-btn" id="helpBtn" type="button">說明</button>
+    </header>
+
+    <section class="card">
+      <nav class="tabs" aria-label="加密模式">
+        <button class="tab active" data-tab="pdf" type="button">PDF 文件</button>
+        <button class="tab" data-tab="text" type="button">文字速記</button>
+      </nav>
+
+      <section class="page active" id="page-pdf">
+        <h1 class="section-title">加密 PDF</h1>
+
+        <div class="drop" id="pdfDrop">
+          <div>
+            <div class="drop-icon">PDF</div>
+            <strong>拖入 PDF</strong>
+            <small>或從電腦選取檔案</small><br>
+            <button class="select-btn" id="pickPdf" type="button">選擇 PDF</button>
+            <input id="pdfInput" type="file" accept="application/pdf,.pdf" hidden>
+          </div>
+        </div>
+
+        <div class="filebox" id="pdfFileBox">
+          <div class="filebadge">PDF</div>
+          <div class="filemeta">
+            <div class="filename" id="pdfName"></div>
+            <div class="filesize" id="pdfSize"></div>
+          </div>
+          <button class="remove" id="removePdf" type="button">移除</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="pdfPassword">密碼</label>
+            <div class="pwrow">
+              <input id="pdfPassword" type="password" value="happysurprise" autocomplete="off">
+              <button class="eye" data-toggle="pdfPassword" type="button">顯示</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="pdfOutputName">輸出名稱</label>
+            <input id="pdfOutputName" type="text" placeholder="encrypted-document">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="makePdf" type="button">建立加密 HTML</button>
+          <span class="status" id="pdfStatus"></span>
+        </div>
+      </section>
+
+      <section class="page" id="page-text">
+        <h1 class="section-title">文字速記</h1>
+
+        <div class="note-head">
+          <div class="field">
+            <label for="noteTitle">標題</label>
+            <input id="noteTitle" type="text" placeholder="未命名速記">
+          </div>
+          <div class="field">
+            <label for="textPassword">密碼</label>
+            <div class="pwrow">
+              <input id="textPassword" type="password" value="happysurprise" autocomplete="off">
+              <button class="eye" data-toggle="textPassword" type="button">顯示</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="noteText">內容</label>
+          <textarea id="noteText" placeholder="直接開始寫……"></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="makeText" type="button">建立加密 HTML</button>
+          <span class="status" id="textStatus"></span>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="helpTitle">說明</h2>
+        <button class="close" id="closeHelp" type="button">×</button>
+      </div>
+      <div class="help-section">
+        <h3>PDF 文件</h3>
+        <p>把現有 PDF 拖進來後，PDF 的原始位元組會被加密並封裝成單一 HTML。解鎖後可直接閱讀、另開 PDF 或下載原 PDF。</p>
+      </div>
+      <div class="help-section">
+        <h3>文字速記</h3>
+        <p>輸入標題與文字後產生獨立的加密 HTML，開啟時輸入密碼即可閱讀與複製。</p>
+      </div>
+      <div class="help-section">
+        <h3>加密</h3>
+        <ul>
+          <li>AES-GCM 256-bit。</li>
+          <li>PBKDF2-SHA-256，310,000 次迭代。</li>
+          <li>每份檔案使用隨機 salt 與 IV。</li>
+          <li>密碼不會寫進產生出的加密 HTML。</li>
+          <li>預設密碼為 <code>happysurprise</code>，可自行修改。</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h3>本機與容量</h3>
+        <p>處理都在瀏覽器本機進行，不需上傳。加密 HTML 會比原 PDF 大約多三分之一；大型 PDF 會需要較多記憶體。忘記密碼時沒有復原機制。</p>
+      </div>
+      <div class="help-section">
+        <h3>和 PDF 密碼保護的差別</h3>
+        <p>這個工具不改寫 PDF 本身的權限設定；它是把整份 PDF 加密後裝進 HTML，因此要先解鎖 HTML 才能取得 PDF。</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  const ITERATIONS = 310000;
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const $ = id => document.getElementById(id);
+  let selectedPdf = null;
+
+  function setStatus(el, message, kind = "") {
+    el.className = "status" + (kind ? " " + kind : "");
+    el.textContent = message;
+  }
+
+  function bytesToB64(bytes) {
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  function safeBaseName(name) {
+    return (name || "encrypted-document")
+      .replace(/\.pdf$/i, "")
+      .replace(/\.html?$/i, "")
+      .replace(/[\\/:*?"<>|]+/g, "-")
+      .trim() || "encrypted-document";
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  function packPlain(meta, contentBytes) {
+    const metaBytes = enc.encode(JSON.stringify(meta));
+    const out = new Uint8Array(4 + metaBytes.length + contentBytes.length);
+    new DataView(out.buffer).setUint32(0, metaBytes.length, false);
+    out.set(metaBytes, 4);
+    out.set(contentBytes, 4 + metaBytes.length);
+    return out;
+  }
+
+  async function deriveKey(passwordText, salt, usage) {
+    const material = await crypto.subtle.importKey(
+      "raw", enc.encode(passwordText), { name: "PBKDF2" }, false, ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt, iterations: ITERATIONS, hash: "SHA-256" },
+      material,
+      { name: "AES-GCM", length: 256 },
+      false,
+      usage
+    );
+  }
+
+  async function encryptBytes(bytes, passwordText) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(passwordText, salt, ["encrypt"]);
+    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, bytes);
+    return {
+      v: 2,
+      iter: ITERATIONS,
+      salt: bytesToB64(salt),
+      iv: bytesToB64(iv),
+      data: bytesToB64(new Uint8Array(ciphertext))
+    };
+  }
+
+  function buildLockedHtml(payload) {
+    const packedPayload = bytesToB64(enc.encode(JSON.stringify(payload)));
+    return `<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>加密文件</title>
+<style>
+:root{color-scheme:light;--bg:#f4f7fb;--panel:#fff;--text:#1f2937;--muted:#7b8798;--line:#dfe6ef;--accent:#4263eb;--bad:#c53b4e;--shadow:0 20px 60px rgba(35,51,80,.12)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 18% 3%,rgba(93,135,255,.12),transparent 30%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;padding:24px}
+.center{min-height:calc(100vh - 48px);display:grid;place-items:center}.card{width:min(650px,100%);background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}.lockmark{width:54px;height:54px;border-radius:16px;background:#edf1ff;color:var(--accent);display:grid;place-items:center;font-size:25px;font-weight:900;margin-bottom:18px}h1{font-size:25px;margin:0 0 6px}.sub{color:var(--muted);margin:0 0 20px}.row{display:grid;grid-template-columns:1fr auto;gap:9px}input,button{font:inherit;border-radius:12px;padding:12px 14px}input{border:1px solid var(--line);outline:none;width:100%;color:var(--text)}input:focus{border-color:#91a6ff;box-shadow:0 0 0 4px rgba(66,99,235,.09)}button{border:0;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}.secondary{background:#f6f8fb;color:#596779;border:1px solid var(--line)}#msg{color:var(--bad);font-size:13px;min-height:20px;margin-top:10px}.viewer{display:none;width:min(1120px,100%);margin:auto}.viewer.show{display:block}.viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}.doc-title{font-size:20px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.btns button{padding:9px 12px}.content{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}.pdf-frame{width:100%;height:calc(100vh - 130px);min-height:620px;border:0;display:block;background:#eef1f5}.text-view{white-space:pre-wrap;word-break:break-word;line-height:1.75;padding:28px;min-height:350px}.hidden{display:none!important}@media(max-width:680px){body{padding:12px}.center{min-height:calc(100vh - 24px)}.card{padding:21px}.viewer-head{align-items:flex-start;flex-direction:column}.btns{justify-content:flex-start}.pdf-frame{height:calc(100vh - 185px);min-height:470px}}
+</style>
+</head>
+<body>
+<div id="lockScreen" class="center">
+  <section class="card">
+    <div class="lockmark">⌁</div>
+    <h1>加密文件</h1>
+    <p class="sub">輸入密碼</p>
+    <div class="row">
+      <input id="pw" type="password" autocomplete="current-password" autofocus>
+      <button id="unlock" type="button">解鎖</button>
+    </div>
+    <div id="msg"></div>
+  </section>
+</div>
+
+<main id="viewer" class="viewer">
+  <header class="viewer-head">
+    <div class="doc-title" id="docTitle">文件</div>
+    <div class="btns">
+      <button class="secondary hidden" id="copyBtn" type="button">複製</button>
+      <button class="secondary hidden" id="openPdfBtn" type="button">另開 PDF</button>
+      <button class="secondary hidden" id="downloadPdfBtn" type="button">下載 PDF</button>
+      <button class="secondary" id="lockBtn" type="button">重新鎖定</button>
+    </div>
+  </header>
+  <section class="content">
+    <iframe id="pdfFrame" class="pdf-frame hidden" title="PDF"></iframe>
+    <div id="textView" class="text-view hidden"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const DATA = "${packedPayload}";
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const $ = id => document.getElementById(id);
+  let pdfUrl = null;
+  let pdfBlob = null;
+  let pdfFilename = "document.pdf";
+
+  function b64ToBytes(b64){
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
+  }
+
+  function payload(){
+    return JSON.parse(dec.decode(b64ToBytes(DATA)));
+  }
+
+  async function deriveKey(passwordText,salt,iterations){
+    const material=await crypto.subtle.importKey("raw",enc.encode(passwordText),{name:"PBKDF2"},false,["deriveKey"]);
+    return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations,hash:"SHA-256"},material,{name:"AES-GCM",length:256},false,["decrypt"]);
+  }
+
+  function unpack(bytes){
+    if(bytes.length<4) throw new Error("Invalid package");
+    const metaLen=new DataView(bytes.buffer,bytes.byteOffset,4).getUint32(0,false);
+    if(metaLen<2 || 4+metaLen>bytes.length) throw new Error("Invalid package");
+    const meta=JSON.parse(dec.decode(bytes.subarray(4,4+metaLen)));
+    return {meta,body:bytes.subarray(4+metaLen)};
+  }
+
+  function resetViewer(){
+    if(pdfUrl){URL.revokeObjectURL(pdfUrl);pdfUrl=null;}
+    pdfBlob=null;
+    $("pdfFrame").src="about:blank";
+    $("pdfFrame").classList.add("hidden");
+    $("textView").classList.add("hidden");
+    $("textView").textContent="";
+    $("copyBtn").classList.add("hidden");
+    $("openPdfBtn").classList.add("hidden");
+    $("downloadPdfBtn").classList.add("hidden");
+  }
+
+  async function unlock(){
+    const password=$("pw").value;
+    $("msg").textContent="";
+    if(!password){$("msg").textContent="請輸入密碼。";return;}
+    try{
+      if(!crypto || !crypto.subtle) throw new Error("Web Crypto unavailable");
+      const p=payload();
+      const key=await deriveKey(password,b64ToBytes(p.salt),p.iter);
+      const plainBuffer=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64ToBytes(p.iv)},key,b64ToBytes(p.data));
+      const pack=unpack(new Uint8Array(plainBuffer));
+      resetViewer();
+      $("docTitle").textContent=pack.meta.title || pack.meta.filename || "文件";
+
+      if(pack.meta.type==="pdf"){
+        pdfFilename=pack.meta.filename || "document.pdf";
+        pdfBlob=new Blob([pack.body],{type:"application/pdf"});
+        pdfUrl=URL.createObjectURL(pdfBlob);
+        $("pdfFrame").src=pdfUrl;
+        $("pdfFrame").classList.remove("hidden");
+        $("openPdfBtn").classList.remove("hidden");
+        $("downloadPdfBtn").classList.remove("hidden");
+      }else if(pack.meta.type==="text"){
+        $("textView").textContent=dec.decode(pack.body);
+        $("textView").classList.remove("hidden");
+        $("copyBtn").classList.remove("hidden");
+      }else{
+        throw new Error("Unknown type");
+      }
+
+      $("lockScreen").classList.add("hidden");
+      $("viewer").classList.add("show");
+      $("pw").value="";
+    }catch(err){
+      $("msg").textContent="密碼錯誤，或檔案已損壞。";
+    }
+  }
+
+  $("unlock").addEventListener("click",unlock);
+  $("pw").addEventListener("keydown",e=>{if(e.key==="Enter") unlock();});
+
+  $("lockBtn").addEventListener("click",()=>{
+    resetViewer();
+    $("viewer").classList.remove("show");
+    $("lockScreen").classList.remove("hidden");
+    $("msg").textContent="";
+    $("pw").focus();
+  });
+
+  $("copyBtn").addEventListener("click",async()=>{
+    try{
+      await navigator.clipboard.writeText($("textView").textContent);
+      const old=$("copyBtn").textContent;$("copyBtn").textContent="已複製";
+      setTimeout(()=>$("copyBtn").textContent=old,1200);
+    }catch(e){alert("瀏覽器未允許自動複製，請手動選取文字。");}
+  });
+
+  $("openPdfBtn").addEventListener("click",()=>{
+    if(pdfUrl) window.open(pdfUrl,"_blank","noopener");
+  });
+
+  $("downloadPdfBtn").addEventListener("click",()=>{
+    if(!pdfBlob) return;
+    const a=document.createElement("a");
+    a.href=pdfUrl;a.download=pdfFilename;document.body.appendChild(a);a.click();a.remove();
+  });
+})();
+<\/script>
+</body>
+</html>`;
+  }
+
+  function downloadHtml(filename, html) {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1600);
+  }
+
+  function choosePdf(file) {
+    if (!file) return;
+    if (!(file.type === "application/pdf" || /\.pdf$/i.test(file.name))) {
+      setStatus($("pdfStatus"), "請選擇 PDF。", "bad");
+      return;
+    }
+    selectedPdf = file;
+    $("pdfName").textContent = file.name;
+    $("pdfSize").textContent = formatBytes(file.size);
+    $("pdfFileBox").classList.add("show");
+    $("pdfOutputName").value = safeBaseName(file.name);
+    setStatus($("pdfStatus"), "");
+  }
+
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      document.querySelectorAll(".page").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+      $("page-" + btn.dataset.tab).classList.add("active");
+    });
+  });
+
+  document.querySelectorAll(".eye").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = $(btn.dataset.toggle);
+      const hidden = input.type === "password";
+      input.type = hidden ? "text" : "password";
+      btn.textContent = hidden ? "隱藏" : "顯示";
+    });
+  });
+
+  $("pickPdf").addEventListener("click", () => $("pdfInput").click());
+  $("pdfInput").addEventListener("change", e => choosePdf(e.target.files[0]));
+  $("removePdf").addEventListener("click", () => {
+    selectedPdf = null;
+    $("pdfInput").value = "";
+    $("pdfFileBox").classList.remove("show");
+    $("pdfOutputName").value = "";
+    setStatus($("pdfStatus"), "");
+  });
+
+  const drop = $("pdfDrop");
+  ["dragenter", "dragover"].forEach(name => drop.addEventListener(name, e => {
+    e.preventDefault(); e.stopPropagation(); drop.classList.add("drag");
+  }));
+  ["dragleave", "drop"].forEach(name => drop.addEventListener(name, e => {
+    e.preventDefault(); e.stopPropagation(); drop.classList.remove("drag");
+  }));
+  drop.addEventListener("drop", e => choosePdf(e.dataTransfer.files[0]));
+
+  $("makePdf").addEventListener("click", async () => {
+    const btn = $("makePdf");
+    setStatus($("pdfStatus"), "");
+    if (!selectedPdf) { setStatus($("pdfStatus"), "尚未選擇 PDF。", "bad"); return; }
+    if (!$("pdfPassword").value) { setStatus($("pdfStatus"), "密碼不能空白。", "bad"); return; }
+    if (!window.crypto || !crypto.subtle) { setStatus($("pdfStatus"), "瀏覽器不支援 Web Crypto。", "bad"); return; }
+
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "加密中…";
+    try {
+      const fileBytes = new Uint8Array(await selectedPdf.arrayBuffer());
+      const meta = {
+        type: "pdf",
+        filename: selectedPdf.name,
+        title: safeBaseName(selectedPdf.name),
+        mime: "application/pdf"
+      };
+      const plaintext = packPlain(meta, fileBytes);
+      const payload = await encryptBytes(plaintext, $("pdfPassword").value);
+      const html = buildLockedHtml(payload);
+      const output = safeBaseName($("pdfOutputName").value || selectedPdf.name) + ".html";
+      downloadHtml(output, html);
+      setStatus($("pdfStatus"), "完成", "ok");
+    } catch (err) {
+      console.error(err);
+      setStatus($("pdfStatus"), "建立失敗。", "bad");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old;
+    }
+  });
+
+  $("makeText").addEventListener("click", async () => {
+    const btn = $("makeText");
+    setStatus($("textStatus"), "");
+    const text = $("noteText").value;
+    const password = $("textPassword").value;
+    const title = $("noteTitle").value.trim() || "未命名速記";
+    if (!text) { setStatus($("textStatus"), "尚未輸入內容。", "bad"); return; }
+    if (!password) { setStatus($("textStatus"), "密碼不能空白。", "bad"); return; }
+    if (!window.crypto || !crypto.subtle) { setStatus($("textStatus"), "瀏覽器不支援 Web Crypto。", "bad"); return; }
+
+    const old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "加密中…";
+    try {
+      const meta = { type: "text", title };
+      const plaintext = packPlain(meta, enc.encode(text));
+      const payload = await encryptBytes(plaintext, password);
+      const html = buildLockedHtml(payload);
+      downloadHtml(safeBaseName(title) + ".html", html);
+      setStatus($("textStatus"), "完成", "ok");
+    } catch (err) {
+      console.error(err);
+      setStatus($("textStatus"), "建立失敗。", "bad");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old;
+    }
+  });
+
+  $("helpBtn").addEventListener("click", () => $("helpModal").classList.add("show"));
+  $("closeHelp").addEventListener("click", () => $("helpModal").classList.remove("show"));
+  $("helpModal").addEventListener("click", e => { if (e.target === $("helpModal")) $("helpModal").classList.remove("show"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") $("helpModal").classList.remove("show"); });
+})();
+</script>
+</body>
+</html>
