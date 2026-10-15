@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>工作記錄</title>
+  <link id="tabIcon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%234c5c53'/%3E%3Cpath d='M13 34h22M16 16h16M16 24h12' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink:#27322e; --ink-soft:#66736b; --ink-faint:#91988e;
+      --stone:#f2f2ed; --sidebar:#eef0ea; --paper:#fffefa;
+      --line:#e4e7de; --line-strong:#d6ddd1; --accent:#3e6555;
+      --accent-hover:#2c5142; --accent-tint:#e6f0e8; --pebble:#e9ebe5;
+      --danger:#a4514a; --shadow:0 24px 60px rgba(43,53,43,.07),0 2px 8px rgba(43,53,43,.03);
+      --serif: 'Iowan Old Style','Noto Serif TC','Songti TC','Source Han Serif TC','PMingLiU',serif;
+      --sans: -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
+    }
+    * {box-sizing:border-box}
+    html,body {margin:0;min-height:100%;height:100%}
+    body {font-family:var(--sans);background:var(--stone);color:var(--ink);-webkit-font-smoothing:antialiased}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    button:disabled{cursor:not-allowed;opacity:.46}
+    :focus-visible{outline:2px solid #739983;outline-offset:3px}
+    svg.icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+    .hidden,[hidden]{display:none!important}
+    .app-shell{display:none;width:100%;height:100dvh;min-height:540px;overflow:hidden}
+    body.mode-writing .app-shell{display:flex}
+    body.is-masked .app-shell,body.is-masked .gate-screen,body.is-masked .modal-layer,body.is-masked .toast-stack{visibility:hidden!important}
+    .sidebar{width:280px;flex:none;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--sidebar);padding:26px 17px 16px;position:relative;z-index:15}
+    .brand{display:flex;align-items:center;gap:12px;padding:0 10px 28px}
+    .brandmark{width:40px;height:40px;border-radius:13px;background:var(--ink);color:#fff;display:grid;place-items:center;box-shadow:0 6px 16px rgba(29,54,42,.12)}
+    .brandmark svg{width:21px;height:21px}
+    .brand-name{font-family:var(--serif);font-size:21px;font-weight:650;letter-spacing:.13em;line-height:1.2}
+    .brand-sub{font-size:9px;letter-spacing:.22em;color:var(--ink-faint);font-weight:700;margin-top:4px}
+    .new-draft{background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:10px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;font-weight:650;font-size:13px;letter-spacing:.04em;transition:background .15s,transform .15s}
+    .new-draft:hover{background:#384d43;transform:translateY(-1px)}
+    .library-head{padding:30px 10px 10px;display:flex;align-items:center;justify-content:space-between;color:var(--ink-soft);font-weight:700;font-size:11px;letter-spacing:.16em}
+    .library-count{background:#dfe4db;padding:3px 8px;border-radius:99px;font-size:11px;letter-spacing:0;color:#738176}
+    .search-wrap{height:36px;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.62);border:1px solid var(--line);border-radius:8px;margin:0 3px 10px;padding:0 11px;color:#8a988e}
+    .search-wrap .icon{width:15px;height:15px}
+    .search-wrap input{width:100%;background:transparent;border:0;outline:none;font-size:12px;color:var(--ink);min-width:0}
+    .search-wrap input::placeholder{color:#9aaba0}
+    .document-list{overflow-y:auto;min-height:0;flex:1;padding:2px 0 12px;scrollbar-width:thin;scrollbar-color:#c8d0c5 transparent}
+    .doc-item{width:100%;border:1px solid transparent;background:transparent;border-radius:10px;padding:12px 12px 11px;text-align:left;display:flex;align-items:flex-start;gap:8px;color:inherit;margin-bottom:5px;transition:background .15s,border-color .15s}
+    .doc-item:hover{background:rgba(255,255,255,.57)}
+    .doc-item.active{background:var(--paper);border-color:#dde4d9;box-shadow:0 3px 13px rgba(38,54,43,.035)}
+    .doc-item-main{flex:1;min-width:0}
+    .doc-item-title{font-size:13px;font-weight:680;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}
+    .doc-item-meta{font-size:10.5px;color:var(--ink-faint);margin-top:7px;display:flex;gap:5px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .doc-item-excerpt{font-size:11px;color:#879087;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:7px}
+    .pin{color:#c49a65;width:14px;height:14px;flex:none}
+    .empty-list{padding:28px 12px;text-align:center;color:var(--ink-faint);font-size:12px;line-height:1.8}
+    .sidebar-bottom{border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:5px;padding:16px 5px 0}
+    .local-seal{display:flex;gap:7px;align-items:center;color:#738377;font-size:10px;letter-spacing:.04em;white-space:nowrap}
+    .local-seal .icon{width:14px;height:14px;color:#61836c}
+    .sidebar-bottom-actions{display:flex;gap:2px}
+    .icon-btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--ink-soft)}
+    .icon-btn:hover{background:var(--pebble);color:var(--ink)}
+    .icon-btn .icon{width:17px;height:17px}
+    .page{min-width:0;flex:1;display:flex;flex-direction:column}
+    .topbar{height:74px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,3.8vw,56px);border-bottom:1px solid var(--line);gap:15px;background:var(--stone)}
+    .topbar-left,.topbar-actions{display:flex;align-items:center;gap:11px;min-width:0}
+    .topbar-actions{flex:none}
+    .breadcrumb{display:flex;align-items:center;gap:9px;font-size:12px;color:#93a095;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .breadcrumb strong{color:#6c7d72;font-weight:650;max-width:210px;overflow:hidden;text-overflow:ellipsis}
+    .breadcrumb-divider{color:#bdc6bc}
+    .top-button{border:1px solid var(--line-strong);background:transparent;color:var(--ink-soft);font-size:12px;min-height:36px;padding:0 12px;border-radius:8px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-weight:600}
+    .top-button:hover{background:#fff;border-color:#c8d1c6;color:var(--ink)}
+    .top-button .icon{width:15px;height:15px}
+    .panic-button{background:var(--ink);color:#fff;border-color:var(--ink);padding:0 13px}
+    .panic-button:hover{background:#355a47;color:#fff;border-color:#355a47}
+    kbd{font-family:var(--sans);border:1px solid rgba(255,255,255,.3);border-radius:4px;font-size:10px;padding:2px 5px;font-weight:500}
+    .save-indicator{display:flex;align-items:center;gap:6px;color:#85988a;font-size:11px;white-space:nowrap;margin-right:5px}
+    .save-dot{width:6px;height:6px;border-radius:50%;background:#79a38a}
+    .save-indicator.pending .save-dot{background:#c9a26f}
+    .save-indicator.error .save-dot{background:#c56e6b}
+    .workspace{flex:1;min-height:0;padding:30px clamp(18px,4vw,62px) 25px;display:flex;flex-direction:column}
+    .paper-frame{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);width:100%;max-width:1150px;margin:0 auto;overflow:hidden}
+    .paper-pad{padding-left:clamp(28px,7vw,100px);padding-right:clamp(28px,7vw,100px)}
+    .paper-top{padding-top:43px}
+    .overline{font-size:10px;letter-spacing:.2em;color:#a7aea4;font-weight:750;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .overline::before{content:'';display:block;width:23px;height:1px;background:#b7c7b9;margin-right:2px}
+    .overline-text{flex:1}
+    .overline .doc-date{font-weight:550;letter-spacing:.06em;white-space:nowrap}
+    .doc-title{display:block;border:0;outline:none;background:transparent;width:100%;padding:17px 0 7px;font-family:var(--serif);font-weight:620;letter-spacing:.055em;color:var(--ink);font-size:clamp(25px,2.7vw,34px);line-height:1.35}
+    .doc-title::placeholder{color:#bec6bc}
+    .meta-row{height:48px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);color:#93a298;font-size:12px}
+    .meta-row .icon{width:14px;height:14px}
+    .project-input{color:#718479;outline:none;border:0;background:transparent;width:min(42%,260px);font-size:12px;min-width:80px}
+    .project-input::placeholder{color:#b5c1b7}
+    .meta-spacer{flex:1}
+    .light-pill{display:flex;align-items:center;gap:5px;color:#9ba79e;font-size:11px;white-space:nowrap}
+    .light-pill .icon{width:13px;height:13px}
+    .tab-row{height:55px;flex:none;display:flex;align-items:stretch;gap:26px;border-bottom:1px solid var(--line);margin:0 clamp(28px,7vw,100px)}
+    .tab-button{border:0;background:none;padding:0 1px;margin-bottom:-1px;border-bottom:2px solid transparent;color:#99a69a;font-size:12px;font-weight:650;letter-spacing:.04em}
+    .tab-button:hover{color:var(--ink)}
+    .tab-button.active{border-color:var(--accent);color:var(--ink)}
+    .tab-hint{margin-left:auto;align-self:center;color:#b5beb2;font-size:11px;white-space:nowrap}
+    .editor-field{flex:1;min-height:0;display:flex;position:relative}
+    .editor-textarea{width:100%;height:100%;flex:1;min-height:0;resize:none;padding:28px clamp(28px,7vw,100px);border:0;outline:none;background:transparent;overflow-y:auto;color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.95;letter-spacing:.03em;white-space:pre-wrap;word-break:break-word;tab-size:2;scrollbar-width:thin;scrollbar-color:#d3dad1 transparent}
+    .editor-textarea::placeholder{color:#b5bcb2;font-style:italic}
+    #notesEditor{font-size:16px;line-height:1.94}
+    .bottom-panel{flex:none;border-top:1px solid var(--line)}
+    .tools-row{min-height:65px;padding:11px clamp(23px,5vw,75px);display:flex;align-items:center;justify-content:space-between;gap:15px}
+    .tools-left,.tools-right{display:flex;align-items:center;gap:8px}
+    .tools-right{flex-wrap:wrap;justify-content:flex-end}
+    .small-tool{border:1px solid transparent;background:transparent;border-radius:7px;color:#85958a;font-size:12px;min-height:35px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 8px;font-weight:600}
+    .small-tool:hover{background:var(--pebble);color:var(--ink)}
+    .small-tool .icon{width:15px;height:15px}
+    .tool-separator{height:18px;width:1px;background:var(--line);margin:0 4px}
+    .action-btn{border:1px solid var(--line-strong);border-radius:7px;background:#fff;color:var(--ink-soft);min-height:37px;padding:0 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;transition:background .15s,border-color .15s}
+    .action-btn:hover{border-color:#bacbbd;background:#f6faf6}
+    .action-btn .icon{width:15px;height:15px}
+    .action-btn.ai{background:#e9f0e8;color:#436351;border-color:#d6e4d7}
+    .action-btn.ai:hover{background:#dceadd}
+    .action-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 8px rgba(56,101,76,.1)}
+    .action-btn.primary:hover{background:var(--accent-hover)}
+    .paper-foot{border-top:1px solid #f1f2ed;min-height:35px;padding:9px clamp(28px,7vw,100px);display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:#aab6aa}
+    .paper-foot-left{letter-spacing:.035em}
+    .paper-foot-right{letter-spacing:.12em;font-family:Georgia,serif;color:#c1c8c0}
+    .mobile-menu{display:none}
+    .sidebar-scrim{display:none}
+    .hot-corner{position:fixed;right:0;top:0;width:26px;height:26px;z-index:30;pointer-events:auto}
+    body.is-masked .hot-corner,body:not(.mode-writing) .hot-corner{display:none}
+    body.focus-mode .sidebar{display:none}
+    body.focus-mode .workspace{padding-left:clamp(20px,8vw,120px);padding-right:clamp(20px,8vw,120px)}
+    .gate-screen{height:100dvh;min-height:620px;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 82% 2%,#e5eee5 0,transparent 40%),var(--stone);padding:25px}
+    body.mode-gate .gate-screen{display:flex}
+    .gate-card{width:min(465px,100%);border:1px solid var(--line);border-radius:18px;background:var(--paper);padding:42px clamp(24px,5vw,48px) 32px;box-shadow:var(--shadow)}
+    .gate-crest{width:48px;height:48px;background:var(--ink);border-radius:13px;display:grid;place-items:center;color:white;margin:0 0 22px}
+    .gate-crest .icon{width:25px;height:25px}
+    .gate-eyebrow{font-size:10px;letter-spacing:.23em;font-weight:750;color:#8a9d8d;margin-bottom:12px}
+    .gate-title{font-family:var(--serif);font-size:29px;line-height:1.45;letter-spacing:.065em;margin:0 0 10px;font-weight:650}
+    .gate-subtitle{font-size:13px;line-height:1.9;color:#8a978b;margin:0 0 26px}
+    .form-field{margin:0 0 15px}
+    .field-label{display:block;font-size:11px;font-weight:750;letter-spacing:.045em;color:#5d7465;margin-bottom:9px}
+    .text-field{height:43px;border:1px solid var(--line-strong);border-radius:8px;background:var(--paper);padding:0 12px;color:var(--ink);outline:none;width:100%;font-size:13px}
+    .text-field:focus{border-color:#7c9e88;box-shadow:0 0 0 3px rgba(91,145,106,.1)}
+    .text-field::placeholder{color:#b1beb2}
+    .field-help{font-size:11px;color:#a2aea4;line-height:1.65;margin-top:6px}
+    .gate-cta{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:44px;margin-top:22px;background:var(--accent);color:#fff;border:0;border-radius:8px;font-size:13px;font-weight:750}
+    .gate-cta:hover{background:var(--accent-hover)}
+    .gate-other{border-top:1px solid var(--line);margin-top:24px;padding-top:17px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:#96a398}
+    .link-btn{background:none;border:0;color:var(--accent);font-size:12px;font-weight:750;padding:3px 0;text-decoration:none}
+    .link-btn:hover{text-decoration:underline}
+    .gate-error{min-height:16px;margin-top:9px;font-size:12px;color:var(--danger)}
+    /* Dialogs */
+    .modal-layer{position:fixed;inset:0;display:none;z-index:100;background:rgba(26,40,33,.44);align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+    .modal-layer.open{display:flex}
+    .modal{width:min(665px,100%);max-height:min(85dvh,850px);overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:15px;box-shadow:0 30px 90px rgba(22,39,27,.18);display:flex;flex-direction:column}
+    .modal-head{padding:25px 29px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:15px}
+    .modal-eyebrow{font-size:9px;font-weight:780;letter-spacing:.19em;color:#9aac9c;margin-bottom:7px}
+    .modal-title{font-family:var(--serif);font-size:22px;letter-spacing:.055em;margin:0;font-weight:650}
+    .modal-x{width:31px;height:31px;border:1px solid var(--line);background:transparent;border-radius:8px;color:var(--ink-soft);display:grid;place-items:center}
+    .modal-x:hover{background:var(--pebble)}
+    .modal-x .icon{width:16px;height:16px}
+    .modal-body{padding:25px 29px 29px;overflow-y:auto;font-size:13px;line-height:1.85;color:var(--ink-soft)}
+    .modal-body h3{color:var(--ink);font-size:13px;letter-spacing:.035em;margin:24px 0 8px}
+    .modal-body h3:first-child{margin-top:0}
+    .modal-body p{margin:6px 0 12px}
+    .modal-body ul,.modal-body ol{padding-left:21px;margin:8px 0 18px}
+    .modal-body li{margin:6px 0}
+    .modal-body strong{color:var(--ink);font-weight:730}
+    .shortcut-table{display:grid;grid-template-columns:auto 1fr;gap:0 17px;margin:12px 0 18px;font-size:12px}
+    .shortcut-table>*{padding:10px 0;border-bottom:1px solid var(--line)}
+    .shortcut-table kbd{background:#edf1e9;border-color:#dfe5db;color:#4c6655;font-size:11px;padding:4px 7px}
+    .info-note{border-left:3px solid #9ab3a0;padding:10px 13px;background:#f2f6f1;border-radius:0 7px 7px 0;font-size:12px;line-height:1.8;color:#718677;margin:14px 0}
+    .warning-note{border-left-color:#d7b48b;background:#fbf6ee;color:#876d53}
+    .feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0 8px}
+    .feature-card{padding:18px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.68)}
+    .feature-card .icon{width:20px;height:20px;color:var(--accent);margin-bottom:9px}
+    .feature-card h3{margin:0 0 5px;font-size:13px}
+    .feature-card p{font-size:12px;margin:0;color:#8c9a8e;line-height:1.75}
+    .feature-card button{margin-top:16px}
+    .full-btn{width:100%;min-height:39px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink);font-size:12px;font-weight:750;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:7px}
+    .full-btn:hover{border-color:#a7bba9;background:#f6faf6}
+    .full-btn .icon{width:15px;height:15px}
+    .full-btn.strong{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .full-btn.strong:hover{background:var(--accent-hover)}
+    .full-btn.danger{color:var(--danger);border-color:#e9cec5}
+    .settings-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 0;border-bottom:1px solid var(--line)}
+    .settings-row:first-child{padding-top:0}
+    .settings-row:last-child{border-bottom:0}
+    .setting-label{font-weight:750;color:var(--ink);font-size:12px}
+    .setting-sub{font-size:11px;color:#9aa89d;line-height:1.75;margin-top:5px}
+    .toggle{width:42px;height:25px;flex:none;border:0;border-radius:15px;background:#d3dbd2;position:relative;padding:2px;transition:background .18s}
+    .toggle::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;background:white;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.13);transition:transform .18s}
+    .toggle.on{background:var(--accent)}
+    .toggle.on::after{transform:translateX(17px)}
+    .select-field{border:1px solid var(--line-strong);border-radius:7px;height:34px;color:var(--ink);background:var(--paper);padding:0 9px;font-size:12px;min-width:110px}
+    .prompt-editor{width:100%;height:177px;border:1px solid var(--line-strong);border-radius:9px;background:var(--paper);padding:12px;resize:vertical;color:var(--ink);font-size:12px;line-height:1.85;outline:none}
+    .prompt-editor:focus{border-color:#8cb299}
+    .setting-foot{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+    .version-item{border:1px solid var(--line);padding:12px 14px;border-radius:8px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .version-item strong{font-size:12px}
+    .version-item p{font-size:11px;color:#9aa69b;margin:3px 0}
+    .inline-actions{display:flex;gap:7px;align-items:center;flex:none}
+    .small-outline{padding:7px 11px;border:1px solid var(--line-strong);border-radius:7px;background:transparent;color:var(--ink-soft);font-size:11px;font-weight:750}
+    .small-outline:hover{background:var(--pebble)}
+    .toast-stack{position:fixed;right:24px;top:89px;z-index:200;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast{padding:13px 16px;background:#2f5041;color:#fff;border-radius:9px;box-shadow:0 10px 26px rgba(18,49,28,.15);font-size:12px;display:flex;align-items:center;gap:9px;max-width:390px;animation:pop .2s ease-out}
+    .toast.bad{background:#a15349}
+    .toast .icon{width:15px;height:15px}
+    @keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    /* The all-white, fully offline cover */
+    .cover-screen{position:fixed;inset:0;z-index:1000;display:none;background:white;color:#202124;font-family:Arial,Helvetica,sans-serif;overflow:auto}
+    body.is-masked .cover-screen{display:flex;flex-direction:column}
+    .google-top{flex:none;height:62px;padding:0 26px;display:flex;align-items:center;justify-content:flex-end;gap:20px;font-size:13px}
+    .google-top a{color:#303134;text-decoration:none}
+    .google-top a:hover{text-decoration:underline}
+    .google-apps{background:transparent;border:0;width:35px;height:35px;display:grid;place-items:center;border-radius:50%;color:#5f6368}
+    .google-apps:hover{background:#f0f0f0}
+    .google-avatar{width:31px;height:31px;display:grid;place-items:center;color:white;border-radius:50%;font-weight:650;font-size:16px;background:#8869a9}
+    .google-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:clamp(72px,15vh,155px);min-height:420px}
+    .google-wordmark{font-family:Arial,Helvetica,sans-serif;font-size:clamp(72px,8vw,92px);font-weight:550;letter-spacing:-6px;line-height:1.24;user-select:none;cursor:default}
+    .google-wordmark span:nth-child(1),.google-wordmark span:nth-child(4){color:#4285f4}
+    .google-wordmark span:nth-child(2),.google-wordmark span:nth-child(6){color:#ea4335}
+    .google-wordmark span:nth-child(3){color:#fbbc05}
+    .google-wordmark span:nth-child(5){color:#34a853}
+    .google-search{width:min(584px,calc(100% - 42px));min-height:47px;margin-top:29px;display:flex;align-items:center;gap:13px;border:1px solid #dfe1e5;border-radius:28px;padding:0 16px;box-shadow:0 1px 5px rgba(32,33,36,.08)}
+    .google-search:focus-within,.google-search:hover{box-shadow:0 1px 6px rgba(32,33,36,.25);border-color:transparent}
+    .google-search .icon{width:18px;height:18px;color:#9aa0a6;stroke-width:2.2}
+    .google-search input{outline:none;border:0;background:transparent;color:#202124;font-size:16px;width:100%;height:43px;min-width:0}
+    .google-search .search-side{display:flex;gap:15px;align-items:center;flex:none}
+    .search-mic{width:14px;height:19px;position:relative;display:block}
+    .search-mic:before{content:'';position:absolute;left:4px;top:0;width:7px;height:13px;background:linear-gradient(#4285f4 0 55%,#ea4335 55%);border-radius:5px}
+    .search-mic:after{content:'';position:absolute;width:12px;height:10px;left:1px;top:7px;border:2px solid #34a853;border-top:0;border-radius:0 0 9px 9px}
+    .search-lens{width:18px;height:18px;border:3px solid #4285f4;border-radius:50%;position:relative;display:block;transform:scale(.78)}
+    .search-lens:after{content:'';position:absolute;width:9px;height:4px;background:#34a853;right:-7px;bottom:-3px;transform:rotate(43deg);border-radius:2px}
+    .google-buttons{display:flex;gap:12px;margin-top:28px}
+    .google-btn{background:#f8f9fa;border:1px solid #f8f9fa;border-radius:4px;color:#3c4043;font-size:14px;padding:0 16px;height:36px}
+    .google-btn:hover{box-shadow:0 1px 1px rgba(0,0,0,.1);border:1px solid #dadce0}
+    .google-lang{margin-top:29px;font-size:13px;color:#4d5156}
+    .google-lang a{color:#1a0dab;text-decoration:none;margin-left:7px}
+    .google-lang a:hover{text-decoration:underline}
+    .google-footer{flex:none;background:#f2f2f2;color:#70757a;font-size:14px}
+    .google-region{padding:15px 30px;border-bottom:1px solid #dadce0}
+    .google-foot-links{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:15px 32px}
+    .google-foot-links div{display:flex;gap:27px;flex-wrap:wrap}
+    .google-foot-links a{text-decoration:none;color:#70757a}
+    .google-foot-links a:hover{text-decoration:underline}
+    body[data-theme="night"]{--ink:#e3eae2;--ink-soft:#b0c0b2;--ink-faint:#84968b;--stone:#1d2621;--sidebar:#202b23;--paper:#29332b;--line:#39473d;--line-strong:#485c4d;--accent:#80a88b;--accent-hover:#699678;--accent-tint:#334b39;--pebble:#354239;--shadow:0 24px 55px rgba(0,0,0,.19)}
+    body[data-theme="night"] .new-draft,body[data-theme="night"] .panic-button{background:#415e4a;border-color:#415e4a}
+    body[data-theme="night"] .doc-item.active{background:#354338;border-color:#495b4b}
+    body[data-theme="night"] .doc-title,body[data-theme="night"] .editor-textarea{color:#ecf1e6}
+    body[data-theme="night"] .brandmark,body[data-theme="night"] .gate-crest{background:#416248}
+    body[data-theme="night"] .action-btn,body[data-theme="night"] .full-btn,body[data-theme="night"] .feature-card{background:#303d34;color:var(--ink)}
+    body[data-theme="night"] .action-btn.ai{background:#38503c;color:#bbd5bf}
+    body[data-theme="night"] .action-btn.primary,body[data-theme="night"] .full-btn.strong,body[data-theme="night"] .gate-cta{background:#496b54;color:#fff;border-color:#496b54}
+    body[data-theme="night"] .info-note{background:#344a39;color:#c0d0c0}
+    body[data-theme="night"] .warning-note{background:#4a4034;color:#e0c8a9}
+    body[data-theme="night"] .document-list{scrollbar-color:#4d5e50 transparent}
+    body[data-theme="night"] .search-wrap{background:#303b31}
+    body[data-theme="night"] .google-top,body[data-theme="night"] .cover-screen{color:#202124}
+    @media(max-width:1150px){.sidebar{width:250px}.save-indicator{display:none}.topbar{padding:0 23px}.workspace{padding:21px 26px}.paper-top{padding-top:31px}.paper-pad{padding-left:clamp(30px,5vw,62px);padding-right:clamp(30px,5vw,62px)}.tab-row{margin:0 clamp(30px,5vw,62px)}.editor-textarea{padding-left:clamp(30px,5vw,62px);padding-right:clamp(30px,5vw,62px)}.paper-foot{padding-left:clamp(30px,5vw,62px);padding-right:clamp(30px,5vw,62px)}}
+    @media(max-width:850px){.sidebar{position:fixed;left:0;top:0;bottom:0;width:283px;transform:translateX(-100%);transition:transform .2s;box-shadow:10px 0 40px rgba(20,30,24,.1)}body.sidebar-open .sidebar{transform:translateX(0)}body.sidebar-open .sidebar-scrim{display:block;position:fixed;inset:0;z-index:14;background:rgba(24,34,29,.38)}.mobile-menu{display:inline-flex}.topbar{height:64px;padding:0 18px}.breadcrumb .crumb-root,.breadcrumb-divider{display:none}.top-button.top-focus{display:none}.workspace{padding:18px}.topbar-actions{gap:6px}.top-button{padding:0 10px}.paper-top{padding-top:26px}}
+    @media(max-width:610px){.app-shell{min-height:450px}.top-button.backup-toggle{display:inline-flex;padding:0 10px}.top-button.backup-toggle span{display:none}.top-button.backup-toggle .icon{width:17px;height:17px}.top-button.panic-button{font-size:12px}.top-button.panic-button kbd{display:none}.breadcrumb strong{max-width:100px}.workspace{padding:10px}.paper-frame{border-radius:7px}.paper-pad{padding-left:22px;padding-right:22px}.paper-top{padding-top:25px}.overline .doc-date{display:none}.doc-title{font-size:26px}.tab-row{margin:0 22px;gap:20px}.tab-hint{display:none}.editor-textarea{padding:22px;font-size:17px}.tools-row{padding:10px 15px;flex-wrap:wrap;justify-content:space-between}.tools-left{gap:1px}.tools-right{gap:5px}.tools-right .action-btn{padding:0 9px}.tools-right .action-btn.ai{font-size:0;gap:0}.tools-right .action-btn.ai .icon{width:17px;height:17px}.paper-foot{padding:9px 19px}.paper-foot-right{display:none}.gate-card{padding:32px 24px}.modal-head{padding:19px}.modal-body{padding:20px}.feature-grid{grid-template-columns:1fr}.feature-card{padding:15px}.google-foot-links{padding:15px 20px}.google-top{gap:12px;padding:0 12px}.toast-stack{left:15px;right:15px;top:68px}.toast{max-width:none}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+  </style>
+</head>
+<body class="mode-gate" data-theme="day">
+  <!-- Bundled symbols keep the file completely offline. -->
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden"><defs>
+    <symbol id="i-quill" viewBox="0 0 24 24"><path d="M20 4c-6 0-13 5-15 15l5-5m0 0 8-8M4 20l6-6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4.2 4.2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22S4.5 18 4.5 12V5.5L12 2l7.5 3.5V12c0 6-7.5 10-7.5 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M10 2h4l.6 2.1 2 .8 1.9-1.1 2.8 2.8-1.1 1.9.8 2L23 11v4l-2.1.6-.8 2 1.1 1.9-2.8 2.8-1.9-1.1-2 .8L14 23h-4l-.6-2.1-2-.8-1.9 1.1-2.8-2.8 1.1-1.9-.8-2L1 15v-4l2.1-.6.8-2-1.1-1.9 2.8-2.8 1.9 1.1 2-.8L10 2Z" transform="translate(0 -1) scale(1 .94)"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.8-2.5 2.2-2.5 4.5M12 17h.01"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4zM8 4v6h8V4M7 20v-7h10v7"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2ZM19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z"/></symbol>
+    <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M3 3 21 21M10.6 5.1A11.5 11.5 0 0 1 12 5c5 0 9.2 4 10 7-.3 1.1-1.2 2.5-2.4 3.7M6 6.5C4.1 8 2.6 10.1 2 12c.8 3 5 7 10 7 1.8 0 3.5-.5 4.9-1.4M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 18V6m-5 5 5-5 5 5M4 18v3h16v-3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="m15 3 6 6-3 1-4 5-5-5 5-4 1-3ZM9 15l-5 6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="12" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6zM14 2v6h5M9 13h7M9 17h7"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  </defs></svg>
+
+  <div id="sidebarScrim" class="sidebar-scrim"></div>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar" aria-label="草稿清單">
+      <div class="brand"><div class="brandmark"><svg class="icon"><use href="#i-quill"></use></svg></div><div><div class="brand-name">靜稿</div><div class="brand-sub">QUIET DRAFT STUDIO</div></div></div>
+      <button id="newDocBtn" class="new-draft"><svg class="icon"><use href="#i-plus"></use></svg> 新增草稿</button>
+      <div class="library-head">我的稿件 <span id="docCount" class="library-count">0</span></div>
+      <label class="search-wrap"><svg class="icon"><use href="#i-search"></use></svg><input id="docSearch" aria-label="搜尋草稿" placeholder="搜尋標題、內容、作品…" autocomplete="off"></label>
+      <nav id="documentList" class="document-list" aria-label="草稿"></nav>
+      <div class="sidebar-bottom"><div class="local-seal"><svg class="icon"><use href="#i-shield"></use></svg> 本機加密 · 無雲端連線</div><div class="sidebar-bottom-actions"><button id="settingsBtn" class="icon-btn" title="偏好設定" aria-label="偏好設定"><svg class="icon"><use href="#i-settings"></use></svg></button><button id="helpBtn" class="icon-btn" title="使用說明" aria-label="使用說明"><svg class="icon"><use href="#i-help"></use></svg></button></div></div>
+    </aside>
+    <section class="page" aria-label="寫作工作區">
+      <header class="topbar"><div class="topbar-left"><button id="mobileMenuBtn" class="icon-btn mobile-menu" aria-label="開啟稿件清單"><svg class="icon"><use href="#i-menu"></use></svg></button><div class="breadcrumb"><span class="crumb-root">WORKSPACE</span><span class="breadcrumb-divider">/</span><strong id="breadcrumbTitle">未命名草稿</strong></div></div><div class="topbar-actions"><div class="save-indicator" id="saveIndicator"><span class="save-dot"></span><span id="saveText">準備就緒</span></div><button id="focusBtn" class="top-button top-focus" title="收合清單，專心寫作"><svg class="icon"><use href="#i-focus"></use></svg><span>專注</span></button><button id="backupBtn" class="top-button backup-toggle" title="換機與備份" aria-label="換機與備份"><svg class="icon"><use href="#i-upload"></use></svg><span>換機 / 備份</span></button><button id="coverBtn" class="top-button panic-button" title="立刻遮住畫面 (Esc)"><svg class="icon"><use href="#i-eyeoff"></use></svg> 遮蔽畫面 <kbd>Esc</kbd></button></div></header>
+      <main class="workspace"><article class="paper-frame">
+        <div class="paper-pad paper-top"><div class="overline"><span class="overline-text">THE PRIVATE WRITING ROOM</span><span id="docDate" class="doc-date"></span></div><input id="docTitle" class="doc-title" type="text" maxlength="150" autocomplete="off" spellcheck="false" placeholder="為這段故事命名…" aria-label="草稿標題"><div class="meta-row"><svg class="icon"><use href="#i-folder"></use></svg><input id="projectInput" class="project-input" type="text" maxlength="120" autocomplete="off" placeholder="作品名稱 / 章節（選填）" aria-label="作品名稱或章節"><div class="meta-spacer"></div><span class="light-pill"><svg class="icon"><use href="#i-lock"></use></svg> 僅存於此裝置</span></div></div>
+        <div class="tab-row" role="tablist" aria-label="文字區切換"><button id="bodyTab" class="tab-button active" role="tab" aria-selected="true">正文草稿</button><button id="notesTab" class="tab-button" role="tab" aria-selected="false">寫作備註</button><span id="editorHint" class="tab-hint">寫下骨架，剩下的留給靈感</span></div>
+        <div class="editor-field"><textarea id="bodyEditor" class="editor-textarea" aria-label="草稿正文" placeholder="故事從這裡開始。\n\n寫關鍵場景、人物動作、台詞、情緒，或只留幾個提示詞……" spellcheck="true" autocomplete="off"></textarea><textarea id="notesEditor" class="editor-textarea hidden" aria-label="寫作備註" placeholder="人物關係、時間線、視角限制、給 AI 的交代……\n\n這裡的文字會一起放進「複製給 AI」，不會混入純草稿複製。" spellcheck="true" autocomplete="off"></textarea></div>
+        <div class="bottom-panel"><div class="tools-row"><div class="tools-left"><button id="fontDownBtn" class="small-tool" aria-label="縮小字體" title="縮小字體">A−</button><button id="fontUpBtn" class="small-tool" aria-label="放大字體" title="放大字體">A+</button><span class="tool-separator"></span><button id="docMoreBtn" class="small-tool" title="草稿操作"><svg class="icon"><use href="#i-more"></use></svg> 操作</button></div><div class="tools-right"><button id="versionsBtn" class="action-btn" title="查看與建立歷史版本"><svg class="icon"><use href="#i-clock"></use></svg> 版本</button><button id="copyAiBtn" class="action-btn ai" title="連同寫作備註與 AI 指令一起複製"><svg class="icon"><use href="#i-spark"></use></svg> 複製給 AI</button><button id="copyDraftBtn" class="action-btn primary" title="複製目前的草稿正文"><svg class="icon"><use href="#i-copy"></use></svg> 複製草稿</button></div></div></div>
+        <footer class="paper-foot"><span class="paper-foot-left" id="statsText">0 字元 · 0 段</span><span class="paper-foot-right">WORDS IN PROGRESS / PRIVATE EDITION</span></footer>
+      </article></main>
+    </section>
+  </div>
+  <div id="hotCorner" class="hot-corner" title="停留半秒即可遮蔽畫面" aria-hidden="true"></div>
+
+  <main id="gate" class="gate-screen" aria-label="私人寫作空間入口">
+    <section class="gate-card">
+      <div class="gate-crest"><svg class="icon"><use href="#i-quill"></use></svg></div>
+      <div class="gate-eyebrow">PRIVATE WRITING SPACE</div>
+      <h1 id="gateTitle" class="gate-title">留一個位置，給未完成的故事。</h1>
+      <p id="gateDescription" class="gate-subtitle">只儲存在這台電腦的加密草稿。打開檔案，就可以開始寫。</p>
+      <form id="gateForm" autocomplete="off">
+        <div class="form-field"><label class="field-label" for="gatePassword" id="passLabel">設定空間密碼</label><input id="gatePassword" class="text-field" type="password" minlength="8" autocomplete="new-password" placeholder="至少 8 個字元" required></div>
+        <div class="form-field" id="confirmField"><label class="field-label" for="gateConfirm">再輸入一次密碼</label><input id="gateConfirm" class="text-field" type="password" minlength="8" autocomplete="new-password" placeholder="確認密碼" required></div>
+        <div id="gateNote" class="field-help">密碼不會傳送或儲存。遺失密碼就無法解開原稿與備份。</div>
+        <div class="gate-error" id="gateError" role="alert"></div>
+        <button id="gateSubmit" class="gate-cta" type="submit">建立私人空間 <svg class="icon"><use href="#i-arrow"></use></svg></button>
+      </form>
+      <div class="gate-other"><span id="gateOtherText">從另一台電腦帶來的稿件？</span><button id="gateImportBtn" class="link-btn">匯入加密備份</button><button id="gateHelpBtn" class="link-btn">說明</button></div>
+    </section>
+  </main>
+
+  <div id="modalLayer" class="modal-layer" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header class="modal-head"><div><div id="modalEyebrow" class="modal-eyebrow">QUIET DRAFT</div><h2 id="modalTitle" class="modal-title">說明</h2></div><button id="modalClose" class="modal-x" aria-label="關閉視窗"><svg class="icon"><use href="#i-x"></use></svg></button></header><div class="modal-body" id="modalBody"></div></section></div>
+  <div id="toastStack" class="toast-stack" role="status" aria-live="polite"></div>
+  <input type="file" class="hidden" id="backupFile" accept=".qdraft,.json,application/json">
+  <input type="file" class="hidden" id="txtFile" accept=".txt,.md,text/plain,text/markdown">
+
+  <div id="cover" class="cover-screen" aria-label="搜尋首頁">
+    <header class="google-top"><a href="https://mail.google.com/">Gmail</a><a href="https://images.google.com/">圖片</a><button id="fakeApps" class="google-apps" aria-label="Google 應用程式"><svg width="19" height="19" viewBox="0 0 18 18" fill="#5f6368"><circle cx="3" cy="3" r="1.6"/><circle cx="9" cy="3" r="1.6"/><circle cx="15" cy="3" r="1.6"/><circle cx="3" cy="9" r="1.6"/><circle cx="9" cy="9" r="1.6"/><circle cx="15" cy="9" r="1.6"/><circle cx="3" cy="15" r="1.6"/><circle cx="9" cy="15" r="1.6"/><circle cx="15" cy="15" r="1.6"/></svg></button><div class="google-avatar" aria-hidden="true">M</div></header>
+    <div class="google-center"><div class="google-wordmark" id="fakeLogo" aria-label="Google"><span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span></div><div class="google-search"><svg class="icon"><use href="#i-search"></use></svg><input id="fakeSearch" type="search" aria-label="在 Google 上搜尋" spellcheck="false" autocomplete="off"><div class="search-side"><span class="search-mic" title="語音搜尋"></span><span class="search-lens" title="以圖搜尋"></span></div></div><div class="google-buttons"><button id="fakeSearchBtn" class="google-btn">Google 搜尋</button><button id="fakeLuckyBtn" class="google-btn">好手氣</button></div><div class="google-lang">Google 提供：<a href="https://www.google.com/?hl=en">English</a></div></div>
+    <footer class="google-footer"><div class="google-region">台灣</div><div class="google-foot-links"><div><a href="https://about.google/">關於 Google</a><a href="https://ads.google.com/">廣告</a><a href="https://www.google.com/services/">商業</a><a href="https://www.google.com/search/howsearchworks/">搜尋服務的運作方式</a></div><div><a href="https://policies.google.com/privacy">隱私權</a><a href="https://policies.google.com/terms">服務條款</a><a href="https://www.google.com/preferences">設定</a></div></div></footer>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+    const BASE_TITLE = '工作記錄';
+    const NORMAL_ICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="#4c5c53"/><path d="M13 34h22M16 16h16M16 24h12" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>')}`;
+    const COVER_ICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path d="M40 24.4c0-1.3-.1-2.5-.4-3.7H24v7h8.9a7.6 7.6 0 0 1-3.3 5V37h5.4C38.2 34 40 29.6 40 24.4Z" fill="#4285F4"/><path d="M24 41c4.7 0 8.7-1.6 11.6-4l-5.4-4.3a10.4 10.4 0 0 1-15.4-5.5H9.2v4.3A17 17 0 0 0 24 41Z" fill="#34A853"/><path d="M14.8 27.2a10.2 10.2 0 0 1 0-6.4v-4.3H9.2a17 17 0 0 0 0 15l5.6-4.3Z" fill="#FBBC05"/><path d="M24 14c2.6 0 5 1 6.9 2.7l5-5A16.7 16.7 0 0 0 24 7 17 17 0 0 0 9.2 16.5l5.6 4.3A10.3 10.3 0 0 1 24 14Z" fill="#EA4335"/></svg>')}`;
+    const DEFAULT_PROMPT = '請將以下小說草稿擴寫為繁體中文小說正文。忠實保留我的事件順序、角色行動與敘事意圖；場景與人物互動可以補足必要的細節。採自然成熟的小說語氣，維持連續敘事，避免條列、分析說明、過度華麗的修辭與擅自增加重大設定。若提供了寫作備註，請遵守其中的角色知識邊界、視角和限制。直接輸出小說正文。';
+    const now = () => new Date().toISOString();
+    const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'd'+Date.now()+Math.random().toString(36).slice(2));
+    const eHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const bytesToB64 = arr => { let s='';for(let i=0;i<arr.length;i+=8192)s+=String.fromCharCode(...arr.slice(i,i+8192));return btoa(s); };
+    const b64ToBytes = str => Uint8Array.from(atob(str), c=>c.charCodeAt(0));
+    const random = n => crypto.getRandomValues(new Uint8Array(n));
+    const utf8 = new TextEncoder();
+    const utf8decode = new TextDecoder();
+    const ITERATIONS = 310000;
+    let vault = null;
+    let key = null;
+    let vaultMeta = null;
+    let currentRecord = null;
+    let appUnlocked = false;
+    let isMasked = false;
+    let activeTab = 'body';
+    let gateMode = 'create';
+    let saveTimer = null;
+    let saveQueue = Promise.resolve();
+    let pendingSave = false;
+    let changeRev = 0;
+    let savedRev = 0;
+    let lastActivity = Date.now();
+    let busy = false;
+    let storageMode = 'indexeddb';
+    let storageDb = null;
+    let suspendAutoMask = 0;
+    let cornerTimer = null;
+    let logoTaps = [];
+    let lastFocused = null;
+    let currentModal = '';
+    let modalExtras = null;
+    let pendingImport = null;
+    let importMode = 'merge';
+    let statFrame = null;
+    let listRefreshTimer = null;
+    const LOCAL_KEY = 'quietdraft.encrypted.vault.v1';
+
+    async function initStorage(){
+      try {
+        if (!('indexedDB' in window)) throw new Error('IndexedDB unavailable');
+        storageDb = await new Promise((resolve,reject) => {
+          const req=indexedDB.open('quietdraft-private-vault-v1',1);
+          req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('private'))req.result.createObjectStore('private');};
+          req.onsuccess=()=>resolve(req.result);
+          req.onerror=()=>reject(req.error);
+          req.onblocked=()=>reject(new Error('資料庫暫時遭占用'));
+        });
+        await new Promise((resolve,reject)=>{
+          const tx=storageDb.transaction('private','readonly');
+          tx.objectStore('private').get('vault');
+          tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+        });
+        storageMode='indexeddb';
+      } catch (err){
+        storageDb=null;
+        try {localStorage.setItem('quietdraft.test','1');localStorage.removeItem('quietdraft.test');storageMode='localstorage';}
+        catch {storageMode='unavailable';}
+      }
+    }
+    async function readRecord(){
+      if(storageMode==='indexeddb')return await new Promise((resolve,reject)=>{
+        const tx=storageDb.transaction('private','readonly'),q=tx.objectStore('private').get('vault');
+        q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error);
+      });
+      if(storageMode==='localstorage'){
+        const s=localStorage.getItem(LOCAL_KEY);return s?JSON.parse(s):null;
+      }
+      throw new Error('目前瀏覽器不允許本機儲存');
+    }
+    async function writeRecord(record){
+      if(storageMode==='indexeddb')return await new Promise((resolve,reject)=>{
+        const tx=storageDb.transaction('private','readwrite');tx.objectStore('private').put(record,'vault');
+        tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('寫入失敗'));
+      });
+      if(storageMode==='localstorage'){localStorage.setItem(LOCAL_KEY,JSON.stringify(record));return;}
+      throw new Error('目前瀏覽器不允許本機儲存');
+    }
+    async function clearRecord(){
+      if(storageMode==='indexeddb')return await new Promise((resolve,reject)=>{
+        const tx=storageDb.transaction('private','readwrite');tx.objectStore('private').delete('vault');
+        tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+      });
+      if(storageMode==='localstorage')localStorage.removeItem(LOCAL_KEY);
+    }
+    async function derive(pass,salt,iterations=ITERATIONS){
+      const material=await crypto.subtle.importKey('raw',utf8.encode(pass),'PBKDF2',false,['deriveKey']);
+      return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    }
+    async function seal(data,cryptoKey,salt,iterations=ITERATIONS){
+      const iv=random(12);
+      const buffer=await crypto.subtle.encrypt({name:'AES-GCM',iv},cryptoKey,utf8.encode(JSON.stringify(data)));
+      return {version:1,kdf:'PBKDF2-SHA256',iterations,salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:bytesToB64(new Uint8Array(buffer)),updatedAt:now()};
+    }
+    async function openSealed(record,pass){
+      if(!record||record.version!==1||!record.salt||!record.iv||!record.ciphertext)throw new Error('備份格式不正確');
+      const it=record.iterations;
+      if(!Number.isInteger(it)||it<100000||it>2000000)throw new Error('加密參數不正確');
+      const salt=b64ToBytes(record.salt),iv=b64ToBytes(record.iv),ct=b64ToBytes(record.ciphertext);
+      if(salt.length!==16||iv.length!==12||ct.length<17)throw new Error('加密資料不完整');
+      const candidate=await derive(pass,salt,it);
+      const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},candidate,ct);
+      const content=JSON.parse(utf8decode.decode(plain));
+      validateVault(content);
+      return {candidate,content};
+    }
+    function validateVault(obj){
+      if(!obj||obj.schema!==1||!Array.isArray(obj.docs)||obj.docs.length>50000||!obj.settings||typeof obj.settings!=='object')throw new Error('無效的寫作資料');
+      if(obj.docs.some(d=>!d||typeof d.id!=='string'||typeof d.body!=='string'||typeof d.notes!=='string'||typeof d.title!=='string'||typeof d.project!=='string'))throw new Error('部分稿件格式不正確');
+    }
+    function newDoc(title='未命名草稿'){
+      const t=now();return {id:uid(),title,project:'',body:'',notes:'',pinned:false,createdAt:t,updatedAt:t,versions:[],lastSnapshotAt:0};
+    }
+    function newVault(){
+      const doc=newDoc();return {schema:1,activeId:doc.id,docs:[doc],settings:{fontSize:18,autoMask:true,hotCorner:true,lockMinutes:30,theme:'day',aiPrompt:DEFAULT_PROMPT,focus:false}};
+    }
+    function normalizeVault(){
+      vault.settings={fontSize:18,autoMask:true,hotCorner:true,lockMinutes:30,theme:'day',aiPrompt:DEFAULT_PROMPT,focus:false,...vault.settings};
+      vault.settings.fontSize=Math.max(15,Math.min(24,Number(vault.settings.fontSize)||18));
+      vault.docs.forEach(d=>{d.versions=Array.isArray(d.versions)?d.versions:[];d.pinned=!!d.pinned;d.createdAt=d.createdAt||now();d.updatedAt=d.updatedAt||now();d.lastSnapshotAt=Number(d.lastSnapshotAt)||0;});
+      if(!vault.docs.length){const d=newDoc();vault.docs.push(d);vault.activeId=d.id;}
+      if(!vault.docs.some(d=>d.id===vault.activeId))vault.activeId=vault.docs[0].id;
+    }
+    function doc(){return vault?.docs.find(d=>d.id===vault.activeId)||null;}
+    function safeDate(s){const t=Date.parse(s||'');return Number.isFinite(t)?t:0;}
+    function shortDate(d){const t=safeDate(d);return t?new Intl.DateTimeFormat('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(t)):'剛剛';}
+    function longDate(d){const t=safeDate(d);return t?new Intl.DateTimeFormat('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(t)):'';}
+    function setStatus(text,state='saved'){
+      $('saveText').textContent=text;
+      $('saveIndicator').classList.toggle('pending',state==='pending');
+      $('saveIndicator').classList.toggle('error',state==='error');
+    }
+    function touch(d){d.updatedAt=now();lastActivity=Date.now();scheduleSave();}
+    function scheduleSave(){
+      if(!appUnlocked||!key||!vault)return;
+      changeRev++;pendingSave=true;setStatus('準備儲存','pending');
+      if(saveTimer)clearTimeout(saveTimer);
+      saveTimer=setTimeout(()=>{flushSave().catch(()=>{});},650);
+    }
+    async function flushSave(){
+      if(saveTimer){clearTimeout(saveTimer);saveTimer=null;}
+      if(!pendingSave||!appUnlocked||!key||!vault)return saveQueue;
+      const revision=changeRev;
+      const snapshot=JSON.parse(JSON.stringify(vault));
+      const snapKey=key;
+      const salt=b64ToBytes(vaultMeta.salt);
+      const iterations=vaultMeta.iterations;
+      pendingSave=false;setStatus('加密儲存中','pending');
+      saveQueue=saveQueue.catch(()=>{}).then(async()=>{
+        const record=await seal(snapshot,snapKey,salt,iterations);
+        await writeRecord(record);
+        currentRecord=record;
+        savedRev=revision;
+        if(changeRev===revision)setStatus('已加密儲存');
+      }).catch(err=>{
+        pendingSave=true;
+        setStatus('儲存失敗','error');
+        showToast('本機儲存失敗，請立即匯出備份：'+err.message,true);
+        throw err;
+      });
+      return saveQueue;
+    }
+    function setMode(mode){document.body.classList.toggle('mode-writing',mode==='writing');document.body.classList.toggle('mode-gate',mode==='gate');}
+    function updateTheme(){document.body.dataset.theme=vault?.settings?.theme==='night'?'night':'day';}
+    function renderGate(){
+      setMode('gate');setMasked(false,true);
+      gateMode=currentRecord?'unlock':'create';
+      const existing=gateMode==='unlock';
+      $('gateTitle').textContent=existing?'歡迎回到你的故事。':'留一個位置，給未完成的故事。';
+      $('gateDescription').textContent=existing?'輸入空間密碼，繼續剛剛未完的段落。':'只儲存在這台電腦的加密草稿。打開檔案，就可以開始寫。';
+      $('passLabel').textContent=existing?'空間密碼':'設定空間密碼';
+      $('gatePassword').placeholder=existing?'輸入原本的密碼':'至少 8 個字元';
+      $('gatePassword').autocomplete=existing?'current-password':'new-password';
+      $('confirmField').classList.toggle('hidden',existing);
+      $('gateConfirm').required=!existing;
+      $('gateSubmit').innerHTML=existing?`解鎖寫作空間 ${icon('arrow')}`:`建立私人空間 ${icon('arrow')}`;
+      $('gateNote').textContent=existing?'解密在此瀏覽器內完成，無需連線。':'密碼不會傳送或儲存。遺失密碼就無法解開原稿與備份。';
+      $('gateOtherText').textContent=existing?'需要把其他裝置的稿件帶進來？':'從另一台電腦帶來的稿件？';
+      $('gatePassword').value='';$('gateConfirm').value='';$('gateError').textContent='';
+      if(!existing)document.body.dataset.theme='day';
+      setTimeout(()=>$('gatePassword').focus(),30);
+    }
+    async function submitGate(ev){
+      ev.preventDefault();if(busy)return;
+      const pass=$('gatePassword').value,confirm=$('gateConfirm').value;
+      $('gateError').textContent='';
+      if(!crypto?.subtle){$('gateError').textContent='這個瀏覽器無法使用 Web Crypto 加密，請改用最新版 Chrome、Edge 或 Firefox。';return;}
+      if(gateMode==='create'&&pass.length<8){$('gateError').textContent='密碼需要至少 8 個字元。';return;}
+      if(gateMode==='create'&&pass!==confirm){$('gateError').textContent='兩次密碼不一致。';return;}
+      busy=true;$('gateSubmit').disabled=true;$('gateSubmit').textContent='正在處理加密…';
+      try{
+        if(gateMode==='create'){
+          vault=newVault();const salt=random(16);key=await derive(pass,salt);
+          vaultMeta={salt:bytesToB64(salt),iterations:ITERATIONS};
+          const record=await seal(vault,key,salt);await writeRecord(record);
+          currentRecord=record;
+        }else{
+          const result=await openSealed(currentRecord,pass);
+          key=result.candidate;vault=result.content;
+          vaultMeta={salt:currentRecord.salt,iterations:currentRecord.iterations};
+        }
+        normalizeVault();appUnlocked=true;pendingSave=false;changeRev=0;savedRev=0;
+        $('gatePassword').value='';$('gateConfirm').value='';showWorkspace();
+        if(storageMode==='localstorage')showToast('目前使用加密瀏覽器儲存；重要稿件請定期匯出備份。');
+      }catch(err){
+        key=null;vault=null;appUnlocked=false;
+        $('gateError').textContent=gateMode==='unlock'?'密碼不正確，或資料已損壞。':'建立失敗：'+err.message;
+      }finally{busy=false;$('gateSubmit').disabled=false;$('gateSubmit').innerHTML=gateMode==='unlock'?`解鎖寫作空間 ${icon('arrow')}`:`建立私人空間 ${icon('arrow')}`;}
+    }
+    function showWorkspace(){
+      setMode('writing');setMasked(false,true);updateTheme();
+      document.body.classList.toggle('focus-mode',!!vault.settings.focus);
+      document.body.classList.remove('sidebar-open');
+      $('focusBtn').querySelector('span').textContent=vault.settings.focus?'離開專注':'專注';
+      $('docSearch').value='';activeTab='body';
+      renderDocList();renderEditor();setStatus('已加密儲存');lastActivity=Date.now();
+      setTimeout(()=>$('bodyEditor').focus(),60);
+    }
+    function renderDocList(){
+      if(!vault)return;
+      const search=$('docSearch').value.trim().toLocaleLowerCase();
+      const list=$('documentList');list.textContent='';
+      $('docCount').textContent=String(vault.docs.length);
+      const sorted=[...vault.docs].sort((a,b)=>Number(b.pinned)-Number(a.pinned)||safeDate(b.updatedAt)-safeDate(a.updatedAt));
+      const filtered=sorted.filter(d=>!search||[d.title,d.project,d.body,d.notes].some(x=>x.toLocaleLowerCase().includes(search)));
+      if(!filtered.length){const empty=document.createElement('div');empty.className='empty-list';empty.textContent=search?'找不到符合的草稿':'還沒有草稿';list.append(empty);return;}
+      for(const d of filtered){
+        const b=document.createElement('button');b.type='button';b.className='doc-item'+(d.id===vault.activeId?' active':'');b.setAttribute('aria-current',d.id===vault.activeId?'page':'false');
+        const main=document.createElement('div');main.className='doc-item-main';
+        const name=document.createElement('div');name.className='doc-item-title';name.textContent=d.title.trim()||'未命名草稿';
+        const meta=document.createElement('div');meta.className='doc-item-meta';meta.textContent=(d.project?d.project+' · ':'')+shortDate(d.updatedAt);
+        const excerpt=document.createElement('div');excerpt.className='doc-item-excerpt';excerpt.textContent=(d.body||d.notes||'尚未開始書寫').replace(/\s+/g,' ').slice(0,110);
+        main.append(name,meta,excerpt);b.append(main);
+        if(d.pinned){const p=document.createElement('span');p.className='pin';p.innerHTML=icon('pin');b.prepend(p);}
+        b.addEventListener('click',()=>selectDoc(d.id));list.append(b);
+      }
+    }
+    function renderEditor(){
+      const d=doc();if(!d)return;
+      $('docTitle').value=d.title==='未命名草稿'?'':d.title;
+      $('projectInput').value=d.project;
+      $('bodyEditor').value=d.body;
+      $('notesEditor').value=d.notes;
+      $('docDate').textContent=longDate(d.createdAt);
+      $('breadcrumbTitle').textContent=d.title.trim()||'未命名草稿';
+      switchTab(activeTab);
+      $('bodyEditor').style.fontSize=vault.settings.fontSize+'px';
+      $('notesEditor').style.fontSize=Math.max(14,vault.settings.fontSize-2)+'px';
+      $('bodyEditor').scrollTop=0;$('notesEditor').scrollTop=0;
+      updateStats();
+    }
+    function switchTab(tab){
+      activeTab=tab==='notes'?'notes':'body';
+      $('bodyEditor').classList.toggle('hidden',activeTab!=='body');
+      $('notesEditor').classList.toggle('hidden',activeTab!=='notes');
+      $('bodyTab').classList.toggle('active',activeTab==='body');
+      $('notesTab').classList.toggle('active',activeTab==='notes');
+      $('bodyTab').setAttribute('aria-selected',String(activeTab==='body'));
+      $('notesTab').setAttribute('aria-selected',String(activeTab==='notes'));
+      $('editorHint').textContent=activeTab==='body'?'寫下骨架，剩下的留給靈感':'這裡的備註會附在 AI 複製內容中';
+      updateStats();
+    }
+    function selectDoc(id){
+      if(!vault.docs.some(d=>d.id===id))return;
+      vault.activeId=id;activeTab='body';
+      scheduleSave();renderDocList();renderEditor();
+      document.body.classList.remove('sidebar-open');$('bodyEditor').focus();
+    }
+    function addDoc(){
+      const d=newDoc();vault.docs.push(d);vault.activeId=d.id;activeTab='body';
+      scheduleSave();renderDocList();renderEditor();document.body.classList.remove('sidebar-open');
+      $('docTitle').focus();showToast('已建立新草稿');
+    }
+    function markDocEdit(field,value){
+      const d=doc();if(!d||d[field]===value)return;
+      if(field==='body'||field==='notes')maybeAutoSnapshot(d);
+      d[field]=value;touch(d);
+      if(field==='title')$('breadcrumbTitle').textContent=value.trim()||'未命名草稿';
+      if(field!=='body'&&field!=='notes')renderDocList();
+      else {
+        if(statFrame)cancelAnimationFrame(statFrame);
+        statFrame=requestAnimationFrame(()=>{updateStats();statFrame=null;});
+        if(listRefreshTimer)clearTimeout(listRefreshTimer);
+        listRefreshTimer=setTimeout(()=>{renderDocList();listRefreshTimer=null;},700);
+      }
+    }
+    function updateStats(){
+      if(!doc())return;
+      const content=activeTab==='body'?doc().body:doc().notes;
+      const chars=Array.from(content.replace(/\s/g,'')).length;
+      const paragraphs=content.trim()?content.trim().split(/\n\s*\n/).filter(x=>x.trim()).length:0;
+      const label=activeTab==='body'?'草稿':'備註';
+      $('statsText').textContent=`${label} ${chars.toLocaleString('zh-TW')} 字元 · ${paragraphs.toLocaleString('zh-TW')} 段 · 每次修改自動加密儲存`;
+    }
+    function maybeAutoSnapshot(d){
+      const t=Date.now();const old=(d.body||'')+(d.notes||'');
+      if(old.trim()&&t-(d.lastSnapshotAt||0)>15*60*1000){
+        createVersion(d,'自動保存',false);d.lastSnapshotAt=t;
+      }
+    }
+    function createVersion(d,label='手動保存',persist=true){
+      d.versions=d.versions||[];
+      const previous=d.versions[d.versions.length-1];
+      if(previous&&previous.body===d.body&&previous.notes===d.notes&&previous.title===d.title){if(persist)showToast('目前內容與最新版本相同');return false;}
+      d.versions.push({id:uid(),time:now(),label,body:d.body,notes:d.notes,title:d.title,project:d.project});
+      if(d.versions.length>20)d.versions=d.versions.slice(-20);
+      d.lastSnapshotAt=Date.now();if(persist){touch(d);showToast('已保留一份歷史版本');}return true;
+    }
+    function setMasked(flag,silent=false){
+      if(flag&&!isMasked){
+        if(pendingSave)flushSave().catch(()=>{});
+        closeModal();document.body.classList.remove('sidebar-open');
+        isMasked=true;document.body.classList.add('is-masked');
+        document.title='Google';$('tabIcon').href=COVER_ICON;
+        $('fakeSearch').value='';
+        $('cover').scrollTop=0;
+        // Deliberately focus the decoy input, never the hidden manuscript.
+        $('fakeSearch').focus({preventScroll:true});
+      }else if(!flag&&isMasked){
+        isMasked=false;document.body.classList.remove('is-masked');
+        document.title=BASE_TITLE;$('tabIcon').href=NORMAL_ICON;
+        if(appUnlocked){lastActivity=Date.now();$('bodyEditor').focus({preventScroll:true});}
+        else $('gatePassword').focus();
+      }else if(!flag){
+        isMasked=false;document.body.classList.remove('is-masked');document.title=BASE_TITLE;$('tabIcon').href=NORMAL_ICON;
+      }
+      if(!silent&&flag){};
+    }
+    function toggleMask(){setMasked(!isMasked);}
+    async function copyText(text){
+      if(!text.trim()){showToast('目前沒有可複製的文字');return;}
+      try{
+        if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+        else throw new Error('fallback');
+      }catch{
+        const t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');t.style.cssText='position:fixed;opacity:0;left:-99999px;top:0;';document.body.append(t);t.focus();t.select();
+        const ok=document.execCommand('copy');t.remove();
+        if(!ok){showToast('無法存取剪貼簿，請改用瀏覽器複製功能',true);return;}
+      }
+      showToast('已複製到剪貼簿');
+    }
+    function copyDraft(){if(doc())copyText(doc().body);}
+    function composeAi(){
+      const d=doc(),prompt=vault.settings.aiPrompt.trim()||DEFAULT_PROMPT;
+      return [prompt,'',`【草稿標題】\n${d.title.trim()||'未命名草稿'}`,d.project.trim()?`【作品／章節】\n${d.project.trim()}`:'',d.notes.trim()?`【寫作備註】\n${d.notes.trim()}`:'',`【小說草稿】\n${d.body.trim()}`].filter(Boolean).join('\n\n');
+    }
+    function copyAi(){
+      if(!doc()||!doc().body.trim()){showToast('請先在正文草稿中寫下內容');return;}
+      copyText(composeAi());
+    }
+    function showToast(message,bad=false){
+      if(isMasked)return;
+      const div=document.createElement('div');div.className='toast'+(bad?' bad':'');div.innerHTML=icon(bad?'x':'check');
+      const span=document.createElement('span');span.textContent=message;div.append(span);$('toastStack').append(div);
+      setTimeout(()=>div.remove(),3600);
+    }
+    function showModal(which,title,eyebrow,html){
+      lastFocused=document.activeElement;currentModal=which;
+      $('modalTitle').textContent=title;$('modalEyebrow').textContent=eyebrow||'QUIET DRAFT';
+      $('modalBody').innerHTML=html;$('modalLayer').classList.add('open');$('modalLayer').setAttribute('aria-hidden','false');
+      $('modalClose').focus();
+    }
+    function closeModal(){
+      if(!$('modalLayer').classList.contains('open'))return;
+      $('modalLayer').classList.remove('open');$('modalLayer').setAttribute('aria-hidden','true');
+      currentModal='';modalExtras=null;
+      if(lastFocused&&lastFocused.isConnected&&!isMasked)lastFocused.focus({preventScroll:true});
+    }
+    function showHelp(){
+      showModal('help','使用說明','THE QUIET MANUAL',`
+        <h3>緊急遮蔽</h3>
+        <p>畫面會瞬間切換為仿 Google 搜尋首頁，寫作介面完全隱藏，分頁名稱與圖示也會暫時切換。</p>
+        <div class="shortcut-table">
+          <span><kbd>Esc</kbd></span><span>任何編輯狀態下，一鍵遮住畫面</span>
+          <span><kbd>Alt</kbd> + <kbd>Q</kbd></span><span>遮住 / 返回寫作（可重複切換）</span>
+          <span><kbd>Alt</kbd> + <kbd>G</kbd></span><span>儲存後真正前往 Google（網址列也會變成 Google）</span>
+          <span>右上角熱區</span><span>將滑鼠停在視窗最右上角約半秒即可遮蔽；可在設定關閉</span>
+          <span>返回方式</span><span>按 Alt + Q，或連續點三次仿 Google 標誌；手機可連點三次</span>
+        </div>
+        <div class="info-note warning-note">仿 Google 頁面只是本機視覺遮蔽，瀏覽器的網址列仍可能顯示 HTML 檔案路徑；無法隱藏作業系統監控、螢幕錄影、剪貼簿歷史等。</div>
+        <h3>寫作與複製</h3>
+        <p><strong>正文草稿</strong>適合快速列場景、動作、台詞與事件順序；<strong>寫作備註</strong>可記錄角色知識、世界觀和給 AI 的補寫要求。每次修改都會自動加密儲存。可調字級、開啟專注模式，並從「版本」保留快照。</p>
+        <p><strong>複製草稿</strong>只複製正文；<strong>複製給 AI</strong>會附上可自訂的擴寫指令、作品資訊、寫作備註與草稿。指令可到設定修改。</p>
+        <h3>換機流程</h3>
+        <ol><li>在原電腦點「換機 / 備份」，下載 <strong>.qdraft 加密備份</strong>。</li><li>將此 HTML 與備份檔帶到新電腦，使用新版 Chrome / Edge / Firefox 開啟。</li><li>在初始畫面選「匯入加密備份」，輸入備份原本的密碼；若已有草稿，可選合併匯入。</li></ol>
+        <p>沒有自動雲端同步。加密備份是移機與防遺失的關鍵；建議每次完成重要段落就下載一份。瀏覽器資料可能因清理、無痕模式或檔案開啟位置改變而無法讀取。</p>
+        <h3>私密性與資料安全</h3>
+        <p>正文、標題、備註及歷史版本均以 <strong>AES-256-GCM</strong> 加密；密碼以 <strong>PBKDF2-SHA256</strong> 衍生金鑰。密碼本身不儲存，所有處理都在本機瀏覽器完成。這個 HTML 不載入任何遠端程式、字體或追蹤器。</p>
+        <p>複製到 AI 後，文字就會離開此工具的私密範圍；下載的 TXT 明文檔也不加密。離開座位時可到設定選擇自動遮蔽或直接鎖定。</p>
+        <div class="info-note">「偽裝搜尋」中的搜尋按鈕會真的開啟 Google 搜尋網頁（需要網路）。一般寫作、遮蔽、備份及還原都不需要網路。</div>
+      `);
+    }
+    function showBackup(){
+      if(!appUnlocked)return;
+      showModal('backup','換機與備份','PORTABLE / ENCRYPTED',`
+        <p>草稿儲存在目前瀏覽器。攜帶一份加密備份，就能在另一台電腦完整還原。</p>
+        <div class="feature-grid">
+          <div class="feature-card">${icon('download')}<h3>加密匯出</h3><p>包含所有草稿、備註、版本與設定。備份仍需要原密碼才能打開。</p><button class="full-btn strong" id="exportBackupBtn">${icon('download')}下載 .qdraft 備份</button></div>
+          <div class="feature-card">${icon('upload')}<h3>匯入與合併</h3><p>保留本機稿件，加入備份中的草稿；遇到不同內容的同名 ID 會另外保留副本。</p><button class="full-btn" id="mergeBackupBtn">${icon('upload')}選擇加密備份</button></div>
+        </div>
+        <h3>其他匯入／匯出</h3>
+        <div class="feature-grid"><div class="feature-card"><h3>單篇 TXT</h3><p>將目前正文匯出成明文文字檔，方便留存。</p><button class="full-btn" id="exportTxtBtn">${icon('file')}匯出目前草稿 TXT</button></div><div class="feature-card"><h3>匯入 TXT / MD</h3><p>從普通文字檔建立一篇新草稿。</p><button class="full-btn" id="importTxtBtn">${icon('plus')}新增為草稿</button></div></div>
+        <h3>完整取代此空間</h3>
+        <p>適合將另一台電腦的內容設為唯一版本。取代會清除目前稿件，請務必先下載原空間的加密備份。</p>
+        <button id="replaceBackupBtn" class="full-btn danger">以備份完全取代目前資料…</button>
+        <div class="info-note warning-note">加密備份的密碼必須妥善保存。移動 HTML 檔案本身不會自動帶走目前瀏覽器的稿件。</div>
+      `);
+      $('exportBackupBtn').addEventListener('click',exportBackup);
+      $('mergeBackupBtn').addEventListener('click',()=>chooseImport('merge'));
+      $('exportTxtBtn').addEventListener('click',exportTxt);
+      $('importTxtBtn').addEventListener('click',()=>{$('txtFile').value='';suspendAutoMask=Date.now()+10000;$('txtFile').click();});
+      $('replaceBackupBtn').addEventListener('click',showReplaceConfirm);
+    }
+    function showReplaceConfirm(){
+      showModal('replace-confirm','先保護目前的稿件','CAREFUL / REPLACE ALL',`
+        <p>完整還原將<strong>取代此瀏覽器目前全部稿件及版本</strong>。請先將目前空間的加密備份保存在安全位置，以便日後復原。</p>
+        <button id="replaceSafetyBackup" class="full-btn">${icon('download')} 下載目前空間的加密備份</button>
+        <div class="settings-row"><div><div class="setting-label">已備份目前資料，了解原稿將被覆蓋</div><div class="setting-sub">僅在確認後允許進入下一步。</div></div><input id="replaceAcknowledged" type="checkbox" aria-label="確認已備份現有資料" style="width:19px;height:19px;accent-color:#3e6555"></div>
+        <button id="replaceContinue" class="full-btn danger" disabled>${icon('upload')} 選擇要還原的 .qdraft 檔案</button>
+      `);
+      $('replaceSafetyBackup').onclick=exportBackup;
+      $('replaceAcknowledged').onchange=e=>$('replaceContinue').disabled=!e.target.checked;
+      $('replaceContinue').onclick=()=>chooseImport('replace');
+    }
+    function showSettings(){
+      const s=vault.settings;
+      showModal('settings','偏好設定','A MORE PERSONAL DESK',`
+        <div class="settings-row"><div><div class="setting-label">切換視窗時自動遮蔽</div><div class="setting-sub">離開視窗或切換分頁，即顯示仿 Google 頁面。</div></div><button id="autoMaskToggle" class="toggle ${s.autoMask?'on':''}" aria-label="切換自動遮蔽" aria-pressed="${s.autoMask}"></button></div>
+        <div class="settings-row"><div><div class="setting-label">右上角緊急熱區</div><div class="setting-sub">將滑鼠停到畫面最右上方 0.5 秒，快速遮蔽。</div></div><button id="cornerToggle" class="toggle ${s.hotCorner?'on':''}" aria-label="切換緊急熱區" aria-pressed="${s.hotCorner}"></button></div>
+        <div class="settings-row"><div><div class="setting-label">閒置後真正鎖定</div><div class="setting-sub">清除記憶體中的解密金鑰，需再次輸入空間密碼。</div></div><select id="lockMinutes" class="select-field"><option value="0">不自動鎖定</option><option value="5">5 分鐘</option><option value="15">15 分鐘</option><option value="30">30 分鐘</option><option value="60">60 分鐘</option></select></div>
+        <div class="settings-row"><div><div class="setting-label">寫作介面配色</div><div class="setting-sub">只影響編輯區；緊急遮蔽一律保持亮色 Google 外觀。</div></div><select id="themeSelect" class="select-field"><option value="day">暖白紙張</option><option value="night">夜間墨綠</option></select></div>
+        <h3>複製給 AI 時使用的指令</h3><p>可直接換成你慣用的小說補寫規則。這段指令與作品備註會一起複製。</p>
+        <textarea id="aiPromptEditor" class="prompt-editor" aria-label="AI 擴寫指令"></textarea>
+        <div class="setting-foot"><button id="changePassBtn" class="action-btn">${icon('lock')} 更改空間密碼</button><button id="saveSettingsBtn" class="action-btn primary">${icon('check')} 套用設定</button></div>
+        <div class="info-note">真正鎖定會清除這一頁的解密金鑰；快速「遮蔽畫面」保留已開啟的編輯狀態，返回更迅速。</div>
+        <button class="full-btn" id="lockNowBtn">${icon('lock')} 立即鎖定此空間</button>
+      `);
+      $('lockMinutes').value=String(s.lockMinutes);
+      $('themeSelect').value=s.theme;
+      $('aiPromptEditor').value=s.aiPrompt;
+      function toggle(id){const b=$(id);b.classList.toggle('on');b.setAttribute('aria-pressed',String(b.classList.contains('on')));}
+      $('autoMaskToggle').addEventListener('click',()=>toggle('autoMaskToggle'));
+      $('cornerToggle').addEventListener('click',()=>toggle('cornerToggle'));
+      $('saveSettingsBtn').addEventListener('click',()=>{
+        const text=$('aiPromptEditor').value.trim();
+        if(!text){showToast('AI 指令不能是空白',true);return;}
+        Object.assign(vault.settings,{autoMask:$('autoMaskToggle').classList.contains('on'),hotCorner:$('cornerToggle').classList.contains('on'),lockMinutes:Number($('lockMinutes').value),theme:$('themeSelect').value,aiPrompt:text});
+        updateTheme();scheduleSave();closeModal();showToast('偏好設定已套用');
+      });
+      $('changePassBtn').addEventListener('click',showChangePass);
+      $('lockNowBtn').addEventListener('click',()=>lockVault());
+    }
+    function showChangePass(){
+      showModal('password','更改空間密碼','ENCRYPTION KEY',`
+        <p>會用新密碼重新加密目前所有稿件。舊備份仍須使用匯出當時的舊密碼。</p>
+        <form id="changePassForm" autocomplete="off"><div class="form-field"><label class="field-label" for="oldPass">目前密碼</label><input id="oldPass" type="password" class="text-field" autocomplete="current-password" required></div><div class="form-field"><label class="field-label" for="newPass">新密碼（至少 8 個字元）</label><input id="newPass" type="password" class="text-field" minlength="8" autocomplete="new-password" required></div><div class="form-field"><label class="field-label" for="newPass2">確認新密碼</label><input id="newPass2" type="password" class="text-field" minlength="8" autocomplete="new-password" required></div><div class="gate-error" id="changePassError"></div><button id="changePassSubmit" class="full-btn strong" type="submit">${icon('lock')} 重新加密並更新密碼</button></form>
+      `);
+      $('changePassForm').addEventListener('submit',async e=>{
+        e.preventDefault();if(busy)return;
+        const old=$('oldPass').value,n=$('newPass').value,c=$('newPass2').value;
+        if(n.length<8||n!==c){$('changePassError').textContent='新密碼太短，或兩次輸入不同。';return;}
+        busy=true;$('changePassSubmit').disabled=true;
+        try{
+          await flushSave();await openSealed(currentRecord,old);
+          const salt=random(16);const nextKey=await derive(n,salt);const record=await seal(vault,nextKey,salt);
+          await writeRecord(record);key=nextKey;vaultMeta={salt:record.salt,iterations:record.iterations};currentRecord=record;
+          closeModal();showToast('密碼已更新，請重新下載加密備份');
+        }catch{ $('changePassError').textContent='目前密碼不正確，或重新加密失敗。'; }
+        finally{busy=false;if($('changePassSubmit'))$('changePassSubmit').disabled=false;}
+      });
+    }
+    function showDocMore(){
+      const d=doc();
+      showModal('doc-more','這份草稿','MANUSCRIPT TOOLS',`
+        <div class="feature-grid">
+          <div class="feature-card">${icon('pin')}<h3>${d.pinned?'取消釘選':'釘選草稿'}</h3><p>讓這篇草稿固定顯示在左側清單前段。</p><button id="pinDocBtn" class="full-btn">${d.pinned?'取消釘選':'釘選這篇'}</button></div>
+          <div class="feature-card">${icon('copy')}<h3>建立副本</h3><p>複製正文與備註為另一篇草稿，原文保持不變。</p><button id="duplicateBtn" class="full-btn">複製為新草稿</button></div>
+          <div class="feature-card">${icon('file')}<h3>下載純文字</h3><p>將這篇正文匯出為 TXT 明文檔。</p><button id="exportThisBtn" class="full-btn">下載 TXT</button></div>
+          <div class="feature-card">${icon('trash')}<h3>刪除草稿</h3><p>從加密空間移除這篇與其歷史版本。</p><button id="deleteDocBtn" class="full-btn danger">刪除這篇…</button></div>
+        </div>
+      `);
+      $('pinDocBtn').onclick=()=>{d.pinned=!d.pinned;touch(d);renderDocList();closeModal();showToast(d.pinned?'草稿已釘選':'已取消釘選');};
+      $('duplicateBtn').onclick=()=>{
+        const clone={...JSON.parse(JSON.stringify(d)),id:uid(),title:(d.title||'未命名草稿')+'（副本）',createdAt:now(),updatedAt:now(),versions:[],pinned:false,lastSnapshotAt:0};
+        vault.docs.push(clone);vault.activeId=clone.id;activeTab='body';scheduleSave();renderDocList();renderEditor();closeModal();showToast('已建立草稿副本');
+      };
+      $('exportThisBtn').onclick=exportTxt;
+      $('deleteDocBtn').onclick=()=>showConfirmDelete(d.id);
+    }
+    function showConfirmDelete(id){
+      const d=vault.docs.find(x=>x.id===id);if(!d)return;
+      showModal('delete','刪除這篇草稿？','DELETE / LOCAL ONLY',`
+        <p>將移除 <strong>${eHtml(d.title||'未命名草稿')}</strong> 的正文、備註與所有歷史版本。這個動作無法在目前空間內復原，但過去的加密備份不受影響。</p>
+        <div class="setting-foot"><button class="action-btn" id="deleteCancel">取消</button><button class="action-btn" id="deleteConfirm" style="color:#a4514a;border-color:#d7aca3">確定刪除</button></div>
+      `);
+      $('deleteCancel').onclick=closeModal;
+      $('deleteConfirm').onclick=()=>{
+        vault.docs=vault.docs.filter(x=>x.id!==id);
+        if(!vault.docs.length)vault.docs=[newDoc()];
+        vault.activeId=vault.docs[0].id;activeTab='body';scheduleSave();renderDocList();renderEditor();closeModal();showToast('已刪除草稿');
+      };
+    }
+    function showVersions(){
+      const d=doc();const vers=[...(d.versions||[])].reverse();
+      const list=vers.length?vers.map(v=>`<div class="version-item"><div><strong>${eHtml(v.label||'歷史版本')}</strong><p>${eHtml(shortDate(v.time))} · ${Array.from((v.body||'').replace(/\s/g,'')).length.toLocaleString('zh-TW')} 字元</p></div><div class="inline-actions"><button class="small-outline version-copy" data-id="${eHtml(v.id)}">複製</button><button class="small-outline version-restore" data-id="${eHtml(v.id)}">還原</button></div></div>`).join(''):'<div class="info-note">這篇稿件還沒有歷史版本。你可以先保存一個快照，之後會以 15 分鐘為間隔自動保留編輯前的內容。</div>';
+      showModal('versions','歷史版本','A QUIET SAFETY NET',`
+        <p>最多保留最近 20 份快照，與正文一起加密儲存。</p>
+        <button id="saveVersionBtn" class="full-btn strong">${icon('plus')} 保存目前這一版</button>
+        <h3>已保存的版本</h3>${list}
+      `);
+      $('saveVersionBtn').onclick=()=>{createVersion(d);showVersions();};
+      $('modalBody').querySelectorAll('.version-copy').forEach(b=>b.onclick=()=>{const v=d.versions.find(x=>x.id===b.dataset.id);if(v)copyText(v.body);});
+      $('modalBody').querySelectorAll('.version-restore').forEach(b=>b.onclick=()=>{
+        const v=d.versions.find(x=>x.id===b.dataset.id);if(!v)return;
+        showRestoreConfirm(v.id);
+      });
+    }
+    function showRestoreConfirm(versionId){
+      const d=doc(),v=d.versions.find(x=>x.id===versionId);if(!v)return;
+      showModal('restore','還原這份版本？','RESTORE SNAPSHOT',`
+        <p>還原將改寫目前正文、備註與標題。系統會先保存「還原前」的快照，因此可以再次找回。</p>
+        <div class="setting-foot"><button id="restoreCancel" class="action-btn">取消</button><button id="restoreConfirm" class="action-btn primary">還原版本</button></div>
+      `);
+      $('restoreCancel').onclick=showVersions;
+      $('restoreConfirm').onclick=()=>{
+        createVersion(d,'還原前備份',false);
+        d.body=v.body;d.notes=v.notes;d.title=v.title;d.project=v.project;
+        touch(d);renderDocList();renderEditor();closeModal();showToast('已還原歷史版本');
+      };
+    }
+    function downloadFile(filename,content,type='application/octet-stream'){
+      const url=URL.createObjectURL(new Blob([content],{type}));
+      const anchor=document.createElement('a');anchor.href=url;anchor.download=filename;document.body.append(anchor);anchor.click();anchor.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }
+    function filenameSafe(s){return (s||'未命名草稿').replace(/[\\/:*?"<>|\u0000-\u001f]/g,'_').trim().slice(0,70)||'未命名草稿';}
+    async function exportBackup(){
+      if(!appUnlocked)return;
+      let record=null;let emergency=false;
+      try{
+        await flushSave();await saveQueue;record=await readRecord();
+        if(!record)throw new Error('找不到加密資料');
+      }catch(err){
+        // If browser storage fails (quota / permissions), save in-memory edits to an encrypted portable file.
+        try{record=await seal(vault,key,b64ToBytes(vaultMeta.salt),vaultMeta.iterations);emergency=true;}
+        catch{showToast('備份失敗：'+err.message,true);return;}
+      }
+      try{
+        const archive={format:'QUIET_DRAFT_ENCRYPTED_BACKUP',formatVersion:1,exportedAt:now(),encryptedVault:record};
+        const date=new Date().toLocaleDateString('en-CA').replace(/\//g,'-');
+        downloadFile(`quietdraft_${date}.qdraft`,JSON.stringify(archive,null,2),'application/json');
+        showToast(emergency?'已緊急匯出最新內容；本機儲存仍有異常':'加密備份已下載（請保存密碼）',emergency);
+      }catch(err){showToast('備份失敗：'+err.message,true);}
+    }
+    function exportTxt(){
+      if(!doc())return;
+      const d=doc();downloadFile(filenameSafe(d.title)+'.txt',d.body,'text/plain;charset=utf-8');
+      showToast('正文 TXT 已下載（此檔案未加密）');
+    }
+    function chooseImport(mode){
+      importMode=mode;$('backupFile').value='';suspendAutoMask=Date.now()+10000;$('backupFile').click();
+    }
+    function parseArchive(text){
+      const a=JSON.parse(text);
+      if(!a||a.format!=='QUIET_DRAFT_ENCRYPTED_BACKUP'||a.formatVersion!==1||!a.encryptedVault)throw new Error('這不是有效的 .qdraft 加密備份');
+      if(text.length>75*1024*1024)throw new Error('備份檔案過大');
+      const r=a.encryptedVault;
+      if(!r.ciphertext||!r.salt||!r.iv||r.version!==1)throw new Error('備份缺少加密資料');
+      return r;
+    }
+    async function onBackupPicked(e){
+      const file=e.target.files?.[0];if(!file)return;
+      try{
+        if(file.size>75*1024*1024)throw new Error('檔案超過 75 MB 的安全讀取限制');
+        pendingImport=parseArchive(await file.text());
+        showImportDialog();
+      }catch(err){showToast('匯入失敗：'+err.message,true);}
+      finally{e.target.value='';}
+    }
+    function showImportDialog(){
+      const mode=!appUnlocked?'replace':importMode;
+      showModal('import','開啟加密備份','IMPORT / DECRYPT LOCALLY',`
+        <p>${mode==='merge'?'將解密備份並合併到目前空間；遇到內容不同的重複 ID，兩份都會保存。':'將備份完整還原到此裝置。如果原本有其他草稿，還原後原資料會被覆蓋；請先保留原空間備份。'}</p>
+        <form id="importPassForm" autocomplete="off"><div class="form-field"><label class="field-label" for="importPass">備份檔案原本的密碼</label><input id="importPass" class="text-field" type="password" autocomplete="off" placeholder="輸入備份密碼" required></div><div class="gate-error" id="importError" role="alert"></div><button id="importSubmit" class="full-btn strong" type="submit">${icon('lock')} 解密並${mode==='merge'?'合併':'還原'}</button></form>
+        <div class="info-note">密碼僅用於此瀏覽器中的解密，沒有網路傳輸。</div>
+      `);
+      $('importPassForm').addEventListener('submit',async event=>{
+        event.preventDefault();if(busy)return;
+        const password=$('importPass').value;
+        busy=true;$('importSubmit').disabled=true;
+        try{
+          const imported=await openSealed(pendingImport,password);
+          if(mode==='merge'&&appUnlocked){
+            let added=0;
+            for(const foreignDoc of imported.content.docs){
+              const original=vault.docs.find(x=>x.id===foreignDoc.id);
+              if(!original){vault.docs.push(JSON.parse(JSON.stringify(foreignDoc)));added++;}
+              else if(JSON.stringify([original.title,original.project,original.body,original.notes])!==JSON.stringify([foreignDoc.title,foreignDoc.project,foreignDoc.body,foreignDoc.notes])){
+                vault.docs.push({...JSON.parse(JSON.stringify(foreignDoc)),id:uid(),title:(foreignDoc.title||'未命名草稿')+'（匯入版本）',pinned:false});added++;
+              }else{
+                // Same manuscript text can still have additional history from the other machine.
+                const known=new Set((original.versions||[]).map(v=>JSON.stringify([v.time,v.body,v.notes,v.title])));
+                for(const snap of (foreignDoc.versions||[])){
+                  const signature=JSON.stringify([snap.time,snap.body,snap.notes,snap.title]);
+                  if(!known.has(signature)){(original.versions ||= []).push({...snap,id:uid()});known.add(signature);}
+                }
+                original.versions=(original.versions||[]).sort((a,b)=>safeDate(a.time)-safeDate(b.time)).slice(-20);
+              }
+            }
+            normalizeVault();scheduleSave();await flushSave();renderDocList();renderEditor();
+            closeModal();showToast(`匯入完成，新增 ${added} 篇稿件`);
+          }else{
+            if(appUnlocked)await flushSave();
+            await writeRecord(pendingImport);
+            currentRecord=pendingImport;vault=imported.content;key=imported.candidate;
+            vaultMeta={salt:currentRecord.salt,iterations:currentRecord.iterations};
+            appUnlocked=true;normalizeVault();pendingSave=false;changeRev=0;savedRev=0;
+            closeModal();showWorkspace();showToast('已還原加密備份');
+          }
+          pendingImport=null;
+        }catch(err){if($('importError'))$('importError').textContent='密碼錯誤，或備份無法解密：'+(err.name==='OperationError'?'請檢查密碼':err.message);}
+        finally{busy=false;if($('importSubmit'))$('importSubmit').disabled=false;}
+      });
+    }
+    async function onTxtPicked(e){
+      const file=e.target.files?.[0];if(!file||!appUnlocked)return;
+      try{
+        if(file.size>10*1024*1024)throw new Error('文字檔超過 10 MB');
+        const text=await file.text();const title=file.name.replace(/\.(txt|md)$/i,'')||'匯入草稿';
+        const d=newDoc(title);d.body=text;vault.docs.push(d);vault.activeId=d.id;activeTab='body';
+        scheduleSave();renderDocList();renderEditor();closeModal();showToast('已將文字檔新增為草稿');
+      }catch(err){showToast('文字匯入失敗：'+err.message,true);}
+      finally{e.target.value='';}
+    }
+    async function lockVault(){
+      if(!appUnlocked)return;
+      const wasMasked=isMasked;
+      try{await flushSave();await saveQueue;}catch{showToast('儲存失敗，無法安全鎖定',true);return;}
+      closeModal();setMasked(false,true);
+      key=null;vault=null;vaultMeta=null;appUnlocked=false;pendingSave=false;
+      currentRecord=await readRecord();
+      document.body.classList.remove('focus-mode','sidebar-open');
+      renderGate();
+      // The mask must stay on even after idle auto-lock; otherwise a cover turns into a conspicuous password screen.
+      if(wasMasked)setMasked(true,true);
+    }
+    function bindEvents(){
+      $('gateForm').addEventListener('submit',submitGate);
+      $('gateImportBtn').addEventListener('click',()=>chooseImport('replace'));
+      $('gateHelpBtn').addEventListener('click',showHelp);
+      $('newDocBtn').addEventListener('click',addDoc);
+      $('docSearch').addEventListener('input',renderDocList);
+      $('bodyEditor').addEventListener('input',e=>markDocEdit('body',e.target.value));
+      $('notesEditor').addEventListener('input',e=>markDocEdit('notes',e.target.value));
+      $('docTitle').addEventListener('input',e=>markDocEdit('title',e.target.value));
+      $('projectInput').addEventListener('input',e=>markDocEdit('project',e.target.value));
+      $('bodyTab').addEventListener('click',()=>{switchTab('body');$('bodyEditor').focus();});
+      $('notesTab').addEventListener('click',()=>{switchTab('notes');$('notesEditor').focus();});
+      $('fontDownBtn').addEventListener('click',()=>changeFont(-1));
+      $('fontUpBtn').addEventListener('click',()=>changeFont(1));
+      $('focusBtn').addEventListener('click',()=>{vault.settings.focus=!vault.settings.focus;document.body.classList.toggle('focus-mode',vault.settings.focus);$('focusBtn').querySelector('span').textContent=vault.settings.focus?'離開專注':'專注';scheduleSave();});
+      $('backupBtn').addEventListener('click',showBackup);
+      $('coverBtn').addEventListener('click',()=>setMasked(true));
+      $('helpBtn').addEventListener('click',showHelp);
+      $('settingsBtn').addEventListener('click',showSettings);
+      $('copyDraftBtn').addEventListener('click',copyDraft);
+      $('copyAiBtn').addEventListener('click',copyAi);
+      $('versionsBtn').addEventListener('click',showVersions);
+      $('docMoreBtn').addEventListener('click',showDocMore);
+      $('mobileMenuBtn').addEventListener('click',()=>document.body.classList.add('sidebar-open'));
+      $('sidebarScrim').addEventListener('click',()=>document.body.classList.remove('sidebar-open'));
+      $('modalClose').addEventListener('click',closeModal);
+      $('modalLayer').addEventListener('mousedown',e=>{if(e.target===$('modalLayer'))closeModal();});
+      $('backupFile').addEventListener('change',onBackupPicked);
+      $('txtFile').addEventListener('change',onTxtPicked);
+      $('hotCorner').addEventListener('pointerenter',()=>{if(appUnlocked&&vault.settings.hotCorner)cornerTimer=setTimeout(()=>setMasked(true),480);});
+      $('hotCorner').addEventListener('pointerleave',()=>{if(cornerTimer)clearTimeout(cornerTimer);cornerTimer=null;});
+      $('fakeLogo').addEventListener('click',()=>{
+        const t=Date.now();logoTaps=logoTaps.filter(n=>t-n<1500);logoTaps.push(t);
+        if(logoTaps.length>=3){logoTaps=[];setMasked(false);}
+      });
+      $('fakeSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();googleSearch(false);}});
+      $('fakeSearchBtn').addEventListener('click',()=>googleSearch(false));
+      $('fakeLuckyBtn').addEventListener('click',()=>googleSearch(true));
+      $('fakeApps').addEventListener('click',()=>{$('fakeSearch').focus();});
+      // Escape is intentionally reserved for panic, including while a dialog is open.
+      document.addEventListener('keydown',e=>{
+        const altQ=e.altKey&&!e.ctrlKey&&!e.metaKey&&(e.code==='KeyQ'||e.key.toLowerCase()==='q');
+        const altG=e.altKey&&!e.ctrlKey&&!e.metaKey&&(e.code==='KeyG'||e.key.toLowerCase()==='g');
+        if(altQ){e.preventDefault();toggleMask();return;}
+        if(altG&&appUnlocked){e.preventDefault();goToRealGoogle();return;}
+        if(e.key==='Escape'){e.preventDefault();if(!isMasked)setMasked(true);return;}
+        if(isMasked||!appUnlocked)return;
+        if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==='s'){e.preventDefault();flushSave().then(()=>showToast('已加密儲存')).catch(()=>{});}
+        if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='1'){e.preventDefault();copyDraft();}
+        if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='2'){e.preventDefault();copyAi();}
+        // Indent in textareas without moving browser focus.
+        if(e.key==='Tab'&&e.target.matches('textarea.editor-textarea')){
+          e.preventDefault();const field=e.target,a=field.selectionStart,b=field.selectionEnd;
+          field.setRangeText('  ',a,b,'end');markDocEdit(field.id==='bodyEditor'?'body':'notes',field.value);
+        }
+      },true);
+      // A cover appears immediately on browser/window blur (unless the file picker is open).
+      document.addEventListener('visibilitychange',()=>{if(document.hidden&&appUnlocked&&vault?.settings.autoMask&&Date.now()>suspendAutoMask)setMasked(true);});
+      window.addEventListener('blur',()=>{if(appUnlocked&&!isMasked&&vault?.settings.autoMask&&Date.now()>suspendAutoMask)setMasked(true);});
+      window.addEventListener('pagehide',()=>{if(appUnlocked&&pendingSave)flushSave().catch(()=>{});});
+      document.addEventListener('pointerdown',()=>{if(appUnlocked&&!isMasked)lastActivity=Date.now();},{passive:true});
+      document.addEventListener('keydown',()=>{if(appUnlocked&&!isMasked)lastActivity=Date.now();},{passive:true});
+      setInterval(()=>{
+        if(!appUnlocked||!vault)return;
+        const mins=Number(vault.settings.lockMinutes)||0;
+        if(mins>0&&Date.now()-lastActivity>mins*60000)lockVault().catch(()=>{});
+      },20000);
+    }
+    function changeFont(delta){
+      const sz=vault.settings.fontSize=Math.max(15,Math.min(24,vault.settings.fontSize+delta));
+      $('bodyEditor').style.fontSize=sz+'px';$('notesEditor').style.fontSize=Math.max(14,sz-2)+'px';scheduleSave();
+    }
+    async function goToRealGoogle(){
+      setMasked(true);
+      try{await flushSave();await saveQueue;window.location.assign('https://www.google.com/');}
+      catch{setMasked(false);showToast('儲存失敗，已取消跳轉 Google',true);}
+    }
+    async function googleSearch(lucky){
+      const q=$('fakeSearch').value.trim();
+      try{await flushSave();await saveQueue;}catch{}
+      if(q){window.location.href='https://www.google.com/search?q='+encodeURIComponent(q)+(lucky?'&btnI=1':'');}
+      else{window.location.href='https://www.google.com/';}
+    }
+    async function start(){
+      bindEvents();
+      if(!window.crypto?.subtle){
+        $('gateError').textContent='瀏覽器不支援必要的本機加密功能。請改用新版 Chrome、Edge 或 Firefox 開啟此 HTML。';
+        $('gateSubmit').disabled=true;return;
+      }
+      await initStorage();
+      if(storageMode==='unavailable'){
+        $('gateError').textContent='瀏覽器封鎖了本機儲存，請離開無痕模式或允許檔案頁面的儲存權限。';
+        $('gateSubmit').disabled=true;return;
+      }
+      try{currentRecord=await readRecord();renderGate();}
+      catch(err){$('gateError').textContent='無法讀取本機資料：'+err.message;$('gateSubmit').disabled=true;}
+    }
+    start().catch(err=>{console.error(err);$('gateError').textContent='啟動失敗：'+err.message;});
+  })();
+  </script>
+</body>
+</html>
